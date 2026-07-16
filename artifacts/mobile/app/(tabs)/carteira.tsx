@@ -6,6 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  TextInput,
+  Modal,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
@@ -62,10 +66,30 @@ const CHIPS = [
   { key: '7d', label: '7 dias' },
   { key: '1m', label: '1 mês' },
   { key: '1a', label: '1 ano' },
+  { key: 'custom', label: 'Personalizado' },
 ];
+
+function parseDateBR(s: string): Date | null {
+  const parts = s.split('/');
+  if (parts.length !== 3) return null;
+  const [d, m, y] = parts.map(Number);
+  if (!d || !m || !y || y < 2020 || y > 2100) return null;
+  const dt = new Date(y, m - 1, d);
+  if (isNaN(dt.getTime())) return null;
+  return dt;
+}
+
+function formatDateInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
 
 export default function CarteiraScreen() {
   const [periodo, setPeriodo] = useState('7d');
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
 
   // Mock data
   const investido = 10000;
@@ -115,17 +139,44 @@ export default function CarteiraScreen() {
     if (periodo === '1m') {
       return { labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'], valores: gerarSerie(4, 45, 2) };
     }
+    if (periodo === 'custom') {
+      const inicio = parseDateBR(dataInicio);
+      const fim = parseDateBR(dataFim);
+      if (!inicio || !fim || fim <= inicio) return { labels: [], valores: [] };
+      const diffDays = Math.round((fim.getTime() - inicio.getTime()) / 86400000);
+      if (diffDays <= 14) {
+        const lbs = Array.from({ length: diffDays + 1 }, (_, i) => {
+          const d = new Date(inicio); d.setDate(d.getDate() + i);
+          return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+        });
+        return { labels: lbs, valores: gerarSerie(diffDays + 1, 12, 5) };
+      } else if (diffDays <= 60) {
+        const weeks = Math.ceil(diffDays / 7);
+        const lbs = Array.from({ length: weeks }, (_, i) => `Sem ${i + 1}`);
+        return { labels: lbs, valores: gerarSerie(weeks, 45, 6) };
+      } else {
+        const months = Math.ceil(diffDays / 30);
+        const lbs = Array.from({ length: months }, (_, i) => {
+          const d = new Date(inicio); d.setMonth(d.getMonth() + i);
+          return MESES[d.getMonth()];
+        });
+        return { labels: lbs, valores: gerarSerie(months, 155, 7) };
+      }
+    }
     const hoje2 = new Date();
     const lbs = Array.from({ length: 12 }, (_, i) => {
       const d = new Date(hoje2); d.setMonth(d.getMonth() - (11 - i));
       return MESES[d.getMonth()];
     });
     return { labels: lbs, valores: gerarSerie(12, 155, 3) };
-  }, [periodo]);
+  }, [periodo, dataInicio, dataFim]);
 
+  const padH = 8; // horizontal padding so the last point + circle aren't clipped
   const maxVal = Math.max(...valores);
   const points = valores.map((v, i) => ({
-    x: (i / (valores.length - 1)) * chartW,
+    x: valores.length > 1
+      ? padH + (i / (valores.length - 1)) * (chartW - padH * 2)
+      : chartW / 2,
     y: chartH - padBot - (v / (maxVal || 1)) * (chartH - padTop - padBot),
   }));
 
@@ -173,6 +224,94 @@ export default function CarteiraScreen() {
             <Text style={styles.progressCaptionText}>{percentRecebido}% já recebido</Text>
             <Text style={styles.progressCaptionText}>de R$ {formatBRL(totalAReceber)}</Text>
           </View>
+        </View>
+
+        {/* Rentabilidade */}
+        <Text style={styles.sectionTitle}>Rentabilidade</Text>
+        <View style={styles.whiteCard}>
+          <Text style={[styles.statLabel, { marginBottom: 10 }]}>Período</Text>
+          <View style={styles.periodChips}>
+            {CHIPS.map((c) => (
+              <TouchableOpacity
+                key={c.key}
+                style={[styles.chip, periodo === c.key && styles.chipActive]}
+                onPress={() => setPeriodo(c.key)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.chipText, periodo === c.key && styles.chipTextActive]}>{c.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {periodo === 'custom' && (
+            <View style={styles.dateRangeRow}>
+              <View style={styles.dateInputWrap}>
+                <Text style={styles.dateInputLabel}>Início</Text>
+                <TextInput
+                  style={styles.dateInput}
+                  placeholder="DD/MM/AAAA"
+                  placeholderTextColor={C.inkFaint}
+                  keyboardType="numeric"
+                  value={dataInicio}
+                  onChangeText={(t) => setDataInicio(formatDateInput(t))}
+                  maxLength={10}
+                />
+              </View>
+              <View style={styles.dateRangeSep} />
+              <View style={styles.dateInputWrap}>
+                <Text style={styles.dateInputLabel}>Fim</Text>
+                <TextInput
+                  style={styles.dateInput}
+                  placeholder="DD/MM/AAAA"
+                  placeholderTextColor={C.inkFaint}
+                  keyboardType="numeric"
+                  value={dataFim}
+                  onChangeText={(t) => setDataFim(formatDateInput(t))}
+                  maxLength={10}
+                />
+              </View>
+            </View>
+          )}
+
+          {valores.length > 0 ? (
+            <>
+              <View style={{ marginBottom: 16 }}>
+                <Text style={styles.chartReturnValue}>+{retornoPercent.toFixed(1)}%</Text>
+                <Text style={styles.chartReturnSub}>R$ {formatBRL(retornoValor)}</Text>
+              </View>
+
+              <Svg width={chartW} height={chartH} style={{ display: 'flex' }}>
+                <Defs>
+                  <SvgLinearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0%" stopColor={C.dark} stopOpacity="0.16" />
+                    <Stop offset="100%" stopColor={C.dark} stopOpacity="0" />
+                  </SvgLinearGradient>
+                </Defs>
+                <Path d={areaPath} fill="url(#fill)" />
+                <Path d={linePath} fill="none" stroke={C.dark} strokeWidth="2.5" strokeLinecap="round" />
+                {points.length > 0 && (
+                  <Circle
+                    cx={points[points.length - 1].x}
+                    cy={points[points.length - 1].y}
+                    r={4}
+                    fill={C.dark}
+                    stroke="#fff"
+                    strokeWidth={2}
+                  />
+                )}
+              </Svg>
+
+              <View style={styles.axisLabels}>
+                {visLabels.map((l, i) => (
+                  <Text key={i} style={styles.axisLabel}>{l}</Text>
+                ))}
+              </View>
+            </>
+          ) : periodo === 'custom' ? (
+            <Text style={styles.customEmptyHint}>
+              Preencha as duas datas para ver o rendimento do período
+            </Text>
+          ) : null}
         </View>
 
         {/* Ativos section */}
@@ -224,56 +363,6 @@ export default function CarteiraScreen() {
           <Text style={styles.ativosLinkText}>Ver todos os ativos</Text>
           <Feather name="chevron-right" size={14} color={C.inkSoft} />
         </TouchableOpacity>
-
-        {/* Rentabilidade */}
-        <Text style={styles.sectionTitle}>Rentabilidade</Text>
-        <View style={styles.whiteCard}>
-          <Text style={[styles.statLabel, { marginBottom: 10 }]}>Período</Text>
-          <View style={styles.periodChips}>
-            {CHIPS.map((c) => (
-              <TouchableOpacity
-                key={c.key}
-                style={[styles.chip, periodo === c.key && styles.chipActive]}
-                onPress={() => setPeriodo(c.key)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.chipText, periodo === c.key && styles.chipTextActive]}>{c.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={{ marginBottom: 16 }}>
-            <Text style={styles.chartReturnValue}>+{retornoPercent.toFixed(1)}%</Text>
-            <Text style={styles.chartReturnSub}>R$ {formatBRL(retornoValor)}</Text>
-          </View>
-
-          <Svg width={chartW} height={chartH} style={{ display: 'flex' }}>
-            <Defs>
-              <SvgLinearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0%" stopColor={C.dark} stopOpacity="0.16" />
-                <Stop offset="100%" stopColor={C.dark} stopOpacity="0" />
-              </SvgLinearGradient>
-            </Defs>
-            <Path d={areaPath} fill="url(#fill)" />
-            <Path d={linePath} fill="none" stroke={C.dark} strokeWidth="2.5" strokeLinecap="round" />
-            {points.length > 0 && (
-              <Circle
-                cx={points[points.length - 1].x}
-                cy={points[points.length - 1].y}
-                r={4}
-                fill={C.dark}
-                stroke="#fff"
-                strokeWidth={2}
-              />
-            )}
-          </Svg>
-
-          <View style={styles.axisLabels}>
-            {visLabels.map((l, i) => (
-              <Text key={i} style={styles.axisLabel}>{l}</Text>
-            ))}
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
@@ -340,4 +429,14 @@ const styles = StyleSheet.create({
   chartReturnSub: { fontSize: 13, color: C.inkSoft, fontFamily: 'Inter_500Medium', marginTop: 4, marginBottom: 12 },
   axisLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   axisLabel: { fontSize: 10.5, color: C.inkFaint, fontFamily: 'Inter_500Medium' },
+
+  dateRangeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18, gap: 10 },
+  dateInputWrap: { flex: 1 },
+  dateInputLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: C.inkFaint, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 6 },
+  dateInput: {
+    height: 44, borderRadius: 12, backgroundColor: C.bg,
+    paddingHorizontal: 14, fontSize: 14, fontFamily: 'Inter_500Medium', color: C.ink,
+  },
+  dateRangeSep: { width: 12, height: 1.5, backgroundColor: C.line, marginTop: 18 },
+  customEmptyHint: { fontSize: 13, color: C.inkFaint, fontFamily: 'Inter_400Regular', textAlign: 'center', paddingVertical: 24 },
 });

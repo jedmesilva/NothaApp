@@ -215,6 +215,16 @@ export default function AtivosScreen() {
                           <View style={[styles.poolSegDark, { width: `${pctCaptado}%` as any }]} />
                           <View style={[styles.poolSegStripe, { width: `${pctPosClamped}%` as any }]} />
                         </View>
+                        <View style={styles.poolLegend}>
+                          <View style={styles.poolLegendItem}>
+                            <View style={[styles.poolLegendDot, { backgroundColor: C.ink }]} />
+                            <Text style={styles.poolLegendText}>Outros credores</Text>
+                          </View>
+                          <View style={styles.poolLegendItem}>
+                            <View style={[styles.poolLegendDot, { backgroundColor: C.inkFaint }]} />
+                            <Text style={styles.poolLegendText}>Minha participação</Text>
+                          </View>
+                        </View>
                       </>
                     );
                   })()}
@@ -383,6 +393,10 @@ const styles = StyleSheet.create({
   poolSegDark: { height: '100%', backgroundColor: C.ink },
   poolSegStripe: { height: '100%', backgroundColor: C.inkFaint },
   poolCaption: { fontSize: 12.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  poolLegend: { flexDirection: 'row', gap: 16, marginTop: 4 },
+  poolLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  poolLegendDot: { width: 8, height: 8, borderRadius: 4 },
+  poolLegendText: { fontSize: 11.5, color: C.inkSoft, fontFamily: 'Inter_500Medium' },
 
   detailsGrid: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, rowGap: 16, columnGap: 12 },
   detailBlock: { width: '46%' },
