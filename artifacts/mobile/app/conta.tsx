@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, ActionRow } from '@/components/ds';
+import { BackButton, ActionRow, SectionTitle, Eyebrow } from '@/components/ds';
 import { formatBRL } from '@/data/loans';
 
 const saldoConta = 8500;
@@ -37,7 +37,7 @@ export default function ContaScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Saldo hero */}
         <View style={s.heroCard}>
-          <Text style={s.eyebrow}>Saldo em conta</Text>
+          <Eyebrow context="dark">Saldo em conta</Eyebrow>
           <Text style={s.bigValue}>R$ {formatBRL(saldoConta)}</Text>
           <ActionRow
             left={{ icon: 'arrow-down', label: 'Sacar',    context: 'dark' }}
@@ -48,7 +48,7 @@ export default function ContaScreen() {
 
         {/* Extrato */}
         <View style={s.extratoCard}>
-          <Text style={s.sectionTitle}>Extrato</Text>
+          <SectionTitle style={{ marginBottom: spacing[4] }}>Extrato</SectionTitle>
           {extrato.map((item, idx) => (
             <View
               key={item.id}
@@ -96,13 +96,6 @@ const s = StyleSheet.create({
     padding: spacing[6],
     backgroundColor: C.dark,
   },
-  eyebrow: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.semibold,
-    letterSpacing: 0.3,
-    color: C.onDarkSoft,
-    marginBottom: 10,
-  },
   bigValue: {
     fontFamily: fonts.display,
     fontSize: fontSize.hero,
@@ -116,7 +109,6 @@ const s = StyleSheet.create({
     padding: 22,
     backgroundColor: C.card,
   },
-  sectionTitle: { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink, marginBottom: spacing[4] },
   extratoRow: {
     flexDirection: 'row',
     alignItems: 'center',

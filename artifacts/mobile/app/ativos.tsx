@@ -262,7 +262,7 @@ const s = StyleSheet.create({
   legendText: { fontSize: fontSize.xs, color: C.inkSoft, fontFamily: fonts.medium },
   // Modal
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  modalTitle:  { fontFamily: fonts.display, fontSize: 19, color: C.ink, letterSpacing: -0.3 },
+  modalTitle:  { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.3 },
   modalClose:  { width: 32, height: 32, borderRadius: 16, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   modalSectionLabel: { fontSize: fontSize.sm, fontFamily: fonts.bold, letterSpacing: 0.3, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
   pillsWrap:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 26 },

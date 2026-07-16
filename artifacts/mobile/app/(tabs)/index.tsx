@@ -302,7 +302,7 @@ const s = StyleSheet.create({
   seeAllText: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
   // Investir page
   ofertasHeader:   { paddingHorizontal: spacing[5], paddingTop: spacing[5], paddingBottom: 6 },
-  ofertasTitle:    { fontFamily: fonts.display, fontSize: 22, color: C.ink, letterSpacing: -0.3, marginBottom: 4 },
+  ofertasTitle:    { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.3, marginBottom: 4 },
   ofertasSubtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular },
   ofertaEyebrow:     { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint, marginBottom: 6 },
   ofertaRetorno:     { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 48, marginBottom: 8 },
