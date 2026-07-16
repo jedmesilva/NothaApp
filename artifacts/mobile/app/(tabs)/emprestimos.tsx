@@ -131,7 +131,7 @@ export default function EmprestimosScreen() {
                   <View style={styles.poolCaption}>
                     <View style={styles.dotRow}>
                       <View style={[styles.dot, { backgroundColor: C.ink }]} />
-                      <Text style={styles.captionText}>Já captado</Text>
+                      <Text style={styles.captionText}>Captado</Text>
                     </View>
                     <View style={styles.dotRow}>
                       <View style={[styles.dot, { backgroundColor: C.line, borderWidth: 1, borderColor: C.inkFaint }]} />
