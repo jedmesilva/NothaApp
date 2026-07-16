@@ -24,7 +24,7 @@ const extrato = [
 
 export default function ContaScreen() {
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>

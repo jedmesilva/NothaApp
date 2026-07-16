@@ -45,7 +45,7 @@ const RISCOS = [
 
 export default function AtivosScreen() {
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   const [activeFilter, setActiveFilter] = useState('todas');
   const [riscoFilter, setRiscoFilter]   = useState('todos');

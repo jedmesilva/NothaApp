@@ -19,7 +19,7 @@ import type { LoanStatus } from '@/components/ds';
 export default function EmprestimoDetalheScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   const baseEmprestimo = EMPRESTIMOS.find((e) => String(e.id) === id) ?? EMPRESTIMOS[1];
   const [pagas, setPagas] = useState(baseEmprestimo.parcelasPagas);
