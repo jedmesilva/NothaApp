@@ -25,14 +25,17 @@ export default function EmprestimoDetalheScreen() {
   const [pagas, setPagas] = useState(baseEmprestimo.parcelasPagas);
   const [showTimeline, setShowTimeline] = useState(false);
 
-  const { valor, taxaJurosTotal, prazoDias, ciclo, parcelasTotal, status, contratoId } = baseEmprestimo;
+  const { valor, taxaJurosTotal, prazoDias, ciclo, parcelasTotal, status, contratoId, diasDesdeConcessao } = baseEmprestimo;
   const cicloMeta       = CICLO_META[ciclo];
   const totalAPagar     = valor * (1 + taxaJurosTotal / 100);
   const valorParcela    = totalAPagar / parcelasTotal;
   const percentPago     = Math.round((pagas / parcelasTotal) * 100);
 
   const hoje              = new Date();
-  const dataBase          = addDays(hoje, -pagas * cicloMeta.dias);
+  // Use diasDesdeConcessao when available (needed for atrasado loans with parcelasPagas=0)
+  const dataBase          = diasDesdeConcessao != null
+    ? addDays(hoje, -diasDesdeConcessao)
+    : addDays(hoje, -pagas * cicloMeta.dias);
   const valorPago         = pagas * valorParcela;
   const dataConcessao     = dataBase;
   const dataSolicitacao   = addDays(dataConcessao, -3);
