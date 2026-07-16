@@ -184,17 +184,21 @@ export default function HomeScreen() {
               const btnBg       = isVencida ? C.red : C.ink;
               const isLast      = idx === proximasParcelas.length - 1;
               return (
-                <View key={p.loanId} style={[s.parcelaRow, !isLast && !isVencida && s.parcelaRowSep, isVencida && s.parcelaRowVencida]}>
+                <TouchableOpacity
+                  key={p.loanId}
+                  style={[s.parcelaRow, !isLast && !isVencida && s.parcelaRowSep, isVencida && s.parcelaRowVencida]}
+                  activeOpacity={0.75}
+                  onPress={() => router.push(`/emprestimo-detalhe?id=${p.loanId}` as any)}
+                >
                   <View style={[s.accentDot, { backgroundColor: accentColor }]} />
                   <View style={{ flex: 1 }}>
-                    <Eyebrow style={{ marginBottom: 2 }}>Empréstimo #{p.loanId}</Eyebrow>
                     <Text style={[s.installState, { color: accentColor }]}>{stateLabel}</Text>
                     <Text style={s.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
                   </View>
-                  <TouchableOpacity style={[s.payBtn, { backgroundColor: btnBg }]} activeOpacity={0.8} onPress={() => router.push('/emprestimos' as any)}>
+                  <View style={[s.payBtn, { backgroundColor: btnBg }]}>
                     <Text style={s.payBtnText}>Pagar</Text>
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                </TouchableOpacity>
               );
             })}
 
