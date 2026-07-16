@@ -13,7 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { EMPRESTIMOS, CICLO_META, STATUS_META, formatBRL, addDays, formatData, formatDataHora } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid, InstallmentBadge } from '@/components/ds';
+import { BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid, InstallmentBadge, AlertBanner } from '@/components/ds';
 import type { LoanStatus } from '@/components/ds';
 
 export default function EmprestimoDetalheScreen() {
@@ -87,20 +87,11 @@ export default function EmprestimoDetalheScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
         {/* Alerta de atraso */}
         {parcelasAtrasadas.length > 0 && maisAntiga && (
-          <View style={s.alertBanner}>
-            <Feather name="alert-triangle" size={16} color={C.red} style={{ marginTop: 1 }} />
-            <View style={{ flex: 1 }}>
-              <Text style={s.alertTitle}>
-                {parcelasAtrasadas.length === 1
-                  ? '1 parcela em atraso'
-                  : `${parcelasAtrasadas.length} parcelas em atraso`}
-              </Text>
-              <Text style={s.alertSub}>
-                {parcelasAtrasadas.length === 1 ? 'Venceu' : 'A mais antiga venceu'} em {formatData(maisAntiga.data)}
-                {' · '}há {diasEmAtraso} {diasEmAtraso === 1 ? 'dia' : 'dias'}
-              </Text>
-            </View>
-          </View>
+          <AlertBanner
+            style={{ marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: 2 }}
+            title={parcelasAtrasadas.length === 1 ? '1 parcela em atraso' : `${parcelasAtrasadas.length} parcelas em atraso`}
+            message={`${parcelasAtrasadas.length === 1 ? 'Venceu' : 'A mais antiga venceu'} em ${formatData(maisAntiga.data)} · há ${diasEmAtraso} ${diasEmAtraso === 1 ? 'dia' : 'dias'}`}
+          />
         )}
 
         {/* Hero dark card */}
@@ -253,10 +244,6 @@ const s = StyleSheet.create({
   heroEyebrow: { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.onDarkSoft, marginBottom: 10 },
   heroValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: '#fff', letterSpacing: -1, lineHeight: 44, marginBottom: 6 },
   heroSub:   { fontSize: fontSize.base, color: C.onDarkSoft, fontFamily: fonts.regular, marginBottom: 20 },
-  // Alerta de atraso
-  alertBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: 2, padding: 14, borderRadius: radii.lg, backgroundColor: C.redBg, borderWidth: 1, borderColor: 'rgba(192,57,43,0.18)' },
-  alertTitle:  { fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.red, marginBottom: 3 },
-  alertSub:    { fontSize: fontSize.sm, fontFamily: fonts.regular, color: C.red },
   // Dates
   datesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginHorizontal: spacing[4], marginBottom: 14, padding: 14, borderRadius: radii['2xl'], backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },

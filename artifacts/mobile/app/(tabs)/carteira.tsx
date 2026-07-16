@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { formatBRL } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { DarkCard, LightCard, ThinBar, SplitRow, Chip, SectionTitle, Eyebrow, BigValue } from '@/components/ds';
+import { DarkCard, LightCard, ThinBar, SplitRow, Chip, SectionTitle, Eyebrow, BigValue, AlertBanner } from '@/components/ds';
 
 const W = Dimensions.get('window').width;
 
@@ -223,13 +223,15 @@ export default function CarteiraScreen() {
           </View>
 
           {temAtraso && (
-            <View style={s.atrasoBar}>
-              <Feather name="alert-triangle" size={16} color={C.red} />
-              <Text style={s.atrasoText}>
-                <Text style={{ fontFamily: fonts.bold }}>R$ {formatBRL(valorAtrasado)}</Text>
-                {' '}vencido em {dataAtrasoLabel}, aguardando pagamento
-              </Text>
-            </View>
+            <AlertBanner
+              style={{ marginBottom: 18 }}
+              message={
+                <Text style={{ fontSize: fontSize['sm+'], color: C.red, fontFamily: fonts.regular, lineHeight: 18 }}>
+                  <Text style={{ fontFamily: fonts.bold }}>R$ {formatBRL(valorAtrasado)}</Text>
+                  {' '}vencido em {dataAtrasoLabel}, aguardando pagamento
+                </Text>
+              }
+            />
           )}
 
           {/* Timeline */}
@@ -276,8 +278,6 @@ const s = StyleSheet.create({
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   statSub:     { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
   ativosCount: { fontFamily: fonts.display, fontSize: fontSize.display, color: C.ink, letterSpacing: -0.8, lineHeight: 38 },
-  atrasoBar:   { flexDirection: 'row', alignItems: 'flex-start', gap: 9, marginBottom: 18, padding: 12, borderRadius: radii.lg, backgroundColor: C.redBg },
-  atrasoText:  { flex: 1, fontSize: fontSize['sm+'], color: C.red, fontFamily: fonts.regular, lineHeight: 18 },
   timelineWrap:       { paddingHorizontal: 4, marginBottom: 14 },
   timelineTrack:      { position: 'relative', height: 3, backgroundColor: C.line, borderRadius: radii.full },
   timelineDot:        { position: 'absolute', top: -2, width: 7, height: 7, borderRadius: 4, backgroundColor: C.inkFaint },
