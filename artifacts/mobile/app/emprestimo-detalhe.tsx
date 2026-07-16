@@ -270,7 +270,7 @@ const s = StyleSheet.create({
   sectionCount:  { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.regular },
   list: { gap: 10, paddingHorizontal: spacing[4] },
   parcelaCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: radii.card, padding: 14, backgroundColor: C.card },
-  parcelaCardAtrasada:  { borderWidth: 1.5, borderColor: C.red },
+  parcelaCardAtrasada:  { backgroundColor: C.redBg },
   indexBadge:          { width: 36, height: 36, borderRadius: radii.sm, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
   indexBadgePaga:      { backgroundColor: C.ink },
   indexBadgeAtrasada:  { backgroundColor: C.red },

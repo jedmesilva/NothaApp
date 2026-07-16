@@ -184,7 +184,7 @@ export default function HomeScreen() {
               const btnBg       = isVencida ? C.red : C.ink;
               const isLast      = idx === proximasParcelas.length - 1;
               return (
-                <View key={p.loanId} style={[s.parcelaRow, !isLast && s.parcelaRowSep]}>
+                <View key={p.loanId} style={[s.parcelaRow, !isLast && !isVencida && s.parcelaRowSep, isVencida && s.parcelaRowVencida]}>
                   <View style={[s.accentDot, { backgroundColor: accentColor }]} />
                   <View style={{ flex: 1 }}>
                     <Eyebrow style={{ marginBottom: 2 }}>Empréstimo #{p.loanId}</Eyebrow>
@@ -289,8 +289,9 @@ const s = StyleSheet.create({
   statBlock:   { flex: 1 },
   statDivider: { width: 1, height: 34, backgroundColor: C.line, marginHorizontal: 18 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, letterSpacing: -0.3 },
-  parcelaRow:    { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
-  parcelaRowSep: { borderBottomWidth: 1, borderBottomColor: C.line },
+  parcelaRow:      { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
+  parcelaRowSep:   { borderBottomWidth: 1, borderBottomColor: C.line },
+  parcelaRowVencida: { backgroundColor: C.redBg, borderRadius: radii.card, paddingHorizontal: 12, marginHorizontal: -12 },
   accentDot:    { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   installState: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, marginBottom: 4 },
   installValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink },
