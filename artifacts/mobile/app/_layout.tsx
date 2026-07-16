@@ -31,6 +31,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="emprestimo-detalhe" options={{ headerShown: false }} />
         <Stack.Screen name="ativos" options={{ headerShown: false }} />
+        <Stack.Screen name="conta" options={{ headerShown: false }} />
       </Stack>
     </AreaProvider>
   );

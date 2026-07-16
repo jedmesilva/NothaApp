@@ -143,13 +143,13 @@ export default function HomeScreen() {
             <ContaCard
               variant="deposito"
               valor={depositoRecente}
-              onPress={() => router.push('/emprestimos' as any)}
+              onPress={() => router.push('/conta' as any)}
             />
           ) : saldoConta > 0 ? (
             <ContaCard
               variant="saldo"
               valor={saldoConta}
-              onPress={() => {}}
+              onPress={() => router.push('/conta' as any)}
             />
           ) : null}
 
@@ -226,7 +226,7 @@ export default function HomeScreen() {
             <ContaCard
               variant="saldo"
               valor={saldoConta}
-              onPress={() => {}}
+              onPress={() => router.push('/conta' as any)}
               style={{ marginTop: 14 }}
             />
           ) : null}
