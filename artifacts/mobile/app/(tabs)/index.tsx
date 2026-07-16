@@ -165,30 +165,28 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {proximasParcelas.map((p) => {
+            {proximasParcelas.map((p, idx) => {
               const isVencida = p.estado === 'vencida';
               const isProxima = p.estado === 'proxima';
+              const accentColor   = isVencida ? C.red : isProxima ? C.amber : C.inkFaint;
+              const stateLabel    = isVencida ? 'Vencida' : isProxima ? 'Vence em breve' : `Vence ${formatDataBrief(p.data)}`;
+              const btnBg         = isVencida ? C.red : C.ink;
+              const isLast        = idx === proximasParcelas.length - 1;
               return (
                 <View
                   key={p.loanId}
-                  style={[
-                    s.parcelaRow,
-                    isVencida && s.parcelaRowVencida,
-                    isProxima && s.parcelaRowProxima,
-                    !isVencida && !isProxima && s.parcelaRowFutura,
-                  ]}
+                  style={[s.parcelaRow, !isLast && s.parcelaRowSep]}
                 >
-                  <View style={s.installIcon}>
-                    <Feather name="calendar" size={16} color={isVencida ? C.red : isProxima ? C.amber : C.inkSoft} />
-                  </View>
+                  <View style={[s.accentDot, { backgroundColor: accentColor }]} />
                   <View style={{ flex: 1 }}>
-                    <Text style={s.installLoanTag}>Empréstimo #{p.loanId}</Text>
-                    <Text style={[s.installLabel, isVencida && { color: C.red, fontFamily: fonts.bold }, isProxima && { color: C.amber, fontFamily: fonts.bold }]}>
-                      {isVencida ? 'Vencida' : isProxima ? 'Vence em breve' : `Vence ${formatDataBrief(p.data)}`}
+                    <Text style={s.installMeta}>
+                      Empréstimo #{p.loanId}
+                      {'  '}
+                      <Text style={{ color: accentColor, fontFamily: fonts.semibold }}>{stateLabel}</Text>
                     </Text>
                     <Text style={s.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
                   </View>
-                  <TouchableOpacity style={s.payBtn} activeOpacity={0.8} onPress={() => router.push('/emprestimos' as any)}>
+                  <TouchableOpacity style={[s.payBtn, { backgroundColor: btnBg }]} activeOpacity={0.8} onPress={() => router.push('/emprestimos' as any)}>
                     <Text style={s.payBtnText}>Pagar</Text>
                   </TouchableOpacity>
                 </View>
@@ -275,15 +273,12 @@ const s = StyleSheet.create({
   statDivider: { width: 1, height: 34, backgroundColor: C.line, marginHorizontal: 18 },
   statLabel:   { fontSize: fontSize['2xs'], color: C.inkFaint, fontFamily: fonts.semibold, marginBottom: 4 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, letterSpacing: -0.3 },
-  parcelaRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: spacing[4], marginBottom: 10 },
-  parcelaRowVencida: { backgroundColor: C.redBg },
-  parcelaRowProxima: { backgroundColor: C.amberBg },
-  parcelaRowFutura:  { backgroundColor: C.bg },
-  installIcon: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  installLoanTag: { fontSize: fontSize['2xs'], fontFamily: fonts.bold, color: C.inkFaint, textTransform: 'uppercase', letterSpacing: 0.2, marginBottom: 3 },
-  installLabel:   { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 2 },
-  installValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink },
-  payBtn:     { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radii.md, backgroundColor: C.ink },
+  parcelaRow:    { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
+  parcelaRowSep: { borderBottomWidth: 1, borderBottomColor: C.line },
+  accentDot:    { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
+  installMeta:  { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 4 },
+  installValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink },
+  payBtn:     { paddingHorizontal: 14, paddingVertical: 9, borderRadius: radii.md },
   payBtnText: { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
   seeAllLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, paddingTop: 4, paddingBottom: 4 },
   seeAllText: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
