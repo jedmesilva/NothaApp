@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { EMPRESTIMOS, CICLO_META, STATUS_META, formatBRL, addDays, formatDataShort } from '@/data/loans';
-import { palette as C, fonts, fontSize, radii } from '@/constants/theme';
+import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend, DetailGrid } from '@/components/ds';
 
 // ---------------------------------------------------------------------------
