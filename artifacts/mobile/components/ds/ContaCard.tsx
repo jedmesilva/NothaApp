@@ -1,12 +1,13 @@
 /**
- * ContaCard — contextual account-balance notification card.
+ * ContaCard — compact account notification row.
  *
- * Three variants, each representing a different event:
- *   deposito   — a loan was just granted and deposited into the account
- *   rendimento — an investment return was credited to the account
- *   saldo      — shows current total available balance
- *
+ * Discreet by design: small label, modest value, chevron on the right.
  * Renders nothing when `valor` is 0 or negative.
+ *
+ * Variants:
+ *   deposito   — loan was deposited into the account
+ *   rendimento — investment return was credited
+ *   saldo      — current available balance
  */
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
@@ -23,132 +24,70 @@ export type ContaCardProps = {
   style?: ViewStyle;
 };
 
-// ---------------------------------------------------------------------------
-// Per-variant visual config
-// ---------------------------------------------------------------------------
-type VariantConfig = {
-  pill: { bg: string; color: string };
-  pillLabel: string;
-  pillIcon: string;
-  showPlus?: boolean;
-  helper: string;
-  cta: string;
+const LABELS: Record<ContaCardVariant, { above: string; showPlus?: boolean }> = {
+  deposito:   { above: 'Empréstimo disponível na conta' },
+  rendimento: { above: 'Rendimento creditado na conta', showPlus: true },
+  saldo:      { above: 'Saldo disponível na conta' },
 };
 
-const VARIANTS: Record<ContaCardVariant, VariantConfig> = {
-  deposito: {
-    pill: { bg: C.dark, color: '#fff' },
-    pillLabel: 'Empréstimo disponível',
-    pillIcon: 'arrow-down',
-    helper: 'Depositado na sua conta',
-    cta: 'Acessar conta',
-  },
-  rendimento: {
-    pill: { bg: C.amberBg, color: C.amber },
-    pillLabel: 'Rendimento creditado',
-    pillIcon: 'trending-up',
-    showPlus: true,
-    helper: 'Creditado na sua conta',
-    cta: 'Ver na carteira',
-  },
-  saldo: {
-    pill: { bg: C.chipUrgent, color: C.inkSoft },
-    pillLabel: 'Saldo disponível',
-    pillIcon: 'credit-card',
-    helper: 'Disponível para usar',
-    cta: 'Acessar conta',
-  },
-};
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 export function ContaCard({ variant, valor, onPress, style }: ContaCardProps) {
   if (valor <= 0) return null;
 
-  const cfg = VARIANTS[variant];
+  const { above, showPlus } = LABELS[variant];
   const formatted = valor.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
   return (
-    <LightCard style={style}>
-      {/* State pill */}
-      <View style={[s.pill, { backgroundColor: cfg.pill.bg }]}>
-        <Feather name={cfg.pillIcon as any} size={11} color={cfg.pill.color} />
-        <Text style={[s.pillText, { color: cfg.pill.color }]}>{cfg.pillLabel}</Text>
-      </View>
-
-      {/* Value */}
-      <Text style={s.value}>
-        {cfg.showPlus && <Text style={s.valuePrefix}>+</Text>}
-        {'R$ '}
-        {formatted}
-      </Text>
-
-      {/* Helper text */}
-      <Text style={s.helper}>{cfg.helper}</Text>
-
-      {/* CTA */}
-      <TouchableOpacity style={s.cta} onPress={onPress} activeOpacity={0.85}>
-        <Text style={s.ctaText}>{cfg.cta}</Text>
-        <Feather name="arrow-right" size={15} color="#fff" />
+    <LightCard style={[s.card, style]}>
+      <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.7}>
+        <View style={s.left}>
+          <Text style={s.label}>{above}</Text>
+          <Text style={s.value}>
+            {showPlus ? '+' : ''}R$ {formatted}
+          </Text>
+        </View>
+        <View style={s.chevronWrap}>
+          <Feather name="chevron-right" size={16} color={C.inkSoft} />
+        </View>
       </TouchableOpacity>
     </LightCard>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
 const s = StyleSheet.create({
-  pill: {
+  card: {
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radii.full,
-    marginBottom: 16,
+    justifyContent: 'space-between',
   },
-  pillText: {
+  left: {
+    flex: 1,
+    gap: 3,
+  },
+  label: {
     fontSize: fontSize['sm+'],
-    fontFamily: fonts.semibold,
-    letterSpacing: 0.1,
+    fontFamily: fonts.regular,
+    color: C.inkFaint,
   },
   value: {
     fontFamily: fonts.display,
-    fontSize: 32,
+    fontSize: fontSize['4xl'], // 20px — readable but not dominant
     color: C.ink,
-    letterSpacing: -0.5,
-    marginBottom: 4,
+    letterSpacing: -0.3,
   },
-  valuePrefix: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    color: C.ink,
-  },
-  helper: {
-    fontSize: fontSize['base+'],
-    fontFamily: fonts.regular,
-    color: C.inkSoft,
-    marginBottom: 20,
-    marginTop: 2,
-  },
-  cta: {
-    flexDirection: 'row',
+  chevronWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: radii.full,
+    backgroundColor: C.bg,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 15,
-    borderRadius: radii.md,
-    backgroundColor: C.dark,
-  },
-  ctaText: {
-    fontSize: fontSize.lg,
-    fontFamily: fonts.bold,
-    color: '#fff',
+    marginLeft: 12,
   },
 });
