@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   poolCaption: { fontSize: 12.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginTop: 2 },
   poolLegend: { flexDirection: 'row', gap: 16, marginTop: 4 },
   poolLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  poolLegendDot: { width: 8, height: 8, borderRadius: 4 },
+  poolLegendDot: { width: 8, height: 8, borderRadius: 2 },
   poolLegendText: { fontSize: 11.5, color: C.inkSoft, fontFamily: 'Inter_500Medium' },
 
   detailsGrid: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, rowGap: 16, columnGap: 12 },
