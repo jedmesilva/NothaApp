@@ -101,7 +101,7 @@ export default function EmprestimoDetalheScreen() {
                   items={[
                     { color: '#fff', label: 'pago' },
                     {
-                      color: C.onDarkBorder,
+                      color: status === 'atrasado' ? '#ff6b6b' : C.onDarkBorder,
                       label: status === 'atrasado' ? 'parcela em atraso' : `próxima parcela em ${proximaData}`,
                       bold: status === 'atrasado',
                     },
@@ -151,14 +151,14 @@ export default function EmprestimoDetalheScreen() {
                 key={p.numero}
                 style={[s.parcelaCard, isAtrasada && s.parcelaCardAtrasada, isPaga && { opacity: 0.55 }]}
               >
-                <View style={[s.indexBadge, isPaga && s.indexBadgePaga]}>
+                <View style={[s.indexBadge, isPaga && s.indexBadgePaga, isAtrasada && s.indexBadgeAtrasada]}>
                   {isPaga
                     ? <Feather name="check" size={16} color="#fff" />
-                    : <Text style={[s.indexNum, isAtrasada && { color: C.ink }]}>{p.numero}</Text>
+                    : <Text style={[s.indexNum, isAtrasada && { color: '#fff' }]}>{p.numero}</Text>
                   }
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[s.parcelaLabel, isAtrasada && { color: C.ink, fontFamily: fonts.bold }]}>
+                  <Text style={[s.parcelaLabel, isAtrasada && { color: C.red, fontFamily: fonts.bold }]}>
                     {isPaga ? 'Pago em ' : isAtrasada ? 'Venceu em ' : 'Vence em '}
                     {formatData(p.data)}
                   </Text>
@@ -170,7 +170,7 @@ export default function EmprestimoDetalheScreen() {
                     <Text style={s.pagoText}>Pago</Text>
                   </View>
                 ) : (
-                  <TouchableOpacity style={s.payBtn} onPress={() => handlePagar(p.numero)} activeOpacity={0.85}>
+                  <TouchableOpacity style={[s.payBtn, isAtrasada && s.payBtnAtrasado]} onPress={() => handlePagar(p.numero)} activeOpacity={0.85}>
                     <Text style={s.payBtnText}>Pagar</Text>
                   </TouchableOpacity>
                 )}
@@ -237,14 +237,16 @@ const s = StyleSheet.create({
   sectionCount:  { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.regular },
   list: { gap: 10, paddingHorizontal: spacing[4] },
   parcelaCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: radii.card, padding: 14, backgroundColor: C.card },
-  parcelaCardAtrasada: { borderWidth: 1.5, borderColor: C.ink },
-  indexBadge:     { width: 36, height: 36, borderRadius: radii.sm, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
-  indexBadgePaga: { backgroundColor: C.ink },
+  parcelaCardAtrasada:  { borderWidth: 1.5, borderColor: C.red },
+  indexBadge:          { width: 36, height: 36, borderRadius: radii.sm, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
+  indexBadgePaga:      { backgroundColor: C.ink },
+  indexBadgeAtrasada:  { backgroundColor: C.red },
   indexNum:  { fontFamily: fonts.display, fontSize: fontSize.base, color: C.inkSoft },
   parcelaLabel: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 2 },
   parcelaValue: { fontFamily: fonts.display, fontSize: fontSize.xl },
-  payBtn:     { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radii.md, backgroundColor: C.ink },
-  payBtnText: { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
+  payBtn:         { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radii.md, backgroundColor: C.ink },
+  payBtnAtrasado: { backgroundColor: C.red },
+  payBtnText:     { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
   pagoLabel:  { flexDirection: 'row', alignItems: 'center', gap: 5 },
   pagoText:   { fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.inkSoft },
   contratoId: { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', marginTop: 20, marginHorizontal: spacing[5] },
