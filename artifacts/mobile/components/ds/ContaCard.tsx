@@ -24,16 +24,16 @@ export type ContaCardProps = {
   style?: ViewStyle;
 };
 
-const LABELS: Record<ContaCardVariant, { above: string; showPlus?: boolean }> = {
-  deposito:   { above: 'Empréstimo disponível na conta' },
-  rendimento: { above: 'Rendimento creditado na conta', showPlus: true },
-  saldo:      { above: 'Saldo disponível na conta' },
+const CONFIG: Record<ContaCardVariant, { sub: string; showPlus?: boolean; cta: string }> = {
+  deposito:   { sub: 'disponível em conta',  showPlus: true,  cta: 'Ver conta' },
+  rendimento: { sub: 'creditado em conta',   showPlus: true,  cta: 'Ver carteira' },
+  saldo:      { sub: 'disponível em conta',  showPlus: false, cta: 'Ver saldo' },
 };
 
 export function ContaCard({ variant, valor, onPress, style }: ContaCardProps) {
   if (valor <= 0) return null;
 
-  const { above, showPlus } = LABELS[variant];
+  const { sub, showPlus, cta } = CONFIG[variant];
   const formatted = valor.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -43,13 +43,14 @@ export function ContaCard({ variant, valor, onPress, style }: ContaCardProps) {
     <LightCard style={[s.card, style]}>
       <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.7}>
         <View style={s.left}>
-          <Text style={s.label}>{above}</Text>
           <Text style={s.value}>
             {showPlus ? '+' : ''}R$ {formatted}
           </Text>
+          <Text style={s.sub}>{sub}</Text>
         </View>
-        <View style={s.chevronWrap}>
-          <Feather name="chevron-right" size={16} color={C.inkSoft} />
+        <View style={s.ctaWrap}>
+          <Text style={s.ctaText}>{cta}</Text>
+          <Feather name="chevron-right" size={13} color={C.inkSoft} />
         </View>
       </TouchableOpacity>
     </LightCard>
@@ -70,24 +71,26 @@ const s = StyleSheet.create({
     flex: 1,
     gap: 3,
   },
-  label: {
+  value: {
+    fontFamily: fonts.display,
+    fontSize: fontSize['4xl'], // 20px
+    color: C.ink,
+    letterSpacing: -0.3,
+  },
+  sub: {
     fontSize: fontSize['sm+'],
     fontFamily: fonts.regular,
     color: C.inkFaint,
   },
-  value: {
-    fontFamily: fonts.display,
-    fontSize: fontSize['4xl'], // 20px — readable but not dominant
-    color: C.ink,
-    letterSpacing: -0.3,
-  },
-  chevronWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: radii.full,
-    backgroundColor: C.bg,
+  ctaWrap: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 2,
     marginLeft: 12,
+  },
+  ctaText: {
+    fontSize: fontSize['sm+'],
+    fontFamily: fonts.semibold,
+    color: C.inkSoft,
   },
 });
