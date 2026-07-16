@@ -12,7 +12,7 @@ import {
 import { useFocusEffect, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useArea } from '@/contexts/AreaContext';
-import { formatBRL, addDays } from '@/data/loans';
+import { formatBRL, addDays, formatRelativeDueDate } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   DarkCard, LightCard, ListCard,
@@ -27,9 +27,6 @@ import {
 
 const W = Dimensions.get('window').width;
 
-function formatDataBrief(date: Date) {
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
-}
 
 const CICLO_DIAS: Record<string, number> = { diario: 1, semanal: 7, mensal: 30 };
 
@@ -181,7 +178,7 @@ export default function HomeScreen() {
               const isVencida   = p.estado === 'vencida';
               const isProxima   = p.estado === 'proxima';
               const accentColor = isVencida ? C.red : isProxima ? C.amber : C.inkFaint;
-              const stateLabel  = isVencida ? 'Vencida' : isProxima ? 'Vence em breve' : `Vence ${formatDataBrief(p.data)}`;
+              const stateLabel  = formatRelativeDueDate(p.data);
               const btnBg       = isVencida ? C.red : C.ink;
               const isLast      = idx === proximasParcelas.length - 1;
               return (

@@ -113,6 +113,31 @@ export function formatDataShort(date: Date): string {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+/**
+ * Formata a data de vencimento de uma parcela de forma relativa ao dia atual.
+ * Usado na tela inicial onde o contexto já é claro (lista de vencimentos).
+ *
+ * Exemplos:
+ *   "Venceu hoje"      diff = 0, passado
+ *   "Venceu ontem"     diff = -1
+ *   "Venceu há 3 dias" diff = -3
+ *   "Vence hoje"       diff = 0, futuro (mesmo dia)
+ *   "Vence amanhã"     diff = 1
+ *   "Vence em 5 dias"  diff = 5
+ */
+export function formatRelativeDueDate(data: Date): string {
+  const hoje = new Date();
+  const dataZero = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+  const hojeZero = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const diffDias = Math.round((dataZero.getTime() - hojeZero.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDias === 0) return 'Vence hoje';
+  if (diffDias === 1) return 'Vence amanhã';
+  if (diffDias > 1)   return `Vence em ${diffDias} dias`;
+  if (diffDias === -1) return 'Venceu ontem';
+  return `Venceu há ${Math.abs(diffDias)} dias`;
+}
+
 export function formatDataHora(date: Date): string {
   return `${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} · ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
 }
