@@ -59,6 +59,14 @@ export default function EmprestimoDetalheScreen() {
     return { numero, data, status: pStatus };
   });
 
+  const parcelasAtrasadas = parcelas.filter(p => p.status === 'atrasada');
+  const maisAntiga = parcelasAtrasadas.length > 0
+    ? parcelasAtrasadas.reduce((ant, p) => p.data < ant.data ? p : ant)
+    : null;
+  const diasEmAtraso = maisAntiga
+    ? Math.round((hoje.getTime() - maisAntiga.data.getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+
   const handlePagar = (numero: number) => {
     if (numero === pagas + 1) setPagas(pagas + 1);
   };
@@ -74,6 +82,24 @@ export default function EmprestimoDetalheScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
+        {/* Alerta de atraso */}
+        {parcelasAtrasadas.length > 0 && maisAntiga && (
+          <View style={s.alertBanner}>
+            <Feather name="alert-triangle" size={16} color={C.red} style={{ marginTop: 1 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={s.alertTitle}>
+                {parcelasAtrasadas.length === 1
+                  ? '1 parcela em atraso'
+                  : `${parcelasAtrasadas.length} parcelas em atraso`}
+              </Text>
+              <Text style={s.alertSub}>
+                {parcelasAtrasadas.length === 1 ? 'Venceu' : 'A mais antiga venceu'} em {formatData(maisAntiga.data)}
+                {' · '}há {diasEmAtraso} {diasEmAtraso === 1 ? 'dia' : 'dias'}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Hero dark card */}
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
@@ -226,6 +252,10 @@ const s = StyleSheet.create({
   heroEyebrow: { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.onDarkSoft, marginBottom: 10 },
   heroValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: '#fff', letterSpacing: -1, lineHeight: 44, marginBottom: 6 },
   heroSub:   { fontSize: fontSize.base, color: C.onDarkSoft, fontFamily: fonts.regular, marginBottom: 20 },
+  // Alerta de atraso
+  alertBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: 2, padding: 14, borderRadius: radii.lg, backgroundColor: C.redBg, borderWidth: 1, borderColor: 'rgba(192,57,43,0.18)' },
+  alertTitle:  { fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.red, marginBottom: 3 },
+  alertSub:    { fontSize: fontSize.sm, fontFamily: fonts.regular, color: C.red },
   // Dates
   datesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginHorizontal: spacing[4], marginBottom: 14, padding: 14, borderRadius: radii['2xl'], backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
