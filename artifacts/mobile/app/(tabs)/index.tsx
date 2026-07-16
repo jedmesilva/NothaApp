@@ -10,105 +10,75 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useArea } from '@/contexts/AreaContext';
-
-const C = {
-  bg: '#F4F5F7',
-  card: '#FFFFFF',
-  dark: '#15151D',
-  darkSoft: '#26262F',
-  ink: '#15151D',
-  inkSoft: '#6C707A',
-  inkFaint: '#A2A6AF',
-  line: '#EBEBF0',
-  chipUrgent: '#ECECEF',
-  red: '#C0392B',
-  redBg: '#FBEAE8',
-  amber: '#A6690A',
-  amberBg: '#FCF1DC',
-};
+import { formatBRL, addDays } from '@/data/loans';
+import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import {
+  DarkCard, LightCard, ListCard,
+  PrimaryButton, DarkButton, ActionRow,
+  ThinBar, PoolBar,
+  SplitRow,
+  DetailGrid,
+  Eyebrow, BigValue, SectionTitle,
+} from '@/components/ds';
 
 const W = Dimensions.get('window').width;
 
-function formatBRL(value: number) {
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
-
-function addDays(date: Date, days: number): Date {
-  const r = new Date(date);
-  r.setDate(r.getDate() + days);
-  return r;
-}
-
-function formatData(date: Date) {
+function formatDataBrief(date: Date) {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
 }
 
 const CICLO_DIAS: Record<string, number> = { diario: 1, semanal: 7, mensal: 30 };
 
 const emprestimosAtivos = [
-  { id: 1, valor: 8500, taxaJurosTotal: 20, prazoDias: 60, ciclo: 'mensal', parcelasTotal: 2, parcelasPagas: 0, diasDesdeConcessao: 36, status: 'atrasado' },
-  { id: 2, valor: 3200, taxaJurosTotal: 12, prazoDias: 90, ciclo: 'semanal', parcelasTotal: 13, parcelasPagas: 6, diasDesdeConcessao: 42, status: 'ativo' },
-];
-
-const extrato = [
-  { id: 1, desc: 'Depósito via Pix', data: '10 de julho', valor: 500, tipo: 'entrada' },
-  { id: 2, desc: 'Pagamento de parcela', data: '05 de julho', valor: -331, tipo: 'saida' },
-  { id: 3, desc: 'Saque', data: '28 de junho', valor: -300, tipo: 'saida' },
-  { id: 4, desc: 'Empréstimo liberado', data: '20 de junho', valor: 3200, tipo: 'entrada' },
+  { id: 1, valor: 8500,  taxaJurosTotal: 20, prazoDias: 60, ciclo: 'mensal',  parcelasTotal: 2,  parcelasPagas: 0, diasDesdeConcessao: 36, status: 'atrasado' },
+  { id: 2, valor: 3200,  taxaJurosTotal: 12, prazoDias: 90, ciclo: 'semanal', parcelasTotal: 13, parcelasPagas: 6, diasDesdeConcessao: 42, status: 'ativo' },
 ];
 
 const ofertas = [
-  { id: 3, valorTotalPedido: 5000, taxaJurosTotal: 18, prazoDias: 45, ciclo: 'semanal', jaCaptado: 3100, valorOferta: 900, numCredores: 14, risco: 'Médio', tomadorScore: 'B' },
-  { id: 6, valorTotalPedido: 12000, taxaJurosTotal: 22, prazoDias: 90, ciclo: 'mensal', jaCaptado: 4200, valorOferta: 2000, numCredores: 8, risco: 'Alto', tomadorScore: 'C' },
-  { id: 7, valorTotalPedido: 2500, taxaJurosTotal: 10, prazoDias: 15, ciclo: 'diario', jaCaptado: 2100, valorOferta: 300, numCredores: 22, risco: 'Baixo', tomadorScore: 'A' },
+  { id: 3, valorTotalPedido: 5000,  taxaJurosTotal: 18, prazoDias: 45, ciclo: 'semanal', jaCaptado: 3100, valorOferta: 900,  numCredores: 14, risco: 'Médio', tomadorScore: 'B' },
+  { id: 6, valorTotalPedido: 12000, taxaJurosTotal: 22, prazoDias: 90, ciclo: 'mensal',  jaCaptado: 4200, valorOferta: 2000, numCredores: 8,  risco: 'Alto',  tomadorScore: 'C' },
+  { id: 7, valorTotalPedido: 2500,  taxaJurosTotal: 10, prazoDias: 15, ciclo: 'diario',  jaCaptado: 2100, valorOferta: 300,  numCredores: 22, risco: 'Baixo', tomadorScore: 'A' },
 ];
 
 export default function HomeScreen() {
   const { area, setArea } = useArea();
-  const [activeTab, setActiveTab] = useState<'credito' | 'investir'>(area);
-  const scrollRef = useRef<ScrollView>(null);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isFocusedRef = useRef(false);
+  const [activeTab, setActiveTab]                 = useState<'credito' | 'investir'>(area);
+  const scrollRef                                 = useRef<ScrollView>(null);
+  const scrollTimeoutRef                          = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFocusedRef                              = useRef(false);
+  const bottomPad                                 = 100;
 
-  const bottomPad = 100;
-
-  // When returning to this screen from another tab, scroll to correct page
   useFocusEffect(
     useCallback(() => {
       isFocusedRef.current = true;
-      const targetX = area === 'investir' ? W : 0;
       setActiveTab(area);
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({ x: targetX, animated: false });
-      }, 50);
+      setTimeout(() => scrollRef.current?.scrollTo({ x: area === 'investir' ? W : 0, animated: false }), 50);
       return () => { isFocusedRef.current = false; };
     }, [area])
   );
 
-  // When area changes via GlobalHeader while already on this screen
   useEffect(() => {
     if (!isFocusedRef.current) return;
     setActiveTab(area);
     scrollRef.current?.scrollTo({ x: area === 'investir' ? W : 0, animated: true });
   }, [area]);
 
-  const limiteTotal = 10000;
+  const limiteTotal     = 10000;
   const limiteDisponivel = 1500;
-  const limiteUsado = limiteTotal - limiteDisponivel;
-  const percentUsado = Math.round((limiteUsado / limiteTotal) * 100);
-  const saldoConta = 8500;
-
-  const hoje = new Date();
+  const limiteUsado     = limiteTotal - limiteDisponivel;
+  const percentUsado    = Math.round((limiteUsado / limiteTotal) * 100);
+  const saldoConta      = 8500;
+  const hoje            = new Date();
 
   const proximasParcelas = emprestimosAtivos.map((loan) => {
-    const cicloDias = CICLO_DIAS[loan.ciclo];
-    const totalAPagar = loan.valor * (1 + loan.taxaJurosTotal / 100);
+    const cicloDias    = CICLO_DIAS[loan.ciclo];
+    const totalAPagar  = loan.valor * (1 + loan.taxaJurosTotal / 100);
     const valorParcela = totalAPagar / loan.parcelasTotal;
     const saldoDevedor = (loan.parcelasTotal - loan.parcelasPagas) * valorParcela;
     const dataConcessao = addDays(hoje, -loan.diasDesdeConcessao);
-    const dataProxima = addDays(dataConcessao, (loan.parcelasPagas + 1) * cicloDias);
+    const dataProxima  = addDays(dataConcessao, (loan.parcelasPagas + 1) * cicloDias);
     const diasParaVencer = Math.round((dataProxima.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     const estado = diasParaVencer < 0 ? 'vencida' : diasParaVencer <= 5 ? 'proxima' : 'futura';
     return { loanId: loan.id, loanValor: loan.valor, valorParcela, saldoDevedor, parcelasRestantes: loan.parcelasTotal - loan.parcelasPagas, data: dataProxima, estado };
@@ -119,14 +89,8 @@ export default function HomeScreen() {
     parcelasRestantes: proximasParcelas.reduce((s, p) => s + p.parcelasRestantes, 0),
   };
 
-  const hour = hoje.getHours();
+  const hour     = hoje.getHours();
   const saudacao = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
-
-  const goToTab = (tab: 'credito' | 'investir') => {
-    setActiveTab(tab);
-    setArea(tab);
-    scrollRef.current?.scrollTo({ x: tab === 'credito' ? 0 : W, animated: true });
-  };
 
   const handleSwipeScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
@@ -139,76 +103,65 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.screen}>
-      {/* Swipeable pages */}
+    <View style={s.screen}>
       <ScrollView
         ref={scrollRef}
-        horizontal
-        pagingEnabled
+        horizontal pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleSwipeScroll}
         scrollEventThrottle={16}
         style={{ flex: 1 }}
         contentContainerStyle={{ width: W * 2 }}
       >
-        {/* Page 1 — Crédito */}
+        {/* ── Page 1: Crédito ───────────────────────────────────────── */}
         <ScrollView style={{ width: W }} contentContainerStyle={{ paddingBottom: bottomPad }} showsVerticalScrollIndicator={false}>
-          <Text style={styles.greeting}>{saudacao}, <Text style={styles.greetingName}>Rafael</Text></Text>
+          <Text style={s.greeting}>
+            {saudacao}, <Text style={s.greetingName}>Rafael</Text>
+          </Text>
 
-          {/* Limit card */}
-          <View style={styles.primaryCard}>
-            <Text style={styles.eyebrow}>Limite disponível</Text>
-            <Text style={styles.bigValue}>R$ {formatBRL(limiteDisponivel)}</Text>
-            <Text style={styles.totalText}>de R$ {formatBRL(limiteTotal)}</Text>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${percentUsado}%` as any }]} />
+          {/* Credit limit card */}
+          <DarkCard>
+            <Eyebrow context="dark">Limite disponível</Eyebrow>
+            <BigValue context="dark">R$ {formatBRL(limiteDisponivel)}</BigValue>
+            <Text style={s.totalText}>de R$ {formatBRL(limiteTotal)}</Text>
+            <ThinBar pct={percentUsado} context="dark" style={{ marginBottom: 0 }} />
+            <View style={s.progressCaption}>
+              <Text style={s.progressCaptionText}>R$ {formatBRL(limiteUsado)} utilizados</Text>
+              <Text style={s.progressCaptionText}>{percentUsado}%</Text>
             </View>
-            <View style={styles.progressCaption}>
-              <Text style={styles.progressCaptionText}>R$ {formatBRL(limiteUsado)} utilizados</Text>
-              <Text style={styles.progressCaptionText}>{percentUsado}%</Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.primaryBtn, limiteDisponivel <= 0 && styles.primaryBtnDisabled]}
+            <PrimaryButton
+              label={limiteDisponivel > 0 ? 'Solicitar empréstimo' : 'Limite esgotado'}
               disabled={limiteDisponivel <= 0}
-              activeOpacity={0.85}
-            >
-              <Text style={[styles.primaryBtnText, limiteDisponivel <= 0 && styles.primaryBtnTextDisabled]}>
-                {limiteDisponivel > 0 ? 'Solicitar empréstimo' : 'Limite esgotado'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+            />
+          </DarkCard>
 
           {/* Balance card */}
-          <View style={styles.secondaryCard}>
-            <Text style={styles.eyebrowLight}>Saldo em conta</Text>
-            <Text style={styles.secondaryValue}>R$ {formatBRL(saldoConta)}</Text>
-            <Text style={styles.helperText}>Disponível para usar</Text>
-            <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.actionBtn} activeOpacity={0.8}>
-                <Feather name="arrow-down" size={17} color={C.ink} />
-                <Text style={styles.actionBtnText}>Sacar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionBtn} activeOpacity={0.8}>
-                <Feather name="plus" size={17} color={C.ink} />
-                <Text style={styles.actionBtnText}>Depositar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <LightCard>
+            <Eyebrow context="light">Saldo em conta</Eyebrow>
+            <Text style={s.secondaryValue}>R$ {formatBRL(saldoConta)}</Text>
+            <Text style={s.helperText}>Disponível para usar</Text>
+            <ActionRow
+              left={{ icon: 'arrow-down', label: 'Sacar',     context: 'light' }}
+              right={{ icon: 'plus',      label: 'Depositar',  context: 'light' }}
+            />
+          </LightCard>
 
           {/* Vencimentos card */}
-          <View style={[styles.secondaryCard, { marginTop: 14 }]}>
-            <Text style={styles.sectionTitle}>Vencimentos</Text>
-            <Text style={styles.vencSummary}>R$ {formatBRL(Math.round(divida.totalEmAberto))} em aberto · {divida.parcelasRestantes} parcelas</Text>
+          <LightCard style={{ marginTop: 14 }}>
+            <SectionTitle style={{ marginBottom: 4 }}>Vencimentos</SectionTitle>
+            <Text style={s.vencSummary}>
+              R$ {formatBRL(Math.round(divida.totalEmAberto))} em aberto · {divida.parcelasRestantes} parcelas
+            </Text>
 
-            <View style={styles.statsRow}>
-              <View style={styles.statBlock}>
-                <Text style={styles.statLabel}>Em atraso</Text>
-                <Text style={styles.statValue}>{proximasParcelas.filter(p => p.estado === 'vencida').length}</Text>
+            <View style={s.statsRow}>
+              <View style={s.statBlock}>
+                <Text style={s.statLabel}>Em atraso</Text>
+                <Text style={s.statValue}>{proximasParcelas.filter((p) => p.estado === 'vencida').length}</Text>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBlock}>
-                <Text style={styles.statLabel}>Próximas (5 dias)</Text>
-                <Text style={styles.statValue}>{proximasParcelas.filter(p => p.estado === 'proxima').length}</Text>
+              <View style={s.statDivider} />
+              <View style={s.statBlock}>
+                <Text style={s.statLabel}>Próximas (5 dias)</Text>
+                <Text style={s.statValue}>{proximasParcelas.filter((p) => p.estado === 'proxima').length}</Text>
               </View>
             </View>
 
@@ -219,194 +172,129 @@ export default function HomeScreen() {
                 <View
                   key={p.loanId}
                   style={[
-                    styles.parcelaRow,
-                    isVencida && styles.parcelaRowVencida,
-                    isProxima && styles.parcelaRowProxima,
-                    !isVencida && !isProxima && styles.parcelaRowFutura,
+                    s.parcelaRow,
+                    isVencida && s.parcelaRowVencida,
+                    isProxima && s.parcelaRowProxima,
+                    !isVencida && !isProxima && s.parcelaRowFutura,
                   ]}
                 >
-                  <View style={styles.installIcon}>
+                  <View style={s.installIcon}>
                     <Feather name="calendar" size={16} color={isVencida ? C.red : isProxima ? C.amber : C.inkSoft} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.installLoanTag}>Empréstimo #{p.loanId}</Text>
-                    <Text style={[styles.installLabel, isVencida && { color: C.red, fontFamily: 'Inter_700Bold' }, isProxima && { color: C.amber, fontFamily: 'Inter_700Bold' }]}>
-                      {isVencida ? 'Vencida' : isProxima ? 'Vence em breve' : `Vence ${formatData(p.data)}`}
+                    <Text style={s.installLoanTag}>Empréstimo #{p.loanId}</Text>
+                    <Text style={[s.installLabel, isVencida && { color: C.red, fontFamily: fonts.bold }, isProxima && { color: C.amber, fontFamily: fonts.bold }]}>
+                      {isVencida ? 'Vencida' : isProxima ? 'Vence em breve' : `Vence ${formatDataBrief(p.data)}`}
                     </Text>
-                    <Text style={styles.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
+                    <Text style={s.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
                   </View>
-                  <TouchableOpacity style={styles.payBtn} activeOpacity={0.8} onPress={() => router.push('/emprestimos' as any)}>
-                    <Text style={styles.payBtnText}>Pagar</Text>
+                  <TouchableOpacity style={s.payBtn} activeOpacity={0.8} onPress={() => router.push('/emprestimos' as any)}>
+                    <Text style={s.payBtnText}>Pagar</Text>
                   </TouchableOpacity>
                 </View>
               );
             })}
 
-            <TouchableOpacity style={styles.seeAllLink} onPress={() => router.push('/emprestimos' as any)} activeOpacity={0.7}>
-              <Text style={styles.seeAllText}>Ver todos os empréstimos</Text>
+            <TouchableOpacity style={s.seeAllLink} onPress={() => router.push('/emprestimos' as any)} activeOpacity={0.7}>
+              <Text style={s.seeAllText}>Ver todos os empréstimos</Text>
               <Feather name="chevron-right" size={13} color={C.inkSoft} />
             </TouchableOpacity>
-          </View>
+          </LightCard>
         </ScrollView>
 
-        {/* Page 2 — Investir */}
+        {/* ── Page 2: Investir ──────────────────────────────────────── */}
         <ScrollView style={{ width: W }} contentContainerStyle={{ paddingBottom: bottomPad }} showsVerticalScrollIndicator={false}>
-          <View style={styles.ofertasHeader}>
-            <Text style={styles.ofertasTitle}>Oportunidades</Text>
-            <Text style={styles.ofertasSubtitle}>Empréstimos disponíveis para você investir</Text>
+          <View style={s.ofertasHeader}>
+            <Text style={s.ofertasTitle}>Oportunidades</Text>
+            <Text style={s.ofertasSubtitle}>Empréstimos disponíveis para você investir</Text>
           </View>
 
-          <View style={styles.saldoChip}>
-            <Text style={styles.saldoChipText}>Saldo disponível · R$ {formatBRL(saldoConta)}</Text>
+          <View style={s.saldoChip}>
+            <Text style={s.saldoChipText}>Saldo disponível · R$ {formatBRL(saldoConta)}</Text>
           </View>
 
           {ofertas.map((o) => {
             const percentCaptado = Math.round((o.jaCaptado / o.valorTotalPedido) * 100);
             const restante = o.valorTotalPedido - o.jaCaptado;
             return (
-              <View key={o.id} style={styles.ofertaCard}>
-                <Text style={styles.ofertaEyebrow}>RETORNO ESTIMADO</Text>
-                <Text style={styles.ofertaRetorno}><Text style={styles.ofertaRetornoSign}>+</Text>{o.taxaJurosTotal}%</Text>
-                <Text style={styles.ofertaCaption}>em {o.prazoDias} dias · ciclo {o.ciclo}</Text>
+              <ListCard key={o.id}>
+                <Text style={s.ofertaEyebrow}>RETORNO ESTIMADO</Text>
+                <Text style={s.ofertaRetorno}>
+                  <Text style={s.ofertaRetornoSign}>+</Text>{o.taxaJurosTotal}%
+                </Text>
+                <Text style={s.ofertaCaption}>em {o.prazoDias} dias · ciclo {o.ciclo}</Text>
 
-                <View style={styles.ofertaSplitRow}>
-                  <View>
-                    <Text style={styles.ofertaSplitLabel}>VALOR PEDIDO</Text>
-                    <Text style={styles.ofertaSplitValue}>R$ {formatBRL(o.valorTotalPedido)}</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.ofertaSplitLabel}>DISPONÍVEL</Text>
-                    <Text style={styles.ofertaSplitValue}>R$ {formatBRL(restante)}</Text>
-                  </View>
-                </View>
+                <SplitRow
+                  left={{ label: 'VALOR PEDIDO', value: `R$ ${formatBRL(o.valorTotalPedido)}` }}
+                  right={{ label: 'DISPONÍVEL',  value: `R$ ${formatBRL(restante)}` }}
+                />
 
-                {/* Progress */}
-                <View style={styles.poolTopRow}>
-                  <Text style={styles.poolLabel}>CAPTAÇÃO</Text>
-                  <Text style={styles.poolValue}>R$ {formatBRL(o.jaCaptado)} de R$ {formatBRL(o.valorTotalPedido)}</Text>
-                </View>
-                <View style={styles.poolTrack}>
-                  <View style={[styles.poolFill, { width: `${percentCaptado}%` as any }]} />
-                </View>
+                <PoolBar
+                  label="CAPTAÇÃO"
+                  headLeft={`R$ ${formatBRL(o.jaCaptado)} de R$ ${formatBRL(o.valorTotalPedido)}`}
+                  headRight={undefined}
+                  segments={[{ pct: percentCaptado, variant: 'primary' }]}
+                  style={{ marginBottom: 18 }}
+                />
 
-                <View style={styles.ofertaGrid}>
-                  <View>
-                    <Text style={styles.detailLabel}>RISCO</Text>
-                    <Text style={styles.detailValue}>{o.risco}</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.detailLabel}>SCORE TOMADOR</Text>
-                    <Text style={styles.detailValue}>{o.tomadorScore}</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.detailLabel}>CREDORES</Text>
-                    <Text style={styles.detailValue}>{o.numCredores}</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.detailLabel}>SUA OFERTA</Text>
-                    <Text style={styles.detailValue}>R$ {formatBRL(o.valorOferta)}</Text>
-                  </View>
-                </View>
+                <DetailGrid
+                  items={[
+                    { label: 'RISCO',        value: o.risco },
+                    { label: 'SCORE TOMADOR', value: o.tomadorScore },
+                    { label: 'CREDORES',      value: String(o.numCredores) },
+                    { label: 'SUA OFERTA',    value: `R$ ${formatBRL(o.valorOferta)}` },
+                  ]}
+                />
 
-                <TouchableOpacity style={styles.ofertaBtn} activeOpacity={0.85}>
-                  <Feather name="arrow-up-right" size={16} color="#fff" />
-                  <Text style={styles.ofertaBtnText}>Investir nessa oferta</Text>
-                </TouchableOpacity>
-              </View>
+                <DarkButton
+                  label="Investir nessa oferta"
+                  icon="arrow-up-right"
+                  style={{ marginTop: 18 }}
+                />
+              </ListCard>
             );
           })}
         </ScrollView>
       </ScrollView>
-
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 8 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.dark, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#fff', fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16 },
-  tabWrap: { flex: 1, flexDirection: 'row', backgroundColor: C.card, borderRadius: 999, padding: 4, marginHorizontal: 14, maxWidth: 240 },
-  tabBtn: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 999 },
-  tabBtnActive: { backgroundColor: C.dark },
-  tabLabel: { fontSize: 13.5, fontFamily: 'Inter_600SemiBold' },
-  bellWrap: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  notifDot: { position: 'absolute', top: 8, right: 9, width: 7, height: 7, borderRadius: 4, backgroundColor: C.ink, borderWidth: 1.5, borderColor: C.card },
-  greeting: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 18, fontSize: 15, color: C.inkSoft, fontFamily: 'Inter_400Regular' },
-  greetingName: { color: C.ink, fontFamily: 'Inter_700Bold' },
-  primaryCard: { borderRadius: 28, marginHorizontal: 16, marginBottom: 14, padding: 24, backgroundColor: C.dark },
-  eyebrow: { fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3, color: 'rgba(255,255,255,0.55)', marginBottom: 10 },
-  bigValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 42, color: '#fff', letterSpacing: -1, lineHeight: 48 },
-  totalText: { fontSize: 14, color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter_500Medium', marginBottom: 16, marginTop: 6 },
-  progressTrack: { width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 999, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: '#fff', borderRadius: 999 },
-  progressCaption: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9, marginBottom: 22 },
-  progressCaptionText: { fontSize: 12.5, color: 'rgba(255,255,255,0.45)', fontFamily: 'Inter_400Regular' },
-  primaryBtn: { width: '100%', paddingVertical: 17, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center' },
-  primaryBtnDisabled: { backgroundColor: 'rgba(255,255,255,0.1)' },
-  primaryBtnText: { fontSize: 15.5, fontFamily: 'Inter_700Bold', color: C.dark, letterSpacing: 0.1 },
-  primaryBtnTextDisabled: { color: 'rgba(255,255,255,0.35)' },
-  secondaryCard: { borderRadius: 24, marginHorizontal: 16, padding: 22, backgroundColor: C.card },
-  eyebrowLight: { fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3, color: C.inkFaint, marginBottom: 10 },
-  secondaryValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 32, color: C.ink, letterSpacing: -0.5, marginTop: 2 },
-  helperText: { fontSize: 13.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginTop: 4, marginBottom: 18 },
-  actionRow: { flexDirection: 'row', gap: 10 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 14, backgroundColor: C.bg },
-  actionBtnText: { fontSize: 14.5, fontFamily: 'Inter_600SemiBold', color: C.ink },
-  actionBtnDark: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.12)' },
-  actionBtnDarkText: { fontSize: 14.5, fontFamily: 'Inter_600SemiBold', color: '#fff' },
-  sectionTitle: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 15, color: C.ink, marginBottom: 4 },
-  vencSummary: { fontSize: 13.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginBottom: 16 },
-  statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
-  statBlock: { flex: 1 },
+  greeting:     { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: 18, fontSize: fontSize.lg, color: C.inkSoft, fontFamily: fonts.regular },
+  greetingName: { color: C.ink, fontFamily: fonts.bold },
+  totalText:    { fontSize: fontSize.md, color: C.onDarkMid, fontFamily: fonts.medium, marginBottom: 16, marginTop: 6 },
+  progressCaption:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9, marginBottom: 22 },
+  progressCaptionText: { fontSize: fontSize['sm+'], color: C.onDarkFaint, fontFamily: fonts.regular },
+  secondaryValue: { fontFamily: fonts.display, fontSize: 32, color: C.ink, letterSpacing: -0.5, marginTop: 2 },
+  helperText:     { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 4, marginBottom: 18 },
+  vencSummary:    { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 16 },
+  statsRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
+  statBlock:   { flex: 1 },
   statDivider: { width: 1, height: 34, backgroundColor: C.line, marginHorizontal: 18 },
-  statLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', marginBottom: 4 },
-  statValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 21, color: C.ink, letterSpacing: -0.3 },
-  parcelaRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 16, marginBottom: 10 },
+  statLabel:   { fontSize: fontSize['2xs'], color: C.inkFaint, fontFamily: fonts.semibold, marginBottom: 4 },
+  statValue:   { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, letterSpacing: -0.3 },
+  parcelaRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: spacing[4], marginBottom: 10 },
   parcelaRowVencida: { backgroundColor: C.redBg, borderWidth: 1.5, borderColor: C.red },
   parcelaRowProxima: { backgroundColor: C.amberBg },
-  parcelaRowFutura: { backgroundColor: C.bg },
-  installIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  installLoanTag: { fontSize: 11, fontFamily: 'Inter_700Bold', color: C.inkFaint, textTransform: 'uppercase', letterSpacing: 0.2, marginBottom: 3 },
-  installLabel: { fontSize: 12.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginBottom: 2 },
-  installValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 17, color: C.ink },
-  payBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: C.ink },
-  payBtnText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#fff' },
+  parcelaRowFutura:  { backgroundColor: C.bg },
+  installIcon: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  installLoanTag: { fontSize: fontSize['2xs'], fontFamily: fonts.bold, color: C.inkFaint, textTransform: 'uppercase', letterSpacing: 0.2, marginBottom: 3 },
+  installLabel:   { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 2 },
+  installValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink },
+  payBtn:     { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radii.md, backgroundColor: C.ink },
+  payBtnText: { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
   seeAllLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, paddingTop: 4, paddingBottom: 4 },
-  seeAllText: { fontSize: 12.5, fontFamily: 'Inter_600SemiBold', color: C.inkSoft },
-  // Investir
-  ofertasHeader: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 },
-  ofertasTitle: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 22, color: C.ink, letterSpacing: -0.3, marginBottom: 4 },
-  ofertasSubtitle: { fontSize: 13.5, color: C.inkSoft, fontFamily: 'Inter_400Regular' },
-  saldoChip: { marginHorizontal: 20, marginTop: 14, marginBottom: 4, padding: 10, borderRadius: 12, backgroundColor: C.chipUrgent },
-  saldoChipText: { fontSize: 12.5, color: C.inkSoft, fontFamily: 'Inter_600SemiBold' },
-  ofertaCard: { borderRadius: 22, marginHorizontal: 16, marginTop: 14, padding: 20, backgroundColor: C.card },
-  ofertaEyebrow: { fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3, color: C.inkFaint, marginBottom: 6 },
-  ofertaRetorno: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 44, color: C.ink, letterSpacing: -1.1, lineHeight: 48, marginBottom: 8 },
-  ofertaRetornoSign: { fontSize: 24, fontFamily: 'SpaceGrotesk_700Bold' },
-  ofertaCaption: { fontSize: 13.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginBottom: 18 },
-  ofertaSplitRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
-  ofertaSplitLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 4 },
-  ofertaSplitValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 21, color: C.ink, letterSpacing: -0.3 },
-  poolTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  poolLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', textTransform: 'uppercase', letterSpacing: 0.2 },
-  poolValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 13, color: C.inkSoft },
-  poolTrack: { height: 14, borderRadius: 999, backgroundColor: C.line, overflow: 'hidden', marginBottom: 18 },
-  poolFill: { height: '100%', backgroundColor: C.ink },
-  ofertaGrid: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, marginBottom: 18, rowGap: 16, columnGap: 12 },
-  detailLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
-  detailValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16, color: C.ink },
-  ofertaBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 17, borderRadius: 16, backgroundColor: C.dark },
-  ofertaBtnText: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#fff' },
-  // Conta
-  contaScreen: { flex: 1, backgroundColor: C.bg },
-  contaHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 4 },
-  backBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  contaTitle: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 18, color: C.ink, letterSpacing: -0.2 },
-  extratoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 14, marginBottom: 14, borderBottomWidth: 1, borderBottomColor: C.line },
-  extratoIcon: { width: 36, height: 36, borderRadius: 11, backgroundColor: C.chipUrgent, alignItems: 'center', justifyContent: 'center' },
-  extratoDesc: { fontSize: 13.5, fontFamily: 'Inter_600SemiBold', color: C.ink, marginBottom: 2 },
-  extratoData: { fontSize: 12, color: C.inkFaint, fontFamily: 'Inter_400Regular' },
-  extratoValor: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 14.5 },
+  seeAllText: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
+  // Investir page
+  ofertasHeader:   { paddingHorizontal: spacing[5], paddingTop: spacing[5], paddingBottom: 6 },
+  ofertasTitle:    { fontFamily: fonts.display, fontSize: 22, color: C.ink, letterSpacing: -0.3, marginBottom: 4 },
+  ofertasSubtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular },
+  saldoChip:     { marginHorizontal: spacing[5], marginTop: 14, marginBottom: 4, padding: 10, borderRadius: radii.md, backgroundColor: C.chipUrgent },
+  saldoChipText: { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.semibold },
+  ofertaEyebrow:     { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint, marginBottom: 6 },
+  ofertaRetorno:     { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 48, marginBottom: 8 },
+  ofertaRetornoSign: { fontSize: 24, fontFamily: fonts.display },
+  ofertaCaption:     { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 18 },
 });

@@ -6,88 +6,41 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Modal,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-
-const C = {
-  bg: '#F4F5F7',
-  card: '#FFFFFF',
-  dark: '#15151D',
-  ink: '#15151D',
-  inkSoft: '#6C707A',
-  inkFaint: '#A2A6AF',
-  line: '#EBEBF0',
-  chipBg: '#F4F5F7',
-  overlay: 'rgba(21,21,29,0.44)',
-  red: '#C0392B',
-  redBg: '#FBEAE8',
-};
-
-function formatBRL(v: number) {
-  return v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
-
-const STATUS_META: Record<string, { label: string; icon: string; bg: string; color: string; borderColor?: string; borderStyle?: string }> = {
-  captacao: { label: 'Em captação', icon: 'clock', bg: C.chipBg, color: C.inkSoft },
-  ativo: { label: 'Ativo', icon: 'zap', bg: C.dark, color: '#fff' },
-  atrasado: { label: 'Atrasado', icon: 'alert-triangle', bg: C.redBg, color: C.red },
-  quitado: { label: 'Quitado', icon: 'check-circle', bg: 'transparent', color: C.inkFaint },
-};
+import { formatBRL } from '@/data/loans';
+import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { BackButton, StatusBadge, PoolBar, DetailGrid, SplitRow, Chip, ModalSheet } from '@/components/ds';
+import type { LoanStatus } from '@/components/ds';
 
 const CICLO_META: Record<string, { parcelasLabel: string }> = {
-  diario: { parcelasLabel: 'diárias' },
+  diario:  { parcelasLabel: 'diárias' },
   semanal: { parcelasLabel: 'semanais' },
-  mensal: { parcelasLabel: 'mensais' },
+  mensal:  { parcelasLabel: 'mensais' },
 };
 
 const posicoes = [
-  {
-    id: 1, contratoId: 'EMP-2026-30291', valorInvestido: 900, taxaJurosTotal: 18,
-    prazoDias: 45, ciclo: 'semanal', status: 'captacao',
-    jaCaptado: 3100, valorTotalPedido: 5000, numCredores: 14,
-    risco: 'Médio', tomadorScore: 'B', emprestimosAnteriores: 3, valorTotalTomado: 12400,
-    parcelasTotal: 0, parcelasRecebidas: 0,
-  },
-  {
-    id: 2, contratoId: 'EMP-2026-90214', valorInvestido: 2000, taxaJurosTotal: 22,
-    prazoDias: 90, ciclo: 'mensal', status: 'ativo',
-    jaCaptado: 0, valorTotalPedido: 0, numCredores: 0,
-    parcelasTotal: 3, parcelasRecebidas: 1, proximaData: '4 de agosto',
-    risco: 'Alto', tomadorScore: 'C', emprestimosAnteriores: 1, valorTotalTomado: 3000,
-  },
-  {
-    id: 3, contratoId: 'EMP-2026-11875', valorInvestido: 1200, taxaJurosTotal: 15,
-    prazoDias: 30, ciclo: 'mensal', status: 'atrasado',
-    jaCaptado: 0, valorTotalPedido: 0, numCredores: 0,
-    parcelasTotal: 1, parcelasRecebidas: 0, diasAtraso: 5,
-    risco: 'Médio', tomadorScore: 'B', emprestimosAnteriores: 2, valorTotalTomado: 4100,
-  },
-  {
-    id: 4, contratoId: 'EMP-2026-56002', valorInvestido: 500, taxaJurosTotal: 10,
-    prazoDias: 15, ciclo: 'diario', status: 'quitado',
-    jaCaptado: 0, valorTotalPedido: 0, numCredores: 0,
-    parcelasTotal: 15, parcelasRecebidas: 15,
-    risco: 'Baixo', tomadorScore: 'A', emprestimosAnteriores: 6, valorTotalTomado: 28500,
-  },
+  { id: 1, contratoId: 'EMP-2026-30291', valorInvestido: 900,  taxaJurosTotal: 18, prazoDias: 45, ciclo: 'semanal', status: 'captacao', jaCaptado: 3100, valorTotalPedido: 5000, numCredores: 14, risco: 'Médio', tomadorScore: 'B', emprestimosAnteriores: 3, valorTotalTomado: 12400, parcelasTotal: 0,  parcelasRecebidas: 0 },
+  { id: 2, contratoId: 'EMP-2026-90214', valorInvestido: 2000, taxaJurosTotal: 22, prazoDias: 90, ciclo: 'mensal',  status: 'ativo',    jaCaptado: 0,    valorTotalPedido: 0,    numCredores: 0,  parcelasTotal: 3,  parcelasRecebidas: 1, proximaData: '4 de agosto',    risco: 'Alto',  tomadorScore: 'C', emprestimosAnteriores: 1, valorTotalTomado: 3000 },
+  { id: 3, contratoId: 'EMP-2026-11875', valorInvestido: 1200, taxaJurosTotal: 15, prazoDias: 30, ciclo: 'mensal',  status: 'atrasado', jaCaptado: 0,    valorTotalPedido: 0,    numCredores: 0,  parcelasTotal: 1,  parcelasRecebidas: 0, diasAtraso: 5,                   risco: 'Médio', tomadorScore: 'B', emprestimosAnteriores: 2, valorTotalTomado: 4100 },
+  { id: 4, contratoId: 'EMP-2026-56002', valorInvestido: 500,  taxaJurosTotal: 10, prazoDias: 15, ciclo: 'diario',  status: 'quitado',  jaCaptado: 0,    valorTotalPedido: 0,    numCredores: 0,  parcelasTotal: 15, parcelasRecebidas: 15,                                  risco: 'Baixo', tomadorScore: 'A', emprestimosAnteriores: 6, valorTotalTomado: 28500 },
 ];
 
 const FILTERS = [
-  { key: 'todas', label: 'Todos' },
-  { key: 'ativo', label: 'Ativos' },
+  { key: 'todas',    label: 'Todos' },
+  { key: 'ativo',    label: 'Ativos' },
   { key: 'atrasado', label: 'Atrasados' },
   { key: 'captacao', label: 'Em captação' },
-  { key: 'quitado', label: 'Quitados' },
+  { key: 'quitado',  label: 'Quitados' },
 ];
-
 const RISCOS = [
   { key: 'todos', label: 'Todos os riscos' },
   { key: 'Baixo', label: 'Baixo' },
   { key: 'Médio', label: 'Médio' },
-  { key: 'Alto', label: 'Alto' },
+  { key: 'Alto',  label: 'Alto' },
 ];
 
 export default function AtivosScreen() {
@@ -95,41 +48,37 @@ export default function AtivosScreen() {
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   const [activeFilter, setActiveFilter] = useState('todas');
-  const [riscoFilter, setRiscoFilter] = useState('todos');
-  const [busca, setBusca] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [draftFilter, setDraftFilter] = useState('todas');
-  const [draftRisco, setDraftRisco] = useState('todos');
+  const [riscoFilter, setRiscoFilter]   = useState('todos');
+  const [busca, setBusca]               = useState('');
+  const [modalOpen, setModalOpen]       = useState(false);
+  const [draftFilter, setDraftFilter]   = useState('todas');
+  const [draftRisco, setDraftRisco]     = useState('todos');
 
   const filtersActive = activeFilter !== 'todas' || riscoFilter !== 'todos';
 
   const filtered = posicoes.filter((p) => {
     const statusOk = activeFilter === 'todas' || p.status === activeFilter;
-    const riscoOk = riscoFilter === 'todos' || p.risco === riscoFilter;
-    const buscaOk = busca.trim() === '' || p.contratoId.toLowerCase().includes(busca.trim().toLowerCase());
+    const riscoOk  = riscoFilter === 'todos'  || p.risco === riscoFilter;
+    const buscaOk  = busca.trim() === '' || p.contratoId.toLowerCase().includes(busca.trim().toLowerCase());
     return statusOk && riscoOk && buscaOk;
   });
 
-  const openModal = () => {
-    setDraftFilter(activeFilter);
-    setDraftRisco(riscoFilter);
-    setModalOpen(true);
-  };
+  const openModal = () => { setDraftFilter(activeFilter); setDraftRisco(riscoFilter); setModalOpen(true); };
 
   return (
-    <View style={[styles.screen, { paddingTop: topPad }]}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
-          <Feather name="arrow-left" size={18} color={C.ink} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Ativos</Text>
+    <View style={[s.screen, { paddingTop: topPad }]}>
+      {/* Header */}
+      <View style={s.header}>
+        <BackButton onPress={() => router.back()} />
+        <Text style={s.title}>Ativos</Text>
       </View>
 
-      <View style={styles.searchRow}>
-        <View style={styles.searchWrap}>
+      {/* Search + filter */}
+      <View style={s.searchRow}>
+        <View style={s.searchWrap}>
           <Feather name="search" size={17} color={C.inkFaint} />
           <TextInput
-            style={styles.searchInput}
+            style={s.searchInput}
             placeholder="Buscar por número do contrato"
             placeholderTextColor={C.inkFaint}
             value={busca}
@@ -137,288 +86,189 @@ export default function AtivosScreen() {
           />
         </View>
         <TouchableOpacity
-          style={[styles.filterBtn, filtersActive && styles.filterBtnActive]}
+          style={[s.filterBtn, filtersActive && s.filterBtnActive]}
           onPress={openModal}
           activeOpacity={0.8}
         >
           <Feather name="sliders" size={18} color={filtersActive ? '#fff' : C.ink} />
-          {filtersActive && <View style={styles.filterBadge} />}
+          {filtersActive && <View style={s.filterBadge} />}
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: spacing[4], gap: 12, paddingBottom: 40 }}>
         {filtered.length === 0 && (
-          <Text style={styles.emptyState}>Nenhuma posição nessa categoria.</Text>
+          <Text style={s.emptyState}>Nenhuma posição nessa categoria.</Text>
         )}
 
         {filtered.map((p) => {
-          const meta = STATUS_META[p.status];
-          const ciclo = CICLO_META[p.ciclo];
+          const ciclo          = CICLO_META[p.ciclo];
           const totalComRetorno = p.valorInvestido * (1 + p.taxaJurosTotal / 100);
-          const retornoTotal = totalComRetorno - p.valorInvestido;
-          const isAtrasado = p.status === 'atrasado';
-          const isCaptacao = p.status === 'captacao';
-          const isQuitado = p.status === 'quitado';
+          const retornoTotal   = totalComRetorno - p.valorInvestido;
+          const isAtrasado     = p.status === 'atrasado';
+          const isCaptacao     = p.status === 'captacao';
+          const isQuitado      = p.status === 'quitado';
+
+          // Progress bar data
+          const pctCaptado    = isCaptacao ? Math.round((p.jaCaptado / p.valorTotalPedido) * 100) : 0;
+          const pctPos        = isCaptacao ? Math.round((p.valorInvestido / p.valorTotalPedido) * 100) : 0;
+          const pctPosClamped = Math.min(pctPos, 100 - pctCaptado);
+          const valParcela    = !isCaptacao && p.parcelasTotal > 0 ? totalComRetorno / p.parcelasTotal : 0;
+          const recebido      = valParcela * p.parcelasRecebidas;
+          const pctRecebido   = !isCaptacao && p.parcelasTotal > 0 ? Math.round((recebido / totalComRetorno) * 100) : 0;
 
           return (
             <View
               key={p.id}
               style={[
-                styles.posCard,
-                isAtrasado && styles.posCardAtrasado,
-                isCaptacao && styles.posCardCaptacao,
+                s.posCard,
+                isAtrasado && s.posCardAtrasado,
+                isCaptacao && s.posCardCaptacao,
               ]}
             >
-              <View style={styles.posTopRow}>
-                <Text style={styles.eyebrow}>Retorno do contrato</Text>
-                <View style={[styles.badge, { backgroundColor: meta.bg, borderWidth: isQuitado ? 1 : 0, borderColor: C.line }]}>
-                  <Feather name={meta.icon as any} size={13} color={meta.color} />
-                  <Text style={[styles.badgeText, { color: meta.color }]}>{meta.label}</Text>
-                </View>
+              <View style={s.posTopRow}>
+                <Text style={s.eyebrow}>Retorno do contrato</Text>
+                <StatusBadge status={p.status as LoanStatus} />
               </View>
 
-              <Text style={styles.heroValue}>
-                <Text style={styles.heroSign}>+</Text>{p.taxaJurosTotal}%
-              </Text>
-              <Text style={styles.heroCaption}>
-                Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {p.prazoDias} dias
-              </Text>
+              <Text style={s.heroValue}><Text style={s.heroSign}>+</Text>{p.taxaJurosTotal}%</Text>
+              <Text style={s.heroCaption}>Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {p.prazoDias} dias</Text>
 
-              <View style={styles.splitRow}>
-                <View>
-                  <Text style={styles.splitLabel}>Valor investido</Text>
-                  <Text style={styles.splitValue}>R$ {formatBRL(p.valorInvestido)}</Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.splitLabel}>Retorno</Text>
-                  <Text style={styles.splitValue}>R$ {formatBRL(Math.round(totalComRetorno))}</Text>
-                </View>
-              </View>
+              <SplitRow
+                left={{ label: 'Valor investido', value: `R$ ${formatBRL(p.valorInvestido)}` }}
+                right={{ label: 'Retorno', value: `R$ ${formatBRL(Math.round(totalComRetorno))}` }}
+              />
 
-              {/* Pool / Progress */}
               {isCaptacao ? (
-                <View style={{ marginBottom: 18 }}>
-                  <Text style={styles.poolLabel}>Captação do pedido</Text>
-                  {(() => {
-                    const pctCaptado = Math.round((p.jaCaptado / p.valorTotalPedido) * 100);
-                    const pctPos = Math.round((p.valorInvestido / p.valorTotalPedido) * 100);
-                    const pctPosClamped = Math.min(pctPos, 100 - pctCaptado);
-                    return (
-                      <>
-                        <View style={styles.poolTopRow}>
-                          <Text style={styles.poolPercent}>{pctCaptado + pctPos}% captado</Text>
-                          <Text style={styles.poolValue}>
-                            R$ {formatBRL(p.jaCaptado + p.valorInvestido)} de R$ {formatBRL(p.valorTotalPedido)}
-                          </Text>
-                        </View>
-                        <View style={styles.poolTrack}>
-                          <View style={[styles.poolSegDark, { width: `${pctCaptado}%` as any }]} />
-                          <View style={[styles.poolSegStripe, { width: `${pctPosClamped}%` as any }]} />
-                        </View>
-                        <View style={styles.poolLegend}>
-                          <View style={styles.poolLegendItem}>
-                            <View style={[styles.poolLegendDot, { backgroundColor: C.ink }]} />
-                            <Text style={styles.poolLegendText}>Outros credores</Text>
-                          </View>
-                          <View style={styles.poolLegendItem}>
-                            <View style={[styles.poolLegendDot, { backgroundColor: C.inkFaint }]} />
-                            <Text style={styles.poolLegendText}>Minha participação</Text>
-                          </View>
-                        </View>
-                      </>
-                    );
-                  })()}
-                </View>
+                <PoolBar
+                  label="Captação do pedido"
+                  headLeft={`${pctCaptado + pctPos}% captado`}
+                  headRight={`R$ ${formatBRL(p.jaCaptado + p.valorInvestido)} de R$ ${formatBRL(p.valorTotalPedido)}`}
+                  segments={[
+                    { pct: pctCaptado,    variant: 'primary' },
+                    { pct: pctPosClamped, variant: 'secondary' },
+                  ]}
+                  style={{ marginBottom: 18 }}
+                  footer={
+                    <View style={s.legend}>
+                      <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: C.ink }]}     /><Text style={s.legendText}>Outros credores</Text></View>
+                      <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: C.inkFaint }]} /><Text style={s.legendText}>Minha participação</Text></View>
+                    </View>
+                  }
+                />
               ) : (
-                <View style={{ marginBottom: 18 }}>
-                  <Text style={styles.poolLabel}>Pagamento do contrato</Text>
-                  {(() => {
-                    const valParcela = totalComRetorno / p.parcelasTotal;
-                    const recebido = valParcela * p.parcelasRecebidas;
-                    const pctRecebido = Math.round((recebido / totalComRetorno) * 100);
-                    return (
-                      <>
-                        <View style={styles.poolTopRow}>
-                          <Text style={styles.poolPercent}>{pctRecebido}% pago</Text>
-                          <Text style={styles.poolValue}>
-                            R$ {formatBRL(Math.round(recebido))} de R$ {formatBRL(Math.round(totalComRetorno))}
-                          </Text>
-                        </View>
-                        <View style={styles.poolTrack}>
-                          <View style={[styles.poolSegDark, { width: `${pctRecebido}%` as any }]} />
-                        </View>
-                        <Text style={[styles.poolCaption, isAtrasado && { color: C.red, fontFamily: 'Inter_700Bold' }]}>
-                          {isAtrasado
-                            ? `atrasado há ${(p as any).diasAtraso} dias`
-                            : isQuitado
-                            ? 'contrato encerrado'
-                            : `próximo em ${(p as any).proximaData}`}
-                        </Text>
-                      </>
-                    );
-                  })()}
-                </View>
+                <PoolBar
+                  label="Pagamento do contrato"
+                  headLeft={`${pctRecebido}% pago`}
+                  headRight={`R$ ${formatBRL(Math.round(recebido))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
+                  segments={[{ pct: pctRecebido, variant: 'primary' }]}
+                  style={{ marginBottom: 18 }}
+                  footer={
+                    <Text style={[s.poolCaption, isAtrasado && { color: C.red, fontFamily: fonts.bold }]}>
+                      {isAtrasado
+                        ? `atrasado há ${(p as any).diasAtraso} dias`
+                        : isQuitado
+                          ? 'contrato encerrado'
+                          : `próximo em ${(p as any).proximaData}`}
+                    </Text>
+                  }
+                />
               )}
 
-              <View style={styles.detailsGrid}>
-                <View style={styles.detailBlock}>
-                  <Text style={styles.detailLabel}>Prazo</Text>
-                  <Text style={styles.detailValue}>{p.prazoDias} dias</Text>
-                  <Text style={styles.detailSub}>parcelas {ciclo.parcelasLabel}</Text>
-                </View>
-                <View style={styles.detailBlock}>
-                  <Text style={styles.detailLabel}>Risco</Text>
-                  <Text style={styles.detailValue}>{p.risco}</Text>
-                  <Text style={styles.detailSub}>score {p.tomadorScore}</Text>
-                </View>
-                <View style={styles.detailBlock}>
-                  <Text style={styles.detailLabel}>Histórico</Text>
-                  <Text style={styles.detailValue}>
-                    {p.emprestimosAnteriores === 0 ? 'Primeiro' : `${p.emprestimosAnteriores + 1}º empréstimo`}
-                  </Text>
-                </View>
-                <View style={styles.detailBlock}>
-                  <Text style={styles.detailLabel}>Já tomado</Text>
-                  <Text style={styles.detailValue}>
-                    {p.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(p.valorTotalTomado)}`}
-                  </Text>
-                </View>
-              </View>
+              <DetailGrid
+                items={[
+                  { label: 'Prazo',    value: `${p.prazoDias} dias`, sub: `parcelas ${ciclo.parcelasLabel}` },
+                  { label: 'Risco',    value: p.risco,               sub: `score ${p.tomadorScore}` },
+                  { label: 'Histórico', value: p.emprestimosAnteriores === 0 ? 'Primeiro' : `${p.emprestimosAnteriores + 1}º empréstimo` },
+                  { label: 'Já tomado', value: p.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(p.valorTotalTomado)}` },
+                ]}
+              />
             </View>
           );
         })}
       </ScrollView>
 
-      {/* Filter Modal */}
-      <Modal visible={modalOpen} transparent animationType="slide" onRequestClose={() => setModalOpen(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalOpen(false)}>
-          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <View style={[styles.modalSheet, { paddingBottom: Platform.OS === 'web' ? 28 : insets.bottom + 28 }]}>
-              <View style={styles.grabber} />
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Filtrar posições</Text>
-                <TouchableOpacity style={styles.modalClose} onPress={() => setModalOpen(false)}>
-                  <Feather name="x" size={16} color={C.ink} />
-                </TouchableOpacity>
-              </View>
-
-              <Text style={styles.modalSectionLabel}>Status</Text>
-              <View style={styles.pillsWrap}>
-                {FILTERS.map((f) => (
-                  <TouchableOpacity
-                    key={f.key}
-                    style={[styles.pill, draftFilter === f.key && styles.pillActive]}
-                    onPress={() => setDraftFilter(f.key)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.pillText, draftFilter === f.key && styles.pillTextActive]}>{f.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.modalSectionLabel}>Risco</Text>
-              <View style={styles.pillsWrap}>
-                {RISCOS.map((r) => (
-                  <TouchableOpacity
-                    key={r.key}
-                    style={[styles.pill, draftRisco === r.key && styles.pillActive]}
-                    onPress={() => setDraftRisco(r.key)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.pillText, draftRisco === r.key && styles.pillTextActive]}>{r.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View style={styles.modalFooter}>
-                <TouchableOpacity
-                  style={styles.footerBtnGhost}
-                  onPress={() => { setDraftFilter('todas'); setDraftRisco('todos'); }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.footerBtnGhostText}>Limpar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.footerBtnSolid}
-                  onPress={() => { setActiveFilter(draftFilter); setRiscoFilter(draftRisco); setModalOpen(false); }}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.footerBtnSolidText}>Aplicar filtros</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+      {/* Filter modal */}
+      <ModalSheet
+        visible={modalOpen}
+        onClose={() => setModalOpen(false)}
+        bgColor={C.bg}
+        style={{ padding: 20, paddingTop: 14 }}
+      >
+        <View style={s.modalHeader}>
+          <Text style={s.modalTitle}>Filtrar posições</Text>
+          <TouchableOpacity style={s.modalClose} onPress={() => setModalOpen(false)}>
+            <Feather name="x" size={16} color={C.ink} />
           </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+        </View>
+
+        <Text style={s.modalSectionLabel}>Status</Text>
+        <View style={s.pillsWrap}>
+          {FILTERS.map((f) => (
+            <Chip key={f.key} label={f.label} variant="outlined" active={draftFilter === f.key} onPress={() => setDraftFilter(f.key)} />
+          ))}
+        </View>
+
+        <Text style={s.modalSectionLabel}>Risco</Text>
+        <View style={s.pillsWrap}>
+          {RISCOS.map((r) => (
+            <Chip key={r.key} label={r.label} variant="outlined" active={draftRisco === r.key} onPress={() => setDraftRisco(r.key)} />
+          ))}
+        </View>
+
+        <View style={s.modalFooter}>
+          <TouchableOpacity
+            style={s.footerBtnGhost}
+            onPress={() => { setDraftFilter('todas'); setDraftRisco('todos'); }}
+            activeOpacity={0.8}
+          >
+            <Text style={s.footerBtnGhostText}>Limpar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.footerBtnSolid}
+            onPress={() => { setActiveFilter(draftFilter); setRiscoFilter(draftRisco); setModalOpen(false); }}
+            activeOpacity={0.85}
+          >
+            <Text style={s.footerBtnSolidText}>Aplicar filtros</Text>
+          </TouchableOpacity>
+        </View>
+      </ModalSheet>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingBottom: 4 },
-  backBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  title: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 18, color: C.ink, letterSpacing: -0.2 },
-
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: 16, marginTop: 16, marginBottom: 4 },
-  searchWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 13, borderRadius: 14, backgroundColor: C.card },
-  searchInput: { flex: 1, fontSize: 14.5, color: C.ink, fontFamily: 'Inter_400Regular', padding: 0 },
-  filterBtn: { width: 46, height: 46, borderRadius: 14, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingBottom: 4 },
+  title:  { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: spacing[4], marginTop: spacing[4], marginBottom: 4 },
+  searchWrap:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 13, borderRadius: radii.lg, backgroundColor: C.card },
+  searchInput:  { flex: 1, fontSize: fontSize['md+'], color: C.ink, fontFamily: fonts.regular, padding: 0 },
+  filterBtn:       { width: 46, height: 46, borderRadius: radii.lg, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   filterBtnActive: { backgroundColor: C.dark },
-  filterBadge: { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: C.ink, borderWidth: 2, borderColor: C.card },
-
-  emptyState: { textAlign: 'center', paddingVertical: 60, color: C.inkFaint, fontSize: 14, fontFamily: 'Inter_400Regular' },
-
-  posCard: { borderRadius: 22, backgroundColor: C.card, padding: 22 },
+  filterBadge:     { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: C.ink, borderWidth: 2, borderColor: C.card },
+  emptyState: { textAlign: 'center', paddingVertical: 60, color: C.inkFaint, fontSize: fontSize.md, fontFamily: fonts.regular },
+  posCard:         { borderRadius: radii.card, backgroundColor: C.card, padding: 22 },
   posCardAtrasado: { borderWidth: 1.5, borderColor: C.red },
   posCardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
   posTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  eyebrow: { fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3, color: C.inkFaint },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  badgeText: { fontSize: 12, fontFamily: 'Inter_700Bold' },
-
-  heroValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 44, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
-  heroSign: { fontSize: 24, fontFamily: 'SpaceGrotesk_700Bold' },
-  heroCaption: { fontSize: 13.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginBottom: 18 },
-
-  splitRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
-  splitLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 4 },
-  splitValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 21, color: C.ink, letterSpacing: -0.3 },
-
-  poolLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 6 },
-  poolTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
-  poolPercent: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 15, color: C.ink },
-  poolValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 13, color: C.inkSoft },
-  poolTrack: { height: 14, borderRadius: 999, backgroundColor: C.line, overflow: 'hidden', marginBottom: 9, flexDirection: 'row' },
-  poolSegDark: { height: '100%', backgroundColor: C.ink },
-  poolSegStripe: { height: '100%', backgroundColor: C.inkFaint },
-  poolCaption: { fontSize: 12.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  poolLegend: { flexDirection: 'row', gap: 16, marginTop: 4 },
-  poolLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  poolLegendDot: { width: 8, height: 8, borderRadius: 2 },
-  poolLegendText: { fontSize: 11.5, color: C.inkSoft, fontFamily: 'Inter_500Medium' },
-
-  detailsGrid: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, rowGap: 16, columnGap: 12 },
-  detailBlock: { width: '46%' },
-  detailLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
-  detailValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16, color: C.ink },
-  detailSub: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_400Regular', marginTop: 2 },
-
-  modalOverlay: { flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: C.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingTop: 14 },
-  grabber: { width: 36, height: 4, borderRadius: 999, backgroundColor: C.line, alignSelf: 'center', marginBottom: 18 },
+  eyebrow:    { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint },
+  heroValue:  { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
+  heroSign:   { fontSize: 24, fontFamily: fonts.display },
+  heroCaption:{ fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 18 },
+  poolCaption:{ fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
+  legend:     { flexDirection: 'row', gap: 16, marginTop: 4 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot:  { width: 8, height: 8, borderRadius: 2 },
+  legendText: { fontSize: fontSize.xs, color: C.inkSoft, fontFamily: fonts.medium },
+  // Modal
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  modalTitle: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 19, color: C.ink, letterSpacing: -0.3 },
-  modalClose: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  modalSectionLabel: { fontSize: 12, fontFamily: 'Inter_700Bold', letterSpacing: 0.3, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
-  pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 26 },
-  pill: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
-  pillActive: { backgroundColor: C.dark, borderColor: C.dark },
-  pillText: { fontSize: 13.5, fontFamily: 'Inter_600SemiBold', color: C.inkSoft },
-  pillTextActive: { color: '#fff' },
-  modalFooter: { flexDirection: 'row', gap: 10, marginTop: 6 },
-  footerBtnGhost: { flex: 1, paddingVertical: 15, borderRadius: 14, alignItems: 'center', borderWidth: 1, borderColor: C.line },
-  footerBtnGhostText: { fontSize: 14.5, fontFamily: 'Inter_700Bold', color: C.ink },
-  footerBtnSolid: { flex: 2, paddingVertical: 15, borderRadius: 14, alignItems: 'center', backgroundColor: C.dark },
-  footerBtnSolidText: { fontSize: 14.5, fontFamily: 'Inter_700Bold', color: '#fff' },
+  modalTitle:  { fontFamily: fonts.display, fontSize: 19, color: C.ink, letterSpacing: -0.3 },
+  modalClose:  { width: 32, height: 32, borderRadius: 16, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  modalSectionLabel: { fontSize: fontSize.sm, fontFamily: fonts.bold, letterSpacing: 0.3, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
+  pillsWrap:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 26 },
+  modalFooter:  { flexDirection: 'row', gap: 10, marginTop: 6 },
+  footerBtnGhost:    { flex: 1, paddingVertical: 15, borderRadius: radii.lg, alignItems: 'center', borderWidth: 1, borderColor: C.line },
+  footerBtnGhostText:{ fontSize: fontSize['md+'], fontFamily: fonts.bold, color: C.ink },
+  footerBtnSolid:    { flex: 2, paddingVertical: 15, borderRadius: radii.lg, alignItems: 'center', backgroundColor: C.dark },
+  footerBtnSolidText:{ fontSize: fontSize['md+'], fontFamily: fonts.bold, color: '#fff' },
 });

@@ -1,29 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { EMPRESTIMOS, CICLO_META, STATUS_META, formatBRL, addDays, formatDataShort } from '@/data/loans';
+import { palette as C, fonts, fontSize, radii } from '@/constants/theme';
+import { PoolBar, PoolLegend, DetailGrid } from '@/components/ds';
 
-const C = {
-  bg: '#F4F5F7',
-  card: '#FFFFFF',
-  dark: '#15151D',
-  ink: '#15151D',
-  inkSoft: '#6C707A',
-  inkFaint: '#A2A6AF',
-  line: '#EBEBF0',
-  red: '#C0392B',
-  redBg: '#FBEAE8',
-  chipBg: '#F4F5F7',
-};
-
-
+// ---------------------------------------------------------------------------
+// StatusIcon — badge with live timer for captacao status
+// ---------------------------------------------------------------------------
 function ContadorCaptacao() {
   const [segundos, setSegundos] = useState(0);
   useEffect(() => {
@@ -35,89 +20,95 @@ function ContadorCaptacao() {
   const m = Math.floor((segundos % 3600) / 60);
   const s = segundos % 60;
   const texto = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : m > 0 ? `${m}:${pad(s)}min` : `${s}s`;
-  return <Text style={styles.timerText}>{texto}</Text>;
+  return <Text style={st.timerText}>{texto}</Text>;
 }
 
-function StatusIcon({ status }: { status: string }) {
-  const icons: Record<string, { name: string; size: number }> = {
-    analise: { name: 'clock', size: 13 },
-    captacao: { name: 'users', size: 13 },
-    ativo: { name: 'zap', size: 13 },
-    atrasado: { name: 'alert-triangle', size: 13 },
-    quitado: { name: 'check-circle', size: 13 },
-  };
-  const icon = icons[status] || icons.analise;
-  const badgeColors: Record<string, { bg: string; color: string }> = {
-    analise: { bg: C.chipBg, color: C.inkSoft },
-    captacao: { bg: C.chipBg, color: C.inkSoft },
-    ativo: { bg: C.dark, color: '#fff' },
-    atrasado: { bg: C.redBg, color: C.red },
-    quitado: { bg: 'transparent', color: C.inkFaint },
-  };
-  const badge = badgeColors[status] || badgeColors.analise;
+type BadgeStyle = { bg: string; color: string; border?: boolean };
+const BADGE_STYLES: Record<string, BadgeStyle> = {
+  analise:  { bg: C.chipMuted,  color: C.inkSoft },
+  captacao: { bg: C.chipMuted,  color: C.inkSoft },
+  ativo:    { bg: C.dark,       color: '#fff' },
+  atrasado: { bg: C.redBg,      color: C.red },
+  quitado:  { bg: 'transparent', color: C.inkFaint, border: true },
+};
+const BADGE_ICONS: Record<string, string> = {
+  analise: 'clock', captacao: 'users', ativo: 'zap', atrasado: 'alert-triangle', quitado: 'check-circle',
+};
 
+function StatusIcon({ status }: { status: string }) {
+  const badge = BADGE_STYLES[status] ?? BADGE_STYLES.analise;
+  const icon  = BADGE_ICONS[status] ?? 'clock';
   return (
-    <View style={[styles.badge, { backgroundColor: badge.bg, borderWidth: status === 'quitado' ? 1 : 0, borderColor: C.line }]}>
+    <View style={[st.badge, { backgroundColor: badge.bg }, badge.border && { borderWidth: 1, borderColor: C.line }]}>
       {status === 'captacao' ? (
         <>
           <ContadorCaptacao />
-          <Text style={[styles.badgeSep, { color: badge.color }]}> · </Text>
-          <Text style={[styles.badgeText, { color: badge.color }]}>Em captação</Text>
+          <Text style={[st.badgeSep, { color: badge.color }]}> · </Text>
+          <Text style={[st.badgeText, { color: badge.color }]}>Em captação</Text>
         </>
       ) : (
         <>
-          <Feather name={icon.name as any} size={icon.size} color={badge.color} />
-          <Text style={[styles.badgeText, { color: badge.color }]}>{STATUS_META[status]?.label ?? status}</Text>
+          <Feather name={icon as any} size={13} color={badge.color} />
+          <Text style={[st.badgeText, { color: badge.color }]}>{STATUS_META[status]?.label ?? status}</Text>
         </>
       )}
     </View>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 export default function EmprestimosScreen() {
-  const bottomPad = 100;
-
   return (
-    <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottomPad, gap: 12 }}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Empréstimos</Text>
-          <Text style={styles.subtitle}>{EMPRESTIMOS.length} empréstimos no total</Text>
+    <View style={st.screen}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100, gap: 12 }}
+      >
+        <View style={st.header}>
+          <Text style={st.title}>Empréstimos</Text>
+          <Text style={st.subtitle}>{EMPRESTIMOS.length} empréstimos no total</Text>
         </View>
 
         {EMPRESTIMOS.map((loan) => {
           const cicloMeta = CICLO_META[loan.ciclo];
-          const totalAPagar = loan.valor * (1 + loan.taxaJurosTotal / 100);
-          const valorParcela = totalAPagar / loan.parcelasTotal;
-          const valorPago = valorParcela * loan.parcelasPagas;
-          const percentPago = loan.parcelasTotal > 0 ? Math.round((loan.parcelasPagas / loan.parcelasTotal) * 100) : 0;
-          const percentCaptado = loan.status === 'captacao' && loan.valorCaptado ? Math.round((loan.valorCaptado / loan.valor) * 100) : 0;
-          const jaConcedido = loan.status !== 'analise' && loan.status !== 'captacao';
-          const hoje = new Date();
-          const dataConcessao = jaConcedido ? addDays(hoje, -(loan.diasDesdeConcessao ?? 0)) : hoje;
-          const dataVencimento = addDays(dataConcessao, loan.prazoDias);
+          const totalAPagar     = loan.valor * (1 + loan.taxaJurosTotal / 100);
+          const valorParcela    = totalAPagar / loan.parcelasTotal;
+          const valorPago       = valorParcela * loan.parcelasPagas;
+          const percentPago     = loan.parcelasTotal > 0 ? Math.round((loan.parcelasPagas / loan.parcelasTotal) * 100) : 0;
+          const percentCaptado  = loan.status === 'captacao' && loan.valorCaptado
+            ? Math.round((loan.valorCaptado / loan.valor) * 100) : 0;
+          const jaConcedido     = loan.status !== 'analise' && loan.status !== 'captacao';
+          const hoje            = new Date();
+          const dataConcessao   = jaConcedido ? addDays(hoje, -(loan.diasDesdeConcessao ?? 0)) : hoje;
+          const dataVencimento  = addDays(dataConcessao, loan.prazoDias);
+          const isAtrasado      = loan.status === 'atrasado';
+          const isCaptacao      = loan.status === 'captacao';
 
-          const isAtrasado = loan.status === 'atrasado';
-          const isCaptacao = loan.status === 'captacao';
-          const proximaDataCalc = (() => {
-            const ciclo = CICLO_META[loan.ciclo];
+          const proximaDataLabel = (() => {
+            const ciclo  = CICLO_META[loan.ciclo];
             const dataConc = jaConcedido ? addDays(hoje, -(loan.diasDesdeConcessao ?? 0)) : hoje;
-            const proxima = addDays(dataConc, ciclo.dias * (loan.parcelasPagas + 1));
-            return formatDataShort(proxima);
+            return formatDataShort(addDays(dataConc, ciclo.dias * (loan.parcelasPagas + 1)));
           })();
 
           return (
             <TouchableOpacity
               key={loan.id}
-              style={[styles.loanCard, isAtrasado && styles.loanCardAtrasado, isCaptacao && styles.loanCardCaptacao]}
+              style={[
+                st.loanCard,
+                isAtrasado && st.loanCardAtrasado,
+                isCaptacao && st.loanCardCaptacao,
+              ]}
               onPress={() => router.push({ pathname: '/emprestimo-detalhe', params: { id: String(loan.id) } })}
               activeOpacity={0.85}
             >
-              <View style={styles.loanTopRow}>
+              <View style={st.loanTopRow}>
                 <View>
-                  <Text style={styles.loanValue}>R$ {formatBRL(loan.valor)}</Text>
-                  <Text style={styles.loanLabel}>
-                    R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade} · {loan.parcelasTotal} {loan.parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
+                  <Text style={st.loanValue}>R$ {formatBRL(loan.valor)}</Text>
+                  <Text style={st.loanLabel}>
+                    R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade} · {loan.parcelasTotal}{' '}
+                    {loan.parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
                   </Text>
                 </View>
                 <StatusIcon status={loan.status} />
@@ -125,74 +116,56 @@ export default function EmprestimosScreen() {
 
               {/* Captação progress */}
               {isCaptacao && (
-                <View style={styles.poolBlock}>
-                  <Text style={styles.poolLabel}>Captação do pedido</Text>
-                  <View style={styles.poolTopRow}>
-                    <Text style={styles.poolPercent}>{percentCaptado}% captado</Text>
-                    <Text style={styles.poolValue}>R$ {formatBRL(loan.valorCaptado ?? 0)} de R$ {formatBRL(loan.valor)}</Text>
-                  </View>
-                  <View style={styles.poolTrack}>
-                    <View style={[styles.poolFill, { width: `${percentCaptado}%` as any }]} />
-                  </View>
-                  <View style={styles.poolCaption}>
-                    <View style={styles.dotRow}>
-                      <View style={[styles.dot, { backgroundColor: C.ink }]} />
-                      <Text style={styles.captionText}>Captado</Text>
-                    </View>
-                    <View style={styles.dotRow}>
-                      <View style={[styles.dot, { backgroundColor: C.line, borderWidth: 1, borderColor: C.inkFaint }]} />
-                      <Text style={styles.captionText}>Captando</Text>
-                    </View>
-                  </View>
-                </View>
+                <PoolBar
+                  label="Captação do pedido"
+                  headLeft={`${percentCaptado}% captado`}
+                  headRight={`R$ ${formatBRL(loan.valorCaptado ?? 0)} de R$ ${formatBRL(loan.valor)}`}
+                  segments={[{ pct: percentCaptado, variant: 'primary' }]}
+                  style={{ marginBottom: 18 }}
+                  footer={
+                    <PoolLegend
+                      items={[
+                        { color: C.ink,   label: 'Captado' },
+                        { color: C.line,  label: 'Captando' },
+                      ]}
+                    />
+                  }
+                />
               )}
 
               {/* Payment progress */}
               {(loan.status === 'ativo' || isAtrasado) && (
-                <View style={styles.poolBlock}>
-                  <Text style={styles.poolLabel}>Pagamento do empréstimo</Text>
-                  <View style={styles.poolTopRow}>
-                    <Text style={styles.poolPercent}>{percentPago}% pago</Text>
-                    <Text style={styles.poolValue}>R$ {formatBRL(Math.round(valorPago))} de R$ {formatBRL(Math.round(totalAPagar))}</Text>
-                  </View>
-                  <View style={styles.poolTrack}>
-                    <View style={[styles.poolFill, { width: `${percentPago}%` as any }]} />
-                  </View>
-                  <View style={styles.poolCaption}>
-                    <View style={styles.dotRow}>
-                      <View style={[styles.dot, { backgroundColor: C.ink }]} />
-                      <Text style={styles.captionText}>pago</Text>
-                    </View>
-                    <View style={styles.dotRow}>
-                      <View style={[styles.dot, { backgroundColor: C.line, borderWidth: 1, borderColor: C.inkFaint }]} />
-                      <Text style={[styles.captionText, isAtrasado && { color: C.red, fontFamily: 'Inter_700Bold' }]}>
-                        {isAtrasado ? `atrasado há ${loan.diasAtraso ?? 0} dias` : `próximo vencimento em ${proximaDataCalc}`}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
+                <PoolBar
+                  label="Pagamento do empréstimo"
+                  headLeft={`${percentPago}% pago`}
+                  headRight={`R$ ${formatBRL(Math.round(valorPago))} de R$ ${formatBRL(Math.round(totalAPagar))}`}
+                  segments={[{ pct: percentPago, variant: 'primary' }]}
+                  style={{ marginBottom: 18 }}
+                  footer={
+                    <PoolLegend
+                      items={[
+                        { color: C.ink, label: 'pago' },
+                        {
+                          color: C.line,
+                          label: isAtrasado
+                            ? `atrasado há ${loan.diasAtraso ?? 0} dias`
+                            : `próximo vencimento em ${proximaDataLabel}`,
+                          bold: isAtrasado,
+                        },
+                      ]}
+                    />
+                  }
+                />
               )}
 
-              <View style={styles.detailsGrid}>
-                <View style={styles.detailBlock}>
-                  <Text style={styles.detailLabel}>Prazo</Text>
-                  <Text style={styles.detailValue}>{loan.prazoDias} dias</Text>
-                  <Text style={styles.detailSub}>vence {formatDataShort(dataVencimento)}</Text>
-                </View>
-                <View style={styles.detailBlock}>
-                  <Text style={styles.detailLabel}>Ciclo</Text>
-                  <Text style={styles.detailValue}>{cicloMeta.label}</Text>
-                  <Text style={styles.detailSub}>R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade}</Text>
-                </View>
-                <View style={styles.detailBlock}>
-                  <Text style={styles.detailLabel}>Taxa total</Text>
-                  <Text style={styles.detailValue}>{loan.taxaJurosTotal}%</Text>
-                </View>
-                <View style={styles.detailBlock}>
-                  <Text style={styles.detailLabel}>{loan.status === 'quitado' ? 'Total pago' : 'Total a pagar'}</Text>
-                  <Text style={styles.detailValue}>R$ {formatBRL(Math.round(totalAPagar))}</Text>
-                </View>
-              </View>
+              <DetailGrid
+                items={[
+                  { label: 'Prazo',    value: `${loan.prazoDias} dias`, sub: `vence ${formatDataShort(dataVencimento)}` },
+                  { label: 'Ciclo',    value: cicloMeta.label, sub: `R$ ${formatBRL(Math.round(valorParcela))}/${cicloMeta.unidade}` },
+                  { label: 'Taxa total', value: `${loan.taxaJurosTotal}%` },
+                  { label: loan.status === 'quitado' ? 'Total pago' : 'Total a pagar', value: `R$ ${formatBRL(Math.round(totalAPagar))}` },
+                ]}
+              />
             </TouchableOpacity>
           );
         })}
@@ -201,37 +174,32 @@ export default function EmprestimosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   header: { paddingTop: 18, paddingHorizontal: 4, paddingBottom: 6 },
-  title: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 24, color: C.ink, letterSpacing: -0.4 },
-  subtitle: { fontSize: 13.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  emptyState: { alignItems: 'center', paddingVertical: 60 },
-  emptyText: { fontSize: 14, color: C.inkFaint, fontFamily: 'Inter_400Regular' },
-  loanCard: { borderRadius: 22, backgroundColor: C.card, padding: 20 },
+  title:    { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4 },
+  subtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
+  loanCard: { borderRadius: radii.card, backgroundColor: C.card, padding: 20 },
   loanCardAtrasado: { borderWidth: 1.5, borderColor: C.red },
   loanCardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
-  loanTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 },
-  loanValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 24, color: C.ink, letterSpacing: -0.4 },
-  loanLabel: { fontSize: 12.5, color: C.inkFaint, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999 },
-  badgeText: { fontSize: 12, fontFamily: 'Inter_700Bold' },
-  badgeSep: { fontSize: 12, opacity: 0.45 },
-  timerText: { fontSize: 12, fontFamily: 'Inter_700Bold', color: C.inkSoft },
-  poolBlock: { marginBottom: 18 },
-  poolLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 6 },
-  poolTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  poolPercent: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 15, color: C.ink },
-  poolValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 13, color: C.inkSoft },
-  poolTrack: { height: 14, borderRadius: 999, backgroundColor: C.line, overflow: 'hidden', marginBottom: 9 },
-  poolFill: { height: '100%', backgroundColor: C.ink },
-  poolCaption: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  dotRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dot: { width: 8, height: 8, borderRadius: 2 },
-  captionText: { fontSize: 12.5, color: C.inkSoft, fontFamily: 'Inter_400Regular' },
-  detailsGrid: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, rowGap: 16, columnGap: 12 },
-  detailBlock: { width: '46%' },
-  detailLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
-  detailValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 16, color: C.ink },
-  detailSub: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  loanTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  loanValue: { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4 },
+  loanLabel: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginTop: 2 },
+  // Badge (StatusIcon)
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: radii.full,
+  },
+  badgeText: { fontSize: fontSize.sm, fontFamily: fonts.bold },
+  badgeSep:  { fontSize: fontSize.sm, opacity: 0.45 },
+  timerText: { fontSize: fontSize.sm, fontFamily: fonts.bold, color: C.inkSoft },
 });

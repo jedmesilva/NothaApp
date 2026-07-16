@@ -4,13 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useArea } from '@/contexts/AreaContext';
-
-const C = {
-  dark: '#15151D',
-  white: '#FFFFFF',
-  whiteActive: 'rgba(255,255,255,0.12)',
-  whiteInactive: 'rgba(255,255,255,0.5)',
-};
+import { palette as C, fonts, fontSize, radii, shadows } from '@/constants/theme';
 
 type TabDef = {
   name: string;
@@ -19,41 +13,33 @@ type TabDef = {
   icon: (active: boolean) => React.ReactNode;
 };
 
+const WHITE       = '#FFFFFF';
+const WHITE_MID   = 'rgba(255,255,255,0.50)';
+const WHITE_SOFT  = 'rgba(255,255,255,0.12)';
+
 const CREDITO_TABS: TabDef[] = [
   {
-    name: 'index',
-    label: 'Início',
-    area: 'credito',
-    icon: (active) => <Feather name="home" size={19} color={active ? C.white : C.whiteInactive} />,
+    name: 'index', label: 'Início', area: 'credito',
+    icon: (a) => <Feather name="home" size={19} color={a ? WHITE : WHITE_MID} />,
   },
   {
-    name: 'emprestimos',
-    label: 'Empréstimos',
-    area: 'credito',
-    icon: (active) => (
-      <MaterialCommunityIcons name="bank-outline" size={19} color={active ? C.white : C.whiteInactive} />
-    ),
+    name: 'emprestimos', label: 'Empréstimos', area: 'credito',
+    icon: (a) => <MaterialCommunityIcons name="bank-outline" size={19} color={a ? WHITE : WHITE_MID} />,
   },
 ];
 
 const INVESTIR_TABS: TabDef[] = [
   {
-    name: 'index',
-    label: 'Início',
-    area: 'investir',
-    icon: (active) => <Feather name="home" size={19} color={active ? C.white : C.whiteInactive} />,
+    name: 'index', label: 'Início', area: 'investir',
+    icon: (a) => <Feather name="home" size={19} color={a ? WHITE : WHITE_MID} />,
   },
   {
-    name: 'ofertas',
-    label: 'Ofertas',
-    area: 'investir',
-    icon: (active) => <Feather name="tag" size={19} color={active ? C.white : C.whiteInactive} />,
+    name: 'ofertas', label: 'Ofertas', area: 'investir',
+    icon: (a) => <Feather name="tag" size={19} color={a ? WHITE : WHITE_MID} />,
   },
   {
-    name: 'carteira',
-    label: 'Carteira',
-    area: 'investir',
-    icon: (active) => <Feather name="briefcase" size={19} color={active ? C.white : C.whiteInactive} />,
+    name: 'carteira', label: 'Carteira', area: 'investir',
+    icon: (a) => <Feather name="briefcase" size={19} color={a ? WHITE : WHITE_MID} />,
   },
 ];
 
@@ -65,7 +51,6 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
   const currentRouteName = state.routes[state.index]?.name;
 
   const onPress = (tab: TabDef) => {
-    // Update area when switching between area-specific screens
     if (tab.name === 'emprestimos') setArea('credito');
     if (tab.name === 'ofertas' || tab.name === 'carteira') setArea('investir');
 
@@ -76,32 +61,28 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
       target: route?.key ?? tab.name,
       canPreventDefault: true,
     });
-    if (!isActive && !event.defaultPrevented) {
-      navigation.navigate(tab.name);
-    }
+    if (!isActive && !event.defaultPrevented) navigation.navigate(tab.name);
   };
 
   return (
     <View
       style={[
-        styles.container,
-        {
-          paddingBottom: Platform.OS === 'web' ? 34 : insets.bottom > 0 ? insets.bottom - 4 : 8,
-        },
+        s.container,
+        { paddingBottom: Platform.OS === 'web' ? 34 : insets.bottom > 0 ? insets.bottom - 4 : 8 },
       ]}
     >
-      <View style={styles.pill}>
+      <View style={s.pill}>
         {tabs.map((tab) => {
           const isActive = currentRouteName === tab.name;
           return (
             <TouchableOpacity
               key={`${tab.name}-${area}`}
-              style={[styles.navItem, isActive && styles.navItemActive]}
+              style={[s.navItem, isActive && s.navItemActive]}
               onPress={() => onPress(tab)}
               activeOpacity={0.8}
             >
               {tab.icon(isActive)}
-              <Text style={[styles.navLabel, { color: isActive ? C.white : C.whiteInactive }]}>
+              <Text style={[s.navLabel, { color: isActive ? WHITE : WHITE_MID }]}>
                 {tab.label}
               </Text>
             </TouchableOpacity>
@@ -112,12 +93,10 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 0, left: 0, right: 0,
     alignItems: 'center',
     backgroundColor: 'transparent',
     paddingHorizontal: 16,
@@ -126,16 +105,12 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     backgroundColor: C.dark,
-    borderRadius: 20,
+    borderRadius: radii['2xl'],
     paddingHorizontal: 8,
     paddingVertical: 10,
     width: '100%',
     justifyContent: 'space-around',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
+    ...shadows.card,
   },
   navItem: {
     flexDirection: 'row',
@@ -143,14 +118,8 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 999,
+    borderRadius: radii.full,
   },
-  navItemActive: {
-    backgroundColor: C.whiteActive,
-  },
-  navLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    fontFamily: 'Inter_600SemiBold',
-  },
+  navItemActive: { backgroundColor: WHITE_SOFT },
+  navLabel: { fontSize: fontSize.base, fontFamily: fonts.semibold },
 });
