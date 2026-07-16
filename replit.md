@@ -1,6 +1,6 @@
-# [Project name]
+# notha
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+App mobile de empréstimos pessoais — permite ao usuário visualizar limite de crédito, saldo, vencimentos, lista de empréstimos e detalhes com parcelas.
 
 ## Run & Operate
 
