@@ -131,11 +131,11 @@ export default function EmprestimosScreen() {
                   <View style={styles.poolCaption}>
                     <View style={styles.dotRow}>
                       <View style={[styles.dot, { backgroundColor: C.ink }]} />
-                      <Text style={styles.captionText}>{percentCaptado}% captado</Text>
+                      <Text style={styles.captionText}>Já captado</Text>
                     </View>
                     <View style={styles.dotRow}>
                       <View style={[styles.dot, { backgroundColor: C.line, borderWidth: 1, borderColor: C.inkFaint }]} />
-                      <Text style={styles.captionText}>{100 - percentCaptado}% captando</Text>
+                      <Text style={styles.captionText}>Captando</Text>
                     </View>
                   </View>
                 </View>
