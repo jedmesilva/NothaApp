@@ -190,7 +190,13 @@ export default function HomeScreen() {
                   activeOpacity={0.75}
                   onPress={() => router.push(`/emprestimo-detalhe?id=${p.loanId}` as any)}
                 >
-                  <View style={[s.accentDot, { backgroundColor: accentColor }]} />
+                  {(isVencida || isProxima) && (
+                    <Feather
+                      name={isVencida ? 'alert-triangle' : 'clock'}
+                      size={16}
+                      color={accentColor}
+                    />
+                  )}
                   <View style={{ flex: 1 }}>
                     <Text style={[s.installState, { color: accentColor }]}>{stateLabel}</Text>
                     <Text style={s.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
@@ -296,7 +302,6 @@ const s = StyleSheet.create({
   parcelaRow:      { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
   parcelaRowSep:   { borderBottomWidth: 1, borderBottomColor: C.line },
   parcelaRowVencida: { backgroundColor: C.redBg, borderRadius: radii.card, paddingHorizontal: 12, marginHorizontal: -12 },
-  accentDot:    { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
   installState: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, marginBottom: 4 },
   installValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink },
   payBtn:     { paddingHorizontal: 14, paddingVertical: 9, borderRadius: radii.md },
