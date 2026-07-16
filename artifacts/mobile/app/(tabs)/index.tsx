@@ -16,11 +16,12 @@ import { formatBRL, addDays } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   DarkCard, LightCard, ListCard,
-  PrimaryButton, DarkButton, ActionRow,
+  PrimaryButton, DarkButton,
   ThinBar, PoolBar,
   SplitRow,
   DetailGrid,
   Eyebrow, BigValue, SectionTitle,
+  ContaCard,
 } from '@/components/ds';
 
 const W = Dimensions.get('window').width;
@@ -69,8 +70,10 @@ export default function HomeScreen() {
   const limiteDisponivel = 1500;
   const limiteUsado     = limiteTotal - limiteDisponivel;
   const percentUsado    = Math.round((limiteUsado / limiteTotal) * 100);
-  const saldoConta      = 8500;
-  const hoje            = new Date();
+  const saldoConta        = 8500;
+  const depositoRecente   = 8500;   // último empréstimo concedido (null = nenhum recente)
+  const rendimentoRecente = 340;    // rendimento creditado recentemente (0 = nenhum)
+  const hoje              = new Date();
 
   const proximasParcelas = emprestimosAtivos.map((loan) => {
     const cicloDias    = CICLO_DIAS[loan.ciclo];
@@ -135,16 +138,20 @@ export default function HomeScreen() {
             />
           </DarkCard>
 
-          {/* Balance card */}
-          <LightCard>
-            <Eyebrow context="light">Saldo em conta</Eyebrow>
-            <Text style={s.secondaryValue}>R$ {formatBRL(saldoConta)}</Text>
-            <Text style={s.helperText}>Disponível para usar</Text>
-            <ActionRow
-              left={{ icon: 'arrow-down', label: 'Sacar',     context: 'light' }}
-              right={{ icon: 'plus',      label: 'Depositar',  context: 'light' }}
+          {/* Account balance / deposit notification card */}
+          {depositoRecente > 0 ? (
+            <ContaCard
+              variant="deposito"
+              valor={depositoRecente}
+              onPress={() => router.push('/emprestimos' as any)}
             />
-          </LightCard>
+          ) : saldoConta > 0 ? (
+            <ContaCard
+              variant="saldo"
+              valor={saldoConta}
+              onPress={() => {}}
+            />
+          ) : null}
 
           {/* Vencimentos card */}
           <LightCard style={{ marginTop: 14 }}>
@@ -207,9 +214,22 @@ export default function HomeScreen() {
             <Text style={s.ofertasSubtitle}>Empréstimos disponíveis para você investir</Text>
           </View>
 
-          <View style={s.saldoChip}>
-            <Text style={s.saldoChipText}>Saldo disponível · R$ {formatBRL(saldoConta)}</Text>
-          </View>
+          {/* Rendimento credited or available balance card */}
+          {rendimentoRecente > 0 ? (
+            <ContaCard
+              variant="rendimento"
+              valor={rendimentoRecente}
+              onPress={() => router.push('/carteira' as any)}
+              style={{ marginTop: 14 }}
+            />
+          ) : saldoConta > 0 ? (
+            <ContaCard
+              variant="saldo"
+              valor={saldoConta}
+              onPress={() => {}}
+              style={{ marginTop: 14 }}
+            />
+          ) : null}
 
           {ofertas.map((o) => {
             const percentCaptado = Math.round((o.jaCaptado / o.valorTotalPedido) * 100);
@@ -265,8 +285,6 @@ const s = StyleSheet.create({
   totalText:    { fontSize: fontSize.md, color: C.onDarkMid, fontFamily: fonts.medium, marginBottom: 16, marginTop: 6 },
   progressCaption:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9, marginBottom: 22 },
   progressCaptionText: { fontSize: fontSize['sm+'], color: C.onDarkFaint, fontFamily: fonts.regular },
-  secondaryValue: { fontFamily: fonts.display, fontSize: 32, color: C.ink, letterSpacing: -0.5, marginTop: 2 },
-  helperText:     { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 4, marginBottom: 18 },
   vencSummary:    { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 16 },
   statsRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
   statBlock:   { flex: 1 },
@@ -286,8 +304,6 @@ const s = StyleSheet.create({
   ofertasHeader:   { paddingHorizontal: spacing[5], paddingTop: spacing[5], paddingBottom: 6 },
   ofertasTitle:    { fontFamily: fonts.display, fontSize: 22, color: C.ink, letterSpacing: -0.3, marginBottom: 4 },
   ofertasSubtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular },
-  saldoChip:     { marginHorizontal: spacing[5], marginTop: 14, marginBottom: 4, padding: 10, borderRadius: radii.md, backgroundColor: C.chipUrgent },
-  saldoChipText: { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.semibold },
   ofertaEyebrow:     { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint, marginBottom: 6 },
   ofertaRetorno:     { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 48, marginBottom: 8 },
   ofertaRetornoSign: { fontSize: 24, fontFamily: fonts.display },

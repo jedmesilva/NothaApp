@@ -25,3 +25,5 @@ export {
   ScreenTitle,
   BodyText,
 } from './Typography';
+export { ContaCard } from './ContaCard';
+export type { ContaCardVariant, ContaCardProps } from './ContaCard';
