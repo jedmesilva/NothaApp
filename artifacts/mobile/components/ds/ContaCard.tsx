@@ -14,6 +14,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-nativ
 import { Feather } from '@expo/vector-icons';
 import { palette as C, radii, fontSize, fonts } from '@/constants/theme';
 import { LightCard } from './Card';
+import { useContaModal } from '@/contexts/ContaModalContext';
 
 export type ContaCardVariant = 'deposito' | 'rendimento' | 'saldo';
 
@@ -33,15 +34,18 @@ const CONFIG: Record<ContaCardVariant, { sub: string; showPlus?: boolean; cta: s
 export function ContaCard({ variant, valor, onPress, style }: ContaCardProps) {
   if (valor <= 0) return null;
 
+  const { openConta } = useContaModal();
   const { sub, showPlus, cta } = CONFIG[variant];
   const formatted = valor.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
+  const handlePress = () => { onPress?.(); openConta(); };
+
   return (
     <LightCard style={[s.card, style]}>
-      <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity style={s.row} onPress={handlePress} activeOpacity={0.7}>
         <View style={s.left}>
           <Text style={s.value}>
             {showPlus ? '+' : ''}R$ {formatted}

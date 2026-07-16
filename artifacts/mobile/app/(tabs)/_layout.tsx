@@ -3,9 +3,11 @@ import { View } from 'react-native';
 import { Tabs } from 'expo-router';
 import BottomNav from '@/components/BottomNav';
 import GlobalHeader from '@/components/GlobalHeader';
+import { ContaModalProvider } from '@/contexts/ContaModalContext';
 
 export default function TabLayout() {
   return (
+    <ContaModalProvider>
     <View style={{ flex: 1 }}>
       <GlobalHeader />
       <Tabs
@@ -18,5 +20,6 @@ export default function TabLayout() {
         <Tabs.Screen name="carteira" options={{ title: 'Carteira' }} />
       </Tabs>
     </View>
+    </ContaModalProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useArea } from '@/contexts/AreaContext';
+import { useContaModal } from '@/contexts/ContaModalContext';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, ActionRow } from '@/components/ds';
 import { formatBRL } from '@/data/loans';
@@ -29,7 +30,7 @@ export default function GlobalHeader() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { area, setArea } = useArea();
-  const [showConta, setShowConta] = useState(false);
+  const { visible: showConta, openConta, closeConta } = useContaModal();
 
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
@@ -42,7 +43,7 @@ export default function GlobalHeader() {
     <>
       <View style={[s.header, { paddingTop: topPad }]}>
         {/* Avatar */}
-        <TouchableOpacity style={s.avatar} onPress={() => setShowConta(true)} activeOpacity={0.8}>
+        <TouchableOpacity style={s.avatar} onPress={openConta} activeOpacity={0.8}>
           <Text style={s.avatarText}>R</Text>
         </TouchableOpacity>
 
@@ -76,11 +77,11 @@ export default function GlobalHeader() {
       </View>
 
       {/* Conta Modal */}
-      <Modal visible={showConta} animationType="slide" onRequestClose={() => setShowConta(false)}>
+      <Modal visible={showConta} animationType="slide" onRequestClose={closeConta}>
         <View style={[s.contaScreen, { paddingTop: topPad }]}>
           {/* Header */}
           <View style={s.contaHeader}>
-            <BackButton onPress={() => setShowConta(false)} />
+            <BackButton onPress={closeConta} />
             <Text style={s.contaTitle}>Minha Conta</Text>
           </View>
 
