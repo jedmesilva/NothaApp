@@ -154,8 +154,8 @@ export default function HomeScreen() {
           ) : null}
 
           {/* Vencimentos card */}
-          <LightCard style={{ marginTop: 14 }}>
-            <SectionTitle style={{ marginBottom: 4 }}>Vencimentos</SectionTitle>
+          <SectionTitle style={s.vencSectionTitle}>Vencimentos</SectionTitle>
+          <LightCard>
             <Text style={s.vencSummary}>
               R$ {formatBRL(Math.round(divida.totalEmAberto))} em aberto · {divida.parcelasRestantes} parcelas
             </Text>
@@ -285,6 +285,7 @@ const s = StyleSheet.create({
   totalText:    { fontSize: fontSize.md, color: C.onDarkMid, fontFamily: fonts.medium, marginBottom: 16, marginTop: 6 },
   progressCaption:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9, marginBottom: 22 },
   progressCaptionText: { fontSize: fontSize['sm+'], color: C.onDarkFaint, fontFamily: fonts.regular },
+  vencSectionTitle: { marginHorizontal: spacing[4], marginTop: 14, marginBottom: 10 },
   vencSummary:    { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 16 },
   statsRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
   statBlock:   { flex: 1 },
