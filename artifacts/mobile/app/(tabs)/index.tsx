@@ -195,9 +195,9 @@ export default function HomeScreen() {
                     <Text style={[s.installState, { color: accentColor }]}>{stateLabel}</Text>
                     <Text style={s.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
                   </View>
-                  <View style={[s.payBtn, { backgroundColor: btnBg }]}>
+                  <TouchableOpacity style={[s.payBtn, { backgroundColor: btnBg }]} activeOpacity={0.8} onPress={() => {/* TODO: abrir tela de pagamento */}}>
                     <Text style={s.payBtnText}>Pagar</Text>
-                  </View>
+                  </TouchableOpacity>
                 </TouchableOpacity>
               );
             })}
