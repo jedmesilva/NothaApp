@@ -16,7 +16,7 @@ import { formatBRL, addDays } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   DarkCard, LightCard, ListCard,
-  PrimaryButton, DarkButton,
+  PrimaryButton, DarkButton, GhostButton,
   ThinBar, PoolBar,
   SplitRow,
   DetailGrid,
@@ -156,41 +156,39 @@ export default function HomeScreen() {
           {/* Vencimentos card */}
           <SectionTitle style={s.vencSectionTitle}>Vencimentos</SectionTitle>
           <LightCard>
-            <Text style={s.vencSummary}>
-              R$ {formatBRL(Math.round(divida.totalEmAberto))} em aberto · {divida.parcelasRestantes} parcelas
-            </Text>
+            {/* Hero: total em aberto */}
+            <Eyebrow>Total em aberto</Eyebrow>
+            <BigValue context="light" size="display" style={{ lineHeight: 36, marginBottom: 16 }}>
+              R$ {formatBRL(Math.round(divida.totalEmAberto))}
+            </BigValue>
 
+            {/* Contadores de urgência */}
             <View style={s.statsRow}>
               <View style={s.statBlock}>
-                <Text style={s.statLabel}>Em atraso</Text>
+                <Eyebrow style={{ marginBottom: 4 }}>Em atraso</Eyebrow>
                 <Text style={s.statValue}>{proximasParcelas.filter((p) => p.estado === 'vencida').length}</Text>
               </View>
               <View style={s.statDivider} />
               <View style={s.statBlock}>
-                <Text style={s.statLabel}>Próximas (5 dias)</Text>
+                <Eyebrow style={{ marginBottom: 4 }}>Próximas (5 dias)</Eyebrow>
                 <Text style={s.statValue}>{proximasParcelas.filter((p) => p.estado === 'proxima').length}</Text>
               </View>
             </View>
 
+            {/* Lista de parcelas */}
             {proximasParcelas.map((p, idx) => {
-              const isVencida = p.estado === 'vencida';
-              const isProxima = p.estado === 'proxima';
-              const accentColor   = isVencida ? C.red : isProxima ? C.amber : C.inkFaint;
-              const stateLabel    = isVencida ? 'Vencida' : isProxima ? 'Vence em breve' : `Vence ${formatDataBrief(p.data)}`;
-              const btnBg         = isVencida ? C.red : C.ink;
-              const isLast        = idx === proximasParcelas.length - 1;
+              const isVencida   = p.estado === 'vencida';
+              const isProxima   = p.estado === 'proxima';
+              const accentColor = isVencida ? C.red : isProxima ? C.amber : C.inkFaint;
+              const stateLabel  = isVencida ? 'Vencida' : isProxima ? 'Vence em breve' : `Vence ${formatDataBrief(p.data)}`;
+              const btnBg       = isVencida ? C.red : C.ink;
+              const isLast      = idx === proximasParcelas.length - 1;
               return (
-                <View
-                  key={p.loanId}
-                  style={[s.parcelaRow, !isLast && s.parcelaRowSep]}
-                >
+                <View key={p.loanId} style={[s.parcelaRow, !isLast && s.parcelaRowSep]}>
                   <View style={[s.accentDot, { backgroundColor: accentColor }]} />
                   <View style={{ flex: 1 }}>
-                    <Text style={s.installMeta}>
-                      Empréstimo #{p.loanId}
-                      {'  '}
-                      <Text style={{ color: accentColor, fontFamily: fonts.semibold }}>{stateLabel}</Text>
-                    </Text>
+                    <Eyebrow style={{ marginBottom: 2 }}>Empréstimo #{p.loanId}</Eyebrow>
+                    <Text style={[s.installState, { color: accentColor }]}>{stateLabel}</Text>
                     <Text style={s.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
                   </View>
                   <TouchableOpacity style={[s.payBtn, { backgroundColor: btnBg }]} activeOpacity={0.8} onPress={() => router.push('/emprestimos' as any)}>
@@ -200,10 +198,11 @@ export default function HomeScreen() {
               );
             })}
 
-            <TouchableOpacity style={s.seeAllLink} onPress={() => router.push('/emprestimos' as any)} activeOpacity={0.7}>
-              <Text style={s.seeAllText}>Ver todos os empréstimos</Text>
-              <Feather name="chevron-right" size={13} color={C.inkSoft} />
-            </TouchableOpacity>
+            <GhostButton
+              label="Ver todos os empréstimos"
+              onPress={() => router.push('/emprestimos' as any)}
+              style={{ marginTop: 8 }}
+            />
           </LightCard>
         </ScrollView>
 
@@ -286,21 +285,17 @@ const s = StyleSheet.create({
   progressCaption:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9, marginBottom: 22 },
   progressCaptionText: { fontSize: fontSize['sm+'], color: C.onDarkFaint, fontFamily: fonts.regular },
   vencSectionTitle: { marginHorizontal: spacing[4], marginTop: 14, marginBottom: 10 },
-  vencSummary:    { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 16 },
   statsRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
   statBlock:   { flex: 1 },
   statDivider: { width: 1, height: 34, backgroundColor: C.line, marginHorizontal: 18 },
-  statLabel:   { fontSize: fontSize['2xs'], color: C.inkFaint, fontFamily: fonts.semibold, marginBottom: 4 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, letterSpacing: -0.3 },
   parcelaRow:    { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
   parcelaRowSep: { borderBottomWidth: 1, borderBottomColor: C.line },
   accentDot:    { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  installMeta:  { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 4 },
+  installState: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, marginBottom: 4 },
   installValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink },
   payBtn:     { paddingHorizontal: 14, paddingVertical: 9, borderRadius: radii.md },
   payBtnText: { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
-  seeAllLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, paddingTop: 4, paddingBottom: 4 },
-  seeAllText: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
   // Investir page
   ofertasHeader:   { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[2] },
   ofertasTitle:    { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.3, marginBottom: 4 },
