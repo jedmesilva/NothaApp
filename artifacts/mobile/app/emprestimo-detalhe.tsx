@@ -89,8 +89,8 @@ export default function EmprestimoDetalheScreen() {
         {parcelasAtrasadas.length > 0 && maisAntiga && (
           <AlertBanner
             style={{ marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: 2 }}
-            title={parcelasAtrasadas.length === 1 ? '1 parcela em atraso' : `${parcelasAtrasadas.length} parcelas em atraso`}
-            message={`${parcelasAtrasadas.length === 1 ? 'Venceu' : 'A mais antiga venceu'} em ${formatData(maisAntiga.data)} · há ${diasEmAtraso} ${diasEmAtraso === 1 ? 'dia' : 'dias'}`}
+            title={parcelasAtrasadas.length === 1 ? '1 pagamento em atraso' : `${parcelasAtrasadas.length} pagamentos em atraso`}
+            message={`${parcelasAtrasadas.length === 1 ? 'Venceu' : 'O mais antigo venceu'} em ${formatData(maisAntiga.data)} · há ${diasEmAtraso} ${diasEmAtraso === 1 ? 'dia' : 'dias'}`}
           />
         )}
 
@@ -122,7 +122,7 @@ export default function EmprestimoDetalheScreen() {
                     { color: '#fff', label: 'pago' },
                     {
                       color: status === 'atrasado' ? '#ff6b6b' : C.onDarkBorder,
-                      label: status === 'atrasado' ? 'parcela em atraso' : `próxima parcela em ${proximaData}`,
+                      label: status === 'atrasado' ? 'pagamento em atraso' : `próximo pagamento em ${proximaData}`,
                       bold: status === 'atrasado',
                     },
                   ]}
@@ -158,7 +158,7 @@ export default function EmprestimoDetalheScreen() {
 
         {/* Parcelas */}
         <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>Parcelas</Text>
+          <Text style={s.sectionTitle}>Pagamentos</Text>
           <Text style={s.sectionCount}>{parcelasRestantes} restantes</Text>
         </View>
 
