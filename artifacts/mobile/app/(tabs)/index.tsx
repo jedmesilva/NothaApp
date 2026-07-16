@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,10 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useArea } from '@/contexts/AreaContext';
 
 const C = {
   bg: '#F4F5F7',
@@ -69,13 +71,25 @@ const ofertas = [
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<'credito' | 'investir'>('credito');
+  const { area, setArea } = useArea();
+  const [activeTab, setActiveTab] = useState<'credito' | 'investir'>(area);
   const [showConta, setShowConta] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = 100;
+
+  // When coming back to this screen from another tab, scroll to correct page
+  useFocusEffect(
+    useCallback(() => {
+      const targetX = area === 'investir' ? W : 0;
+      setActiveTab(area);
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ x: targetX, animated: false });
+      }, 50);
+    }, [area])
+  );
 
   const limiteTotal = 10000;
   const limiteDisponivel = 1500;
@@ -107,6 +121,7 @@ export default function HomeScreen() {
 
   const goToTab = (tab: 'credito' | 'investir') => {
     setActiveTab(tab);
+    setArea(tab);
     scrollRef.current?.scrollTo({ x: tab === 'credito' ? 0 : W, animated: true });
   };
 
@@ -114,8 +129,9 @@ export default function HomeScreen() {
     const x = e.nativeEvent.contentOffset.x;
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = setTimeout(() => {
-      const index = Math.round(x / W);
-      setActiveTab(index === 0 ? 'credito' : 'investir');
+      const newArea = Math.round(x / W) === 0 ? 'credito' : 'investir';
+      setActiveTab(newArea);
+      setArea(newArea);
     }, 100);
   };
 

@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useArea } from '@/contexts/AreaContext';
 
 const C = {
   dark: '#15151D',
@@ -11,25 +12,74 @@ const C = {
   whiteInactive: 'rgba(255,255,255,0.5)',
 };
 
-export default function BottomNav({ state, descriptors, navigation }: BottomTabBarProps) {
-  const insets = useSafeAreaInsets();
+type TabDef = {
+  name: string;
+  label: string;
+  area: 'credito' | 'investir';
+  icon: (active: boolean) => React.ReactNode;
+};
 
-  const tabs = [
-    {
-      name: 'index',
-      label: 'Início',
-      icon: (active: boolean) => (
-        <Feather name="home" size={19} color={active ? C.white : C.whiteInactive} />
-      ),
-    },
-    {
-      name: 'emprestimos',
-      label: 'Empréstimos',
-      icon: (active: boolean) => (
-        <MaterialCommunityIcons name="bank-outline" size={19} color={active ? C.white : C.whiteInactive} />
-      ),
-    },
-  ];
+const CREDITO_TABS: TabDef[] = [
+  {
+    name: 'index',
+    label: 'Início',
+    area: 'credito',
+    icon: (active) => <Feather name="home" size={19} color={active ? C.white : C.whiteInactive} />,
+  },
+  {
+    name: 'emprestimos',
+    label: 'Empréstimos',
+    area: 'credito',
+    icon: (active) => (
+      <MaterialCommunityIcons name="bank-outline" size={19} color={active ? C.white : C.whiteInactive} />
+    ),
+  },
+];
+
+const INVESTIR_TABS: TabDef[] = [
+  {
+    name: 'index',
+    label: 'Início',
+    area: 'investir',
+    icon: (active) => <Feather name="home" size={19} color={active ? C.white : C.whiteInactive} />,
+  },
+  {
+    name: 'ofertas',
+    label: 'Ofertas',
+    area: 'investir',
+    icon: (active) => <Feather name="tag" size={19} color={active ? C.white : C.whiteInactive} />,
+  },
+  {
+    name: 'carteira',
+    label: 'Carteira',
+    area: 'investir',
+    icon: (active) => <Feather name="briefcase" size={19} color={active ? C.white : C.whiteInactive} />,
+  },
+];
+
+export default function BottomNav({ state, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+  const { area, setArea } = useArea();
+
+  const tabs = area === 'investir' ? INVESTIR_TABS : CREDITO_TABS;
+  const currentRouteName = state.routes[state.index]?.name;
+
+  const onPress = (tab: TabDef) => {
+    // Update area when switching between area-specific screens
+    if (tab.name === 'emprestimos') setArea('credito');
+    if (tab.name === 'ofertas' || tab.name === 'carteira') setArea('investir');
+
+    const route = state.routes.find((r) => r.name === tab.name);
+    const isActive = currentRouteName === tab.name;
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route?.key ?? tab.name,
+      canPreventDefault: true,
+    });
+    if (!isActive && !event.defaultPrevented) {
+      navigation.navigate(tab.name);
+    }
+  };
 
   return (
     <View
@@ -42,26 +92,12 @@ export default function BottomNav({ state, descriptors, navigation }: BottomTabB
     >
       <View style={styles.pill}>
         {tabs.map((tab) => {
-          const route = state.routes.find((r) => r.name === tab.name);
-          const routeIndex = state.routes.findIndex((r) => r.name === tab.name);
-          const isActive = state.index === routeIndex;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route?.key ?? tab.name,
-              canPreventDefault: true,
-            });
-            if (!isActive && !event.defaultPrevented) {
-              navigation.navigate(tab.name);
-            }
-          };
-
+          const isActive = currentRouteName === tab.name;
           return (
             <TouchableOpacity
-              key={tab.name}
+              key={`${tab.name}-${area}`}
               style={[styles.navItem, isActive && styles.navItemActive]}
-              onPress={onPress}
+              onPress={() => onPress(tab)}
               activeOpacity={0.8}
             >
               {tab.icon(isActive)}
@@ -105,7 +141,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 999,
   },

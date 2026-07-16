@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AreaProvider } from '@/contexts/AreaContext';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -25,10 +26,13 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="emprestimo-detalhe" options={{ headerShown: false }} />
-    </Stack>
+    <AreaProvider>
+      <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="emprestimo-detalhe" options={{ headerShown: false }} />
+        <Stack.Screen name="ativos" options={{ headerShown: false }} />
+      </Stack>
+    </AreaProvider>
   );
 }
 
