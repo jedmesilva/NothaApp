@@ -99,6 +99,12 @@ export default function EmprestimosScreen() {
 
           const isAtrasado = loan.status === 'atrasado';
           const isCaptacao = loan.status === 'captacao';
+          const proximaDataCalc = (() => {
+            const ciclo = CICLO_META[loan.ciclo];
+            const dataConc = jaConcedido ? addDays(hoje, -(loan.diasDesdeConcessao ?? 0)) : hoje;
+            const proxima = addDays(dataConc, ciclo.dias * (loan.parcelasPagas + 1));
+            return formatDataShort(proxima);
+          })();
 
           return (
             <TouchableOpacity
@@ -160,7 +166,7 @@ export default function EmprestimosScreen() {
                     <View style={styles.dotRow}>
                       <View style={[styles.dot, { backgroundColor: C.line, borderWidth: 1, borderColor: C.inkFaint }]} />
                       <Text style={[styles.captionText, isAtrasado && { color: C.red, fontFamily: 'Inter_700Bold' }]}>
-                        {isAtrasado ? `atrasado há ${loan.diasAtraso ?? 0} dias` : `próxima parcela em ${loan.proximaData ?? ''}`}
+                        {isAtrasado ? `atrasado há ${loan.diasAtraso ?? 0} dias` : `próximo vencimento em ${proximaDataCalc}`}
                       </Text>
                     </View>
                   </View>
