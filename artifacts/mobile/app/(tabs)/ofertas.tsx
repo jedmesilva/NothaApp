@@ -7,10 +7,8 @@ import {
   StyleSheet,
   Modal,
   Animated,
-  Platform,
   Dimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
 const C = {
@@ -239,13 +237,11 @@ function OfertaBottomSheet({
 }
 
 export default function OfertasScreen() {
-  const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 20 : insets.top;
   const [selectedOferta, setSelectedOferta] = useState<typeof MOCK_OFERTAS[0] | null>(null);
   const saldoConta = 8500;
 
   return (
-    <View style={[styles.screen, { paddingTop: topPad }]}>
+    <View style={styles.screen}>
       <View style={styles.header}>
         <Text style={styles.title}>Oportunidades</Text>
         <Text style={styles.subtitle}>Empréstimos disponíveis para você investir</Text>

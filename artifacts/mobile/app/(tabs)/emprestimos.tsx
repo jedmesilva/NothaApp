@@ -5,9 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { EMPRESTIMOS, CICLO_META, STATUS_META, formatBRL, addDays, formatDataShort } from '@/data/loans';
@@ -85,15 +83,13 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 export default function EmprestimosScreen() {
-  const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState('todos');
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = 100;
 
   const filtered = activeFilter === 'todos' ? EMPRESTIMOS : EMPRESTIMOS.filter((e) => e.status === activeFilter);
 
   return (
-    <View style={[styles.screen, { paddingTop: topPad }]}>
+    <View style={styles.screen}>
       <View style={styles.header}>
         <Text style={styles.title}>Empréstimos</Text>
       </View>

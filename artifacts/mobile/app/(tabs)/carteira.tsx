@@ -6,10 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 
@@ -68,10 +65,7 @@ const CHIPS = [
 ];
 
 export default function CarteiraScreen() {
-  const insets = useSafeAreaInsets();
   const [periodo, setPeriodo] = useState('7d');
-
-  const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   // Mock data
   const investido = 10000;
@@ -147,13 +141,7 @@ export default function CarteiraScreen() {
   const visLabels = labels.filter((_, i) => i % step === 0 || i === labels.length - 1);
 
   return (
-    <View style={[styles.screen, { paddingTop: topPad }]}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
-          <Feather name="arrow-left" size={18} color={C.ink} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Carteira</Text>
-      </View>
+    <View style={styles.screen}>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero card */}

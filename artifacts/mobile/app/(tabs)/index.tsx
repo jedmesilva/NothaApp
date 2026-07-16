@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Modal,
-  Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
-import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useArea } from '@/contexts/AreaContext';
 
 const C = {
@@ -70,26 +66,33 @@ const ofertas = [
 ];
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const { area, setArea } = useArea();
   const [activeTab, setActiveTab] = useState<'credito' | 'investir'>(area);
-  const [showConta, setShowConta] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFocusedRef = useRef(false);
 
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = 100;
 
-  // When coming back to this screen from another tab, scroll to correct page
+  // When returning to this screen from another tab, scroll to correct page
   useFocusEffect(
     useCallback(() => {
+      isFocusedRef.current = true;
       const targetX = area === 'investir' ? W : 0;
       setActiveTab(area);
       setTimeout(() => {
         scrollRef.current?.scrollTo({ x: targetX, animated: false });
       }, 50);
+      return () => { isFocusedRef.current = false; };
     }, [area])
   );
+
+  // When area changes via GlobalHeader while already on this screen
+  useEffect(() => {
+    if (!isFocusedRef.current) return;
+    setActiveTab(area);
+    scrollRef.current?.scrollTo({ x: area === 'investir' ? W : 0, animated: true });
+  }, [area]);
 
   const limiteTotal = 10000;
   const limiteDisponivel = 1500;
@@ -136,36 +139,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={[styles.screen, { paddingTop: topPad }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.avatar} onPress={() => setShowConta(true)} activeOpacity={0.8}>
-          <Text style={styles.avatarText}>R</Text>
-        </TouchableOpacity>
-
-        <View style={styles.tabWrap}>
-          <TouchableOpacity
-            style={[styles.tabBtn, activeTab === 'credito' && styles.tabBtnActive]}
-            onPress={() => goToTab('credito')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.tabLabel, { color: activeTab === 'credito' ? '#fff' : C.inkSoft }]}>Crédito</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tabBtn, activeTab === 'investir' && styles.tabBtnActive]}
-            onPress={() => goToTab('investir')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.tabLabel, { color: activeTab === 'investir' ? '#fff' : C.inkSoft }]}>Investir</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.bellWrap}>
-          <Ionicons name="notifications-outline" size={19} color={C.ink} />
-          <View style={styles.notifDot} />
-        </View>
-      </View>
-
+    <View style={styles.screen}>
       {/* Swipeable pages */}
       <ScrollView
         ref={scrollRef}
@@ -344,52 +318,6 @@ export default function HomeScreen() {
         </ScrollView>
       </ScrollView>
 
-      {/* Conta Modal */}
-      <Modal visible={showConta} animationType="slide" onRequestClose={() => setShowConta(false)}>
-        <View style={[styles.contaScreen, { paddingTop: topPad }]}>
-          <View style={styles.contaHeader}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => setShowConta(false)} activeOpacity={0.8}>
-              <Feather name="arrow-left" size={18} color={C.ink} />
-            </TouchableOpacity>
-            <Text style={styles.contaTitle}>Minha Conta</Text>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.primaryCard}>
-              <Text style={styles.eyebrow}>Saldo em conta</Text>
-              <Text style={[styles.bigValue, { marginBottom: 8 }]}>R$ {formatBRL(saldoConta)}</Text>
-              <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionBtnDark} activeOpacity={0.8}>
-                  <Feather name="arrow-down" size={16} color="#fff" />
-                  <Text style={styles.actionBtnDarkText}>Sacar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtnDark} activeOpacity={0.8}>
-                  <Feather name="plus" size={16} color="#fff" />
-                  <Text style={styles.actionBtnDarkText}>Depositar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={[styles.secondaryCard, { margin: 16 }]}>
-              <Text style={styles.sectionTitle}>Extrato</Text>
-              {extrato.map((item, idx) => (
-                <View key={item.id} style={[styles.extratoRow, idx === extrato.length - 1 && { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 }]}>
-                  <View style={styles.extratoIcon}>
-                    <Feather name={item.tipo === 'entrada' ? 'arrow-down' : 'arrow-up'} size={15} color={C.ink} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.extratoDesc}>{item.desc}</Text>
-                    <Text style={styles.extratoData}>{item.data}</Text>
-                  </View>
-                  <Text style={[styles.extratoValor, { color: item.tipo === 'entrada' ? C.ink : C.inkSoft }]}>
-                    {item.tipo === 'entrada' ? '+' : '−'} R$ {formatBRL(Math.abs(item.valor))}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
     </View>
   );
 }
