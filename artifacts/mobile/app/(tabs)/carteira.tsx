@@ -138,7 +138,7 @@ export default function CarteiraScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
 
         {/* Hero card */}
-        <DarkCard style={{ marginTop: 18 }}>
+        <DarkCard style={{ marginTop: spacing[4] }}>
           <Eyebrow context="dark">Investido</Eyebrow>
           <BigValue context="dark">R$ {formatBRL(investido)}</BigValue>
 

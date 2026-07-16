@@ -45,7 +45,7 @@ const RISCOS = [
 
 export default function AtivosScreen() {
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 20 : insets.top;
+  const topPad = Platform.OS === 'web' ? 67 : insets.top;
 
   const [activeFilter, setActiveFilter] = useState('todas');
   const [riscoFilter, setRiscoFilter]   = useState('todos');
@@ -238,7 +238,7 @@ export default function AtivosScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingBottom: 4 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingBottom: spacing[3] },
   title:  { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: spacing[4], marginTop: spacing[4], marginBottom: 4 },
   searchWrap:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 13, borderRadius: radii.lg, backgroundColor: C.card },

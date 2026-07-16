@@ -204,7 +204,7 @@ const C_chipBg = C.chipUrgent; // alias
 
 const s = StyleSheet.create({
   screen:    { flex: 1, backgroundColor: C.bg },
-  header:    { paddingHorizontal: spacing[5], paddingTop: 6, paddingBottom: 4 },
+  header:    { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[2] },
   title:     { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.3, marginBottom: 4 },
   subtitle:  { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 14 },
   saldoChip: { marginHorizontal: spacing[5], marginBottom: 4, paddingHorizontal: 14, paddingVertical: 10, borderRadius: radii.md, backgroundColor: C.chipUrgent },

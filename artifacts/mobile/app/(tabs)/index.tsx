@@ -280,7 +280,7 @@ export default function HomeScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  greeting:     { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: 18, fontSize: fontSize.lg, color: C.inkSoft, fontFamily: fonts.regular },
+  greeting:     { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[4], fontSize: fontSize.lg, color: C.inkSoft, fontFamily: fonts.regular },
   greetingName: { color: C.ink, fontFamily: fonts.bold },
   totalText:    { fontSize: fontSize.md, color: C.onDarkMid, fontFamily: fonts.medium, marginBottom: 16, marginTop: 6 },
   progressCaption:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9, marginBottom: 22 },
@@ -301,7 +301,7 @@ const s = StyleSheet.create({
   seeAllLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, paddingTop: 4, paddingBottom: 4 },
   seeAllText: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
   // Investir page
-  ofertasHeader:   { paddingHorizontal: spacing[5], paddingTop: spacing[5], paddingBottom: 6 },
+  ofertasHeader:   { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[2] },
   ofertasTitle:    { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.3, marginBottom: 4 },
   ofertasSubtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular },
   ofertaEyebrow:     { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint, marginBottom: 6 },

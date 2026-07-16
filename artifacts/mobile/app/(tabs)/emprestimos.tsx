@@ -176,7 +176,7 @@ export default function EmprestimosScreen() {
 
 const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  header: { paddingTop: 18, paddingHorizontal: 4, paddingBottom: 6 },
+  header: { paddingTop: spacing[4], paddingHorizontal: 4, paddingBottom: spacing[2] },
   title:    { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4 },
   subtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
   loanCard: { borderRadius: radii.card, backgroundColor: C.card, padding: 20 },
