@@ -276,7 +276,7 @@ const s = StyleSheet.create({
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   statSub:     { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
   ativosCount: { fontFamily: fonts.display, fontSize: 38, color: C.ink, letterSpacing: -0.8, lineHeight: 42 },
-  atrasoBar:   { flexDirection: 'row', alignItems: 'flex-start', gap: 9, marginBottom: 18, padding: 12, borderRadius: radii.lg, backgroundColor: C.redBg, borderWidth: 1.5, borderColor: C.red },
+  atrasoBar:   { flexDirection: 'row', alignItems: 'flex-start', gap: 9, marginBottom: 18, padding: 12, borderRadius: radii.lg, backgroundColor: C.redBg },
   atrasoText:  { flex: 1, fontSize: fontSize['sm+'], color: C.red, fontFamily: fonts.regular, lineHeight: 18 },
   timelineWrap:       { paddingHorizontal: 4, marginBottom: 14 },
   timelineTrack:      { position: 'relative', height: 3, backgroundColor: C.line, borderRadius: radii.full },

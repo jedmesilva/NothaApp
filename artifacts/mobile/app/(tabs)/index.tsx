@@ -276,7 +276,7 @@ const s = StyleSheet.create({
   statLabel:   { fontSize: fontSize['2xs'], color: C.inkFaint, fontFamily: fonts.semibold, marginBottom: 4 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, letterSpacing: -0.3 },
   parcelaRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: spacing[4], marginBottom: 10 },
-  parcelaRowVencida: { backgroundColor: C.redBg, borderWidth: 1.5, borderColor: C.red },
+  parcelaRowVencida: { backgroundColor: C.redBg },
   parcelaRowProxima: { backgroundColor: C.amberBg },
   parcelaRowFutura:  { backgroundColor: C.bg },
   installIcon: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
