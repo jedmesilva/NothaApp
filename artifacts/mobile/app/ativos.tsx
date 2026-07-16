@@ -248,7 +248,7 @@ const s = StyleSheet.create({
   filterBadge:     { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: C.ink, borderWidth: 2, borderColor: C.card },
   emptyState: { textAlign: 'center', paddingVertical: 60, color: C.inkFaint, fontSize: fontSize.md, fontFamily: fonts.regular },
   posCard:         { borderRadius: radii.card, backgroundColor: C.card, padding: 22 },
-  posCardAtrasado: { borderWidth: 1.5, borderColor: C.red },
+  posCardAtrasado: { borderWidth: 1.5, borderColor: C.red, backgroundColor: C.redBg },
   posCardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
   posTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   eyebrow:    { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint },

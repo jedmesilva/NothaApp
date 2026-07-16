@@ -180,7 +180,7 @@ const st = StyleSheet.create({
   title:    { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4 },
   subtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
   loanCard: { borderRadius: radii.card, backgroundColor: C.card, padding: 20 },
-  loanCardAtrasado: { borderWidth: 1.5, borderColor: C.red },
+  loanCardAtrasado: { borderWidth: 1.5, borderColor: C.red, backgroundColor: C.redBg },
   loanCardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
   loanTopRow: {
     flexDirection: 'row',
