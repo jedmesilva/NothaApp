@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { EMPRESTIMOS, CICLO_META, STATUS_META, formatBRL, addDays, formatDataShort } from '@/data/loans';
 
@@ -23,14 +23,6 @@ const C = {
   chipBg: '#F4F5F7',
 };
 
-const FILTERS = [
-  { key: 'todos', label: 'Todos' },
-  { key: 'ativo', label: 'Ativos' },
-  { key: 'atrasado', label: 'Atrasados' },
-  { key: 'analise', label: 'Em análise' },
-  { key: 'captacao', label: 'Em captação' },
-  { key: 'quitado', label: 'Quitados' },
-];
 
 function ContadorCaptacao() {
   const [segundos, setSegundos] = useState(0);
@@ -83,40 +75,17 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 export default function EmprestimosScreen() {
-  const [activeFilter, setActiveFilter] = useState('todos');
   const bottomPad = 100;
-
-  const filtered = activeFilter === 'todos' ? EMPRESTIMOS : EMPRESTIMOS.filter((e) => e.status === activeFilter);
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Empréstimos</Text>
-      </View>
-      <Text style={styles.subtitle}>{EMPRESTIMOS.length} empréstimos no total</Text>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, paddingBottom: 18 }}>
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={f.key}
-            style={[styles.pill, activeFilter === f.key && styles.pillActive]}
-            onPress={() => setActiveFilter(f.key)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.pillText, activeFilter === f.key && styles.pillTextActive]}>{f.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottomPad, gap: 12 }}>
-        {filtered.length === 0 && (
-          <View style={styles.emptyState}>
-            <Feather name="inbox" size={28} color={C.inkFaint} style={{ marginBottom: 8 }} />
-            <Text style={styles.emptyText}>Nenhum empréstimo nessa categoria.</Text>
-          </View>
-        )}
+        <View style={styles.header}>
+          <Text style={styles.title}>Empréstimos</Text>
+          <Text style={styles.subtitle}>{EMPRESTIMOS.length} empréstimos no total</Text>
+        </View>
 
-        {filtered.map((loan) => {
+        {EMPRESTIMOS.map((loan) => {
           const cicloMeta = CICLO_META[loan.ciclo];
           const totalAPagar = loan.valor * (1 + loan.taxaJurosTotal / 100);
           const valorParcela = totalAPagar / loan.parcelasTotal;
@@ -228,14 +197,9 @@ export default function EmprestimosScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 4 },
+  header: { paddingTop: 18, paddingHorizontal: 4, paddingBottom: 6 },
   title: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 24, color: C.ink, letterSpacing: -0.4 },
-  subtitle: { paddingHorizontal: 20, paddingBottom: 18, fontSize: 13.5, color: C.inkSoft, fontFamily: 'Inter_400Regular' },
-  filterScroll: { flexGrow: 0 },
-  pill: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
-  pillActive: { backgroundColor: C.dark, borderColor: C.dark },
-  pillText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: C.inkSoft },
-  pillTextActive: { color: '#fff' },
+  subtitle: { fontSize: 13.5, color: C.inkSoft, fontFamily: 'Inter_400Regular', marginTop: 2 },
   emptyState: { alignItems: 'center', paddingVertical: 60 },
   emptyText: { fontSize: 14, color: C.inkFaint, fontFamily: 'Inter_400Regular' },
   loanCard: { borderRadius: 22, backgroundColor: C.card, padding: 20 },
