@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: 'Inter_600SemiBold', marginBottom: 4 },
   statValue: { fontFamily: 'SpaceGrotesk_700Bold', fontSize: 21, color: C.ink, letterSpacing: -0.3 },
   parcelaRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 14, marginBottom: 10 },
-  parcelaRowVencida: { backgroundColor: C.redBg, borderWidth: 1.5, borderColor: C.red },
+  parcelaRowVencida: { backgroundColor: C.redBg },
   parcelaRowProxima: { backgroundColor: C.amberBg },
   parcelaRowFutura: { backgroundColor: C.bg },
   installIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
