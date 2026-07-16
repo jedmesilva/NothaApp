@@ -22,6 +22,7 @@ import {
   DetailGrid,
   Eyebrow, BigValue, SectionTitle,
   ContaCard,
+  InstallmentBadge,
 } from '@/components/ds';
 
 const W = Dimensions.get('window').width;
@@ -190,13 +191,9 @@ export default function HomeScreen() {
                   activeOpacity={0.75}
                   onPress={() => router.push(`/emprestimo-detalhe?id=${p.loanId}` as any)}
                 >
-                  <View style={[s.parcelaIconBadge, isVencida && s.parcelaIconBadgeVencida, isProxima && s.parcelaIconBadgeProxima]}>
-                    <Feather
-                      name={isVencida ? 'alert-triangle' : isProxima ? 'clock' : 'calendar'}
-                      size={16}
-                      color={isVencida ? '#fff' : isProxima ? C.amber : C.inkFaint}
-                    />
-                  </View>
+                  <InstallmentBadge
+                    variant={isVencida ? 'overdue' : isProxima ? 'proxima' : 'future'}
+                  />
                   <View style={{ flex: 1 }}>
                     <Text style={[s.installState, { color: accentColor }]}>{stateLabel}</Text>
                     <Text style={s.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
@@ -300,9 +297,6 @@ const s = StyleSheet.create({
   statDivider: { width: 1, height: 34, backgroundColor: C.line, marginHorizontal: 18 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, letterSpacing: -0.3 },
   parcelaRow:      { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
-  parcelaIconBadge:         { width: 36, height: 36, borderRadius: radii.sm, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
-  parcelaIconBadgeVencida:  { backgroundColor: C.red },
-  parcelaIconBadgeProxima:  { backgroundColor: C.amberBg },
   parcelaRowSep:   { borderBottomWidth: 1, borderBottomColor: C.line },
   parcelaRowVencida: { backgroundColor: C.redBg, borderRadius: radii.card, paddingHorizontal: 12, marginHorizontal: -12 },
   installState: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, marginBottom: 4 },

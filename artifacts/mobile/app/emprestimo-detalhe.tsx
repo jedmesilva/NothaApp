@@ -13,7 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { EMPRESTIMOS, CICLO_META, STATUS_META, formatBRL, addDays, formatData, formatDataHora } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid } from '@/components/ds';
+import { BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid, InstallmentBadge } from '@/components/ds';
 import type { LoanStatus } from '@/components/ds';
 
 export default function EmprestimoDetalheScreen() {
@@ -180,12 +180,10 @@ export default function EmprestimoDetalheScreen() {
                 key={p.numero}
                 style={[s.parcelaCard, isAtrasada && s.parcelaCardAtrasada, isPaga && { opacity: 0.55 }]}
               >
-                <View style={[s.indexBadge, isPaga && s.indexBadgePaga, isAtrasada && s.indexBadgeAtrasada]}>
-                  {isPaga
-                    ? <Feather name="check" size={16} color="#fff" />
-                    : <Text style={[s.indexNum, isAtrasada && { color: '#fff' }]}>{p.numero}</Text>
-                  }
-                </View>
+                <InstallmentBadge
+                  variant={isPaga ? 'paid' : isAtrasada ? 'overdue' : 'default'}
+                  label={String(p.numero)}
+                />
                 <View style={{ flex: 1 }}>
                   <Text style={[s.parcelaLabel, isAtrasada && { color: C.red, fontFamily: fonts.bold }]}>
                     {isPaga ? 'Pago em ' : isAtrasada ? 'Venceu em ' : 'Vence em '}
@@ -271,10 +269,6 @@ const s = StyleSheet.create({
   list: { gap: 10, paddingHorizontal: spacing[4] },
   parcelaCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: radii.card, padding: 14, backgroundColor: C.card },
   parcelaCardAtrasada:  { backgroundColor: C.redBg },
-  indexBadge:          { width: 36, height: 36, borderRadius: radii.sm, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
-  indexBadgePaga:      { backgroundColor: C.ink },
-  indexBadgeAtrasada:  { backgroundColor: C.red },
-  indexNum:  { fontFamily: fonts.display, fontSize: fontSize.base, color: C.inkSoft },
   parcelaLabel: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 2 },
   parcelaValue: { fontFamily: fonts.display, fontSize: fontSize.xl },
   payBtn:         { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radii.md, backgroundColor: C.ink },

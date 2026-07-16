@@ -27,3 +27,5 @@ export {
 } from './Typography';
 export { ContaCard } from './ContaCard';
 export type { ContaCardVariant, ContaCardProps } from './ContaCard';
+export { InstallmentBadge } from './InstallmentBadge';
+export type { InstallmentBadgeVariant } from './InstallmentBadge';
