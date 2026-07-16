@@ -191,7 +191,7 @@ export default function AtivosScreen() {
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.splitLabel}>Retorno</Text>
-                  <Text style={styles.splitValue}>R$ {formatBRL(Math.round(retornoTotal))}</Text>
+                  <Text style={styles.splitValue}>R$ {formatBRL(Math.round(totalComRetorno))}</Text>
                 </View>
               </View>
 
