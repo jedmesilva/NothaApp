@@ -222,7 +222,7 @@ export default function CarteiraScreen() {
             <View style={[styles.progressFill, { width: `${percentRecebido}%` as any }]} />
           </View>
           <View style={styles.progressCaption}>
-            <Text style={styles.progressCaptionText}>{percentRecebido}% já recebido</Text>
+            <Text style={styles.progressCaptionText}>{percentRecebido}% recebido</Text>
             <Text style={styles.progressCaptionText}>de R$ {formatBRL(totalAReceber)}</Text>
           </View>
         </View>
