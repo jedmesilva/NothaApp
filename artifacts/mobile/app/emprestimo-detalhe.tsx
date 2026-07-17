@@ -184,7 +184,7 @@ export default function EmprestimoDetalheScreen() {
         </View>
 
         {/* Dates row */}
-        <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
+        <TouchableOpacity style={[s.datesRow, { marginTop: spacing[4] }]} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
           <View style={{ flex: 1 }}>
             <Text style={s.dateLabel}>{jaConcedido ? 'Concedido em' : 'Solicitado em'}</Text>
             <Text style={s.dateValue}>{formatData(jaConcedido ? dataConcessao : dataSolicitacao)}</Text>
