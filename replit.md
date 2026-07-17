@@ -1,45 +1,46 @@
 # notha
 
-App mobile de empréstimos pessoais — permite ao usuário visualizar limite de crédito, saldo, vencimentos, lista de empréstimos e detalhes com parcelas.
-
-## Run & Operate
-
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+A financial services mobile app for managing investments, loans, and account details.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- **Mobile:** React Native + Expo (SDK 54) with Expo Router and TanStack Query
+- **Backend:** Node.js + Express v5 with Drizzle ORM
+- **Database:** PostgreSQL (via `DATABASE_URL`)
+- **Shared libs:** `lib/db`, `lib/api-spec`, `lib/api-zod`, `lib/api-client-react`
+- **Tooling:** pnpm workspace monorepo
 
-## Where things live
+## Running the project
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+Dependencies are installed via pnpm at the root:
 
-## Architecture decisions
+```bash
+pnpm install
+```
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+### Workflows
 
-## Product
+- **API Server** (`artifacts/api-server`): builds with `esbuild` then starts Express on port 8080
+- **Mobile** (`artifacts/mobile`): starts Expo Metro bundler; scan the QR code with Expo Go or open in web
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+### Required secrets
+
+- `DATABASE_URL` — PostgreSQL connection string. Without it, the API server starts but database-dependent routes will fail.
+
+## Project structure
+
+```
+artifacts/
+  api-server/   # Express backend
+  mobile/       # Expo mobile app
+  mockup-sandbox/ # UI prototyping (Vite)
+lib/
+  db/           # Drizzle schema
+  api-spec/     # OpenAPI definition
+  api-zod/      # Generated Zod schemas
+  api-client-react/ # Generated React Query hooks
+```
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
-
-## Gotchas
-
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+_None recorded yet._
