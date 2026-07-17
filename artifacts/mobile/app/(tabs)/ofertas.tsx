@@ -299,7 +299,7 @@ export default function OfertasScreen() {
 
               {/* Pool */}
               <PoolBar
-                label="Captação do pedido"
+                label="Captação"
                 headLeft={`${pctCaptado}% captado`}
                 headRight={`R$ ${formatBRL(o.jaCaptado)} de R$ ${formatBRL(o.valorTotalPedido)}`}
                 segments={[

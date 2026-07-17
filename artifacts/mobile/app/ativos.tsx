@@ -139,7 +139,7 @@ export default function AtivosScreen() {
 
               {isCaptacao ? (
                 <PoolBar
-                  label="Captação do pedido"
+                  label="Captação"
                   headLeft={`${pctCaptado + pctPos}% captado`}
                   headRight={`R$ ${formatBRL(p.jaCaptado + p.valorInvestido)} de R$ ${formatBRL(p.valorTotalPedido)}`}
                   segments={[

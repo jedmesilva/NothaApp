@@ -144,7 +144,7 @@ export default function AtivoDetalheScreen() {
           {/* Pool bar */}
           {!jaConcedido ? (
             <PoolBar
-              label="Captação do pedido"
+              label="Captação"
               headLeft={`${pctCaptado + pctPos}% captado`}
               headRight={`R$ ${formatBRL(posicao.jaCaptado + valorInvestido)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
               segments={[
