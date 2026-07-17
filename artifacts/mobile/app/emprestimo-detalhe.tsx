@@ -120,7 +120,7 @@ export default function EmprestimoDetalheScreen() {
                   context="dark"
                   items={[
                     { color: '#fff', label: 'captado' },
-                    { color: C.onDarkBorder, label: `${numCredores ?? 0} credores participando` },
+                    { color: C.onDarkBorder, label: 'aguardando captação completa' },
                   ]}
                 />
               }
