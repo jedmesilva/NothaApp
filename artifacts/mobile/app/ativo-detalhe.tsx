@@ -97,13 +97,14 @@ export default function AtivoDetalheScreen() {
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
 
-        {/* ── Header ── */}
-        <View style={s.header}>
-          <BackButton onPress={() => router.back()} />
-          <Text style={s.title}>Detalhes do ativo</Text>
-        </View>
+      {/* ── Header fixo ── */}
+      <View style={s.header}>
+        <BackButton onPress={() => router.back()} />
+        <Text style={s.title}>Detalhes do ativo</Text>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
 
         {/* ── Alert: tomador em atraso (topo, antes do hero) ── */}
         {status === 'atrasado' && posicao.diasAtraso != null && (
