@@ -117,19 +117,11 @@ export default function EmprestimosScreen() {
               {/* Captação progress */}
               {isCaptacao && (
                 <PoolBar
-                  label="Captação do pedido"
+                  label="Captação"
                   headLeft={`${percentCaptado}% captado`}
                   headRight={`R$ ${formatBRL(loan.valorCaptado ?? 0)} de R$ ${formatBRL(loan.valor)}`}
                   segments={[{ pct: percentCaptado, variant: 'primary' }]}
                   style={{ marginBottom: 18 }}
-                  footer={
-                    <PoolLegend
-                      items={[
-                        { color: C.ink,   label: 'Captado' },
-                        { color: C.line,  label: 'Captando' },
-                      ]}
-                    />
-                  }
                 />
               )}
 
