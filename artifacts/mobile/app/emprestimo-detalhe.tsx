@@ -120,25 +120,12 @@ export default function EmprestimoDetalheScreen() {
 
           {(status === 'ativo' || status === 'atrasado' || status === 'quitado') && (
             <PoolBar
-              label="Vencimento do empréstimo"
+              label="Pagamento"
               headLeft={`${percentPago}% pago`}
               headRight={`R$ ${formatBRL(Math.round(valorPago))} de R$ ${formatBRL(Math.round(totalAPagar))}`}
               segments={[{ pct: percentPago, variant: 'primary' }]}
               context="dark"
               style={{ marginBottom: 22 }}
-              footer={
-                <PoolLegend
-                  context="dark"
-                  items={[
-                    { color: '#fff', label: 'pago' },
-                    {
-                      color: status === 'atrasado' ? '#ff6b6b' : C.onDarkBorder,
-                      label: status === 'atrasado' ? 'vencimento em atraso' : `próximo vencimento em ${proximaData}`,
-                      bold: status === 'atrasado',
-                    },
-                  ]}
-                />
-              }
             />
           )}
 
