@@ -30,11 +30,14 @@ const FILTERS = [
   { key: 'captacao', label: 'Em captação' },
   { key: 'quitado',  label: 'Quitados' },
 ];
-const RISCOS = [
-  { key: 'todos', label: 'Todos os riscos' },
-  { key: 'Baixo', label: 'Baixo' },
-  { key: 'Médio', label: 'Médio' },
-  { key: 'Alto',  label: 'Alto' },
+const CLASSIFICACOES = [
+  { key: 'todos', label: 'Todas' },
+  { key: 'A', label: 'A' },
+  { key: 'B', label: 'B' },
+  { key: 'C', label: 'C' },
+  { key: 'D', label: 'D' },
+  { key: 'E', label: 'E' },
+  { key: 'F', label: 'F' },
 ];
 
 export default function AtivosScreen() {
@@ -42,22 +45,22 @@ export default function AtivosScreen() {
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   const [activeFilter, setActiveFilter] = useState('todas');
-  const [riscoFilter, setRiscoFilter]   = useState('todos');
+  const [classificacaoFilter, setClassificacaoFilter] = useState('todos');
   const [busca, setBusca]               = useState('');
   const [modalOpen, setModalOpen]       = useState(false);
   const [draftFilter, setDraftFilter]   = useState('todas');
-  const [draftRisco, setDraftRisco]     = useState('todos');
+  const [draftClassificacao, setDraftClassificacao] = useState('todos');
 
-  const filtersActive = activeFilter !== 'todas' || riscoFilter !== 'todos';
+  const filtersActive = activeFilter !== 'todas' || classificacaoFilter !== 'todos';
 
   const filtered = POSICOES.filter((p) => {
-    const statusOk = activeFilter === 'todas' || p.status === activeFilter;
-    const riscoOk  = riscoFilter === 'todos'  || p.risco === riscoFilter;
-    const buscaOk  = busca.trim() === '' || p.contratoId.toLowerCase().includes(busca.trim().toLowerCase());
-    return statusOk && riscoOk && buscaOk;
+    const statusOk        = activeFilter === 'todas'       || p.status === activeFilter;
+    const classificacaoOk = classificacaoFilter === 'todos' || p.tomadorScore === classificacaoFilter;
+    const buscaOk         = busca.trim() === ''            || p.contratoId.toLowerCase().includes(busca.trim().toLowerCase());
+    return statusOk && classificacaoOk && buscaOk;
   });
 
-  const openModal = () => { setDraftFilter(activeFilter); setDraftRisco(riscoFilter); setModalOpen(true); };
+  const openModal = () => { setDraftFilter(activeFilter); setDraftClassificacao(classificacaoFilter); setModalOpen(true); };
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
@@ -173,7 +176,7 @@ export default function AtivosScreen() {
               <DetailGrid
                 items={[
                   { label: 'Prazo',    value: `${p.prazoDias} dias`, sub: `parcelas ${ciclo.parcelasLabel}` },
-                  { label: 'Risco',    value: p.risco,               sub: `score ${p.tomadorScore}` },
+                  { label: 'Classificação', value: p.tomadorScore },
                   { label: 'Histórico', value: p.emprestimosAnteriores === 0 ? 'Primeiro' : `${p.emprestimosAnteriores + 1}º empréstimo` },
                   { label: 'Já tomado', value: p.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(p.valorTotalTomado)}` },
                 ]}
@@ -204,24 +207,24 @@ export default function AtivosScreen() {
           ))}
         </View>
 
-        <Text style={s.modalSectionLabel}>Risco</Text>
+        <Text style={s.modalSectionLabel}>Classificação</Text>
         <View style={s.pillsWrap}>
-          {RISCOS.map((r) => (
-            <Chip key={r.key} label={r.label} variant="outlined" active={draftRisco === r.key} onPress={() => setDraftRisco(r.key)} />
+          {CLASSIFICACOES.map((c) => (
+            <Chip key={c.key} label={c.label} variant="outlined" active={draftClassificacao === c.key} onPress={() => setDraftClassificacao(c.key)} />
           ))}
         </View>
 
         <View style={s.modalFooter}>
           <TouchableOpacity
             style={s.footerBtnGhost}
-            onPress={() => { setDraftFilter('todas'); setDraftRisco('todos'); }}
+            onPress={() => { setDraftFilter('todas'); setDraftClassificacao('todos'); }}
             activeOpacity={0.8}
           >
             <Text style={s.footerBtnGhostText}>Limpar</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={s.footerBtnSolid}
-            onPress={() => { setActiveFilter(draftFilter); setRiscoFilter(draftRisco); setModalOpen(false); }}
+            onPress={() => { setActiveFilter(draftFilter); setClassificacaoFilter(draftClassificacao); setModalOpen(false); }}
             activeOpacity={0.85}
           >
             <Text style={s.footerBtnSolidText}>Aplicar filtros</Text>

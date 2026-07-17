@@ -272,7 +272,7 @@ export default function AtivoDetalheScreen() {
           <View style={s.tomadorGridWrap}>
             <DetailGrid
               items={[
-                { label: 'Risco',     value: risco,              sub: `score ${tomadorScore}` },
+                { label: 'Classificação', value: tomadorScore },
                 { label: 'Histórico', value: numeroDoContrato },
                 { label: 'Já tomado', value: emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(valorTotalTomado)}` },
                 { label: 'Cidade',    value: cidade },
