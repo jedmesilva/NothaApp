@@ -33,12 +33,20 @@ const emprestimosAtivos = [
 ];
 
 export default function HomeScreen() {
-  const { area, setArea } = useArea();
+  const { area, setArea, registerScrollTo } = useArea();
   const [activeTab, setActiveTab]   = useState<'credito' | 'investir'>('credito');
   const scrollRef                   = useRef<ScrollView>(null);
   const scrollTimeoutRef            = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFocusedRef                = useRef(false);
   const bottomPad                   = 100;
+
+  // Registra o scroll para que o GlobalHeader possa acioná-lo via contexto
+  useEffect(() => {
+    registerScrollTo((a) => {
+      setActiveTab(a);
+      scrollRef.current?.scrollTo({ x: a === 'investir' ? W : 0, animated: true });
+    });
+  }, [registerScrollTo]);
 
   useFocusEffect(
     useCallback(() => {
@@ -48,12 +56,6 @@ export default function HomeScreen() {
       return () => { isFocusedRef.current = false; };
     }, [area])
   );
-
-  useEffect(() => {
-    if (!isFocusedRef.current) return;
-    setActiveTab(area);
-    scrollRef.current?.scrollTo({ x: area === 'investir' ? W : 0, animated: true });
-  }, [area]);
 
   const hoje = new Date();
 

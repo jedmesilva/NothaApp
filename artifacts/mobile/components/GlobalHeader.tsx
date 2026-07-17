@@ -15,12 +15,12 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 export default function GlobalHeader() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { area, setArea } = useArea();
+  const { area, setArea, scrollToArea } = useArea();
 
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   const switchArea = (tab: 'credito' | 'investir') => {
-    setArea(tab);
+    scrollToArea(tab);
     router.navigate('/');
   };
 
