@@ -125,6 +125,7 @@ export default function HomeScreen() {
             <PrimaryButton
               label={limiteDisponivel > 0 ? 'Solicitar empréstimo' : 'Limite esgotado'}
               disabled={limiteDisponivel <= 0}
+              onPress={() => router.push('/novo-emprestimo')}
             />
           </DarkCard>
 
