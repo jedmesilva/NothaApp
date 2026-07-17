@@ -5,6 +5,7 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useArea } from '@/contexts/AreaContext';
 import { palette as C, fonts, fontSize, radii, shadows } from '@/constants/theme';
+import { router } from 'expo-router';
 
 type TabDef = {
   name: string;
@@ -41,14 +42,22 @@ const INVESTIR_TABS: TabDef[] = [
 
 export default function BottomNav({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { area, setArea } = useArea();
+  const { area, setArea, scrollToArea } = useArea();
 
   const tabs = area === 'investir' ? INVESTIR_TABS : CREDITO_TABS;
   const currentRouteName = state.routes[state.index]?.name;
 
   const onPress = (tab: TabDef) => {
+    // "Início" do Investir deve voltar ao index (scroll horizontal) na Page 2,
+    // não navegar para a tab carteira separada — assim o swipe horizontal funciona.
+    if (tab.name === 'carteira') {
+      scrollToArea('investir');
+      router.navigate('/');
+      return;
+    }
+
     if (tab.name === 'emprestimos') setArea('credito');
-    if (tab.name === 'ofertas' || tab.name === 'carteira') setArea('investir');
+    if (tab.name === 'ofertas') setArea('investir');
 
     const route = state.routes.find((r) => r.name === tab.name);
     const isActive = currentRouteName === tab.name;
@@ -60,8 +69,7 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
     if (!isActive && !event.defaultPrevented) navigation.navigate(tab.name);
   };
 
-  // "Início" no Investir aponta para carteira; quando o usuário está no
-  // index (scroll horizontal) na área investir, destacamos o tab Início.
+  // Marca "Início" como ativo quando o usuário está no index na área investir
   const isTabActive = (tab: TabDef) => {
     if (tab.name === 'carteira' && area === 'investir' && currentRouteName === 'index') return true;
     return currentRouteName === tab.name;
