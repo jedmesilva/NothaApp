@@ -42,6 +42,9 @@ function RootLayoutNav() {
             <Stack.Screen name="ativos" options={{ headerShown: false }} />
             <Stack.Screen name="ativo-detalhe" options={{ headerShown: false }} />
             <Stack.Screen name="conta" options={{ headerShown: false }} />
+            <Stack.Screen name="novo-emprestimo" options={{ headerShown: false }} />
+            <Stack.Screen name="aceite-contrato" options={{ headerShown: false }} />
+            <Stack.Screen name="contrato-leitura" options={{ headerShown: false }} />
           </Stack>
 
           {/* Toast global — renderizado por cima de todas as telas */}

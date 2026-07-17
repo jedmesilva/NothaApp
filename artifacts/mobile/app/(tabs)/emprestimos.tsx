@@ -67,8 +67,20 @@ export default function EmprestimosScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100, gap: 12 }}
       >
         <View style={st.header}>
-          <Text style={st.title}>Empréstimos</Text>
-          <Text style={st.subtitle}>{EMPRESTIMOS.length} empréstimos no total</Text>
+          <View style={st.headerRow}>
+            <View>
+              <Text style={st.title}>Empréstimos</Text>
+              <Text style={st.subtitle}>{EMPRESTIMOS.length} empréstimos no total</Text>
+            </View>
+            <TouchableOpacity
+              style={st.newBtn}
+              onPress={() => router.push('/novo-emprestimo')}
+              activeOpacity={0.85}
+            >
+              <Feather name="plus" size={16} color="#fff" />
+              <Text style={st.newBtnText}>Novo</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {EMPRESTIMOS.map((loan) => {
@@ -177,8 +189,19 @@ export default function EmprestimosScreen() {
 const st = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   header: { paddingTop: spacing[4], paddingHorizontal: 4, paddingBottom: spacing[2] },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title:    { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4 },
   subtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
+  newBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: C.dark,
+    borderRadius: radii.full,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  newBtnText: { fontFamily: fonts.bold, fontSize: fontSize.base, color: '#fff' },
   loanCard: { borderRadius: radii.card, backgroundColor: C.card, padding: 20 },
   loanCardAtrasado: { borderWidth: 1.5, borderColor: C.red },
   loanCardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
