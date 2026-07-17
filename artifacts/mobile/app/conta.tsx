@@ -17,7 +17,7 @@ const saldoConta = 8500;
 
 const extrato = [
   { id: 1, desc: 'Depósito via Pix',    data: '10 de julho', valor: 500,  tipo: 'entrada' },
-  { id: 2, desc: 'Pagamento de parcela', data: '05 de julho', valor: -331, tipo: 'saida'  },
+  { id: 2, desc: 'Pagamento de vencimento', data: '05 de julho', valor: -331, tipo: 'saida'  },
   { id: 3, desc: 'Saque',               data: '28 de junho',  valor: -300, tipo: 'saida'  },
   { id: 4, desc: 'Empréstimo liberado',  data: '20 de junho',  valor: 3200, tipo: 'entrada'},
 ];
