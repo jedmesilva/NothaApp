@@ -89,7 +89,7 @@ export default function EmprestimoDetalheScreen() {
         {parcelasAtrasadas.length > 0 && maisAntiga && (
           <AlertBanner
             style={{ marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: 2 }}
-            title={parcelasAtrasadas.length === 1 ? '1 pagamento em atraso' : `${parcelasAtrasadas.length} pagamentos em atraso`}
+            title={parcelasAtrasadas.length === 1 ? '1 vencimento em atraso' : `${parcelasAtrasadas.length} vencimentos em atraso`}
             message={`${parcelasAtrasadas.length === 1 ? 'Venceu' : 'O mais antigo venceu'} em ${formatData(maisAntiga.data)} · há ${diasEmAtraso} ${diasEmAtraso === 1 ? 'dia' : 'dias'}`}
           />
         )}
@@ -109,7 +109,7 @@ export default function EmprestimoDetalheScreen() {
 
           {(status === 'ativo' || status === 'atrasado' || status === 'quitado') && (
             <PoolBar
-              label="Pagamento do empréstimo"
+              label="Vencimento do empréstimo"
               headLeft={`${percentPago}% pago`}
               headRight={`R$ ${formatBRL(Math.round(valorPago))} de R$ ${formatBRL(Math.round(totalAPagar))}`}
               segments={[{ pct: percentPago, variant: 'primary' }]}
@@ -122,7 +122,7 @@ export default function EmprestimoDetalheScreen() {
                     { color: '#fff', label: 'pago' },
                     {
                       color: status === 'atrasado' ? '#ff6b6b' : C.onDarkBorder,
-                      label: status === 'atrasado' ? 'pagamento em atraso' : `próximo pagamento em ${proximaData}`,
+                      label: status === 'atrasado' ? 'vencimento em atraso' : `próximo vencimento em ${proximaData}`,
                       bold: status === 'atrasado',
                     },
                   ]}
@@ -144,7 +144,7 @@ export default function EmprestimoDetalheScreen() {
 
         {/* Parcelas */}
         <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>Pagamentos</Text>
+          <Text style={s.sectionTitle}>Vencimentos</Text>
           <Text style={s.sectionCount}>{parcelasRestantes} restantes</Text>
         </View>
 
