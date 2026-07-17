@@ -138,6 +138,10 @@ export function formatRelativeDueDate(data: Date): string {
   return `Venceu há ${Math.abs(diffDias)} dias`;
 }
 
+export function formatDataComAno(date: Date): string {
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
 export function formatDataHora(date: Date): string {
   return `${date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} · ${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
 }
