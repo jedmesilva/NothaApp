@@ -95,6 +95,28 @@ export const EMPRESTIMOS: Emprestimo[] = [
   },
 ];
 
+export function createEmprestimo(opts: {
+  valorCentavos: number;
+  cicloKey: string;
+  numPeriodos: number;
+  prazoDias: number;
+  taxaTotal: number;
+}): number {
+  const newId = Math.max(...EMPRESTIMOS.map((e) => e.id)) + 1;
+  EMPRESTIMOS.push({
+    id: newId,
+    valor: opts.valorCentavos / 100,
+    taxaJurosTotal: opts.taxaTotal,
+    prazoDias: opts.prazoDias,
+    ciclo: opts.cicloKey,
+    parcelasTotal: opts.numPeriodos,
+    parcelasPagas: 0,
+    status: 'analise',
+    contratoId: `EMP-${new Date().getFullYear()}-${String(newId).padStart(5, '0')}`,
+  });
+  return newId;
+}
+
 export function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }

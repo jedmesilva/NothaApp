@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton } from '@/components/ds';
+import { createEmprestimo } from '@/data/loans';
 
 // ---------------------------------------------------------------------------
 // Contract content
@@ -97,8 +98,14 @@ export default function ContratoLeituraScreen() {
   };
 
   const handleAceitar = () => {
-    // Navigate back to the loans tab, clearing the stack
-    router.navigate('/(tabs)/emprestimos');
+    const newId = createEmprestimo({
+      valorCentavos: parseInt(params.valorCentavos ?? '50000', 10),
+      cicloKey: params.cicloKey ?? 'semanal',
+      numPeriodos: parseInt(params.numPeriodos ?? '8', 10),
+      prazoDias: parseInt(params.prazoDias ?? '56', 10),
+      taxaTotal: parseFloat(params.taxaTotal ?? '14.3'),
+    });
+    router.replace({ pathname: '/emprestimo-detalhe', params: { id: String(newId) } });
   };
 
   return (

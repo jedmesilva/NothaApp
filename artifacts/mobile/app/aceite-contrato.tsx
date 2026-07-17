@@ -12,7 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, DetailGrid } from '@/components/ds';
-import { formatData } from '@/data/loans';
+import { formatData, createEmprestimo } from '@/data/loans';
 
 const fmtBRL = (n: number) =>
   n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -58,6 +58,17 @@ export default function AceiteContratoScreen() {
 
   const ciclo = CICLO_META[cicloKey] ?? CICLO_META.semanal;
 
+  const handleConfirmar = () => {
+    const newId = createEmprestimo({
+      valorCentavos: parseInt(params.valorCentavos ?? '50000', 10),
+      cicloKey,
+      numPeriodos,
+      prazoDias,
+      taxaTotal,
+    });
+    router.replace({ pathname: '/emprestimo-detalhe', params: { id: String(newId) } });
+  };
+
   const handleLerContrato = () => {
     router.push({
       pathname: '/contrato-leitura',
@@ -84,7 +95,7 @@ export default function AceiteContratoScreen() {
           <Text style={s.title}>Revisar e confirmar</Text>
         </View>
       </View>
-      <Text style={s.subtitle}>Confira os termos antes de ler e aceitar o contrato.</Text>
+      <Text style={s.subtitle}>Confira os termos do seu empréstimo antes de confirmar.</Text>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -159,8 +170,8 @@ export default function AceiteContratoScreen() {
 
       {/* Fixed CTA */}
       <View style={[s.ctaBar, { paddingBottom: Math.max(insets.bottom, 18) }]}>
-        <TouchableOpacity style={s.ctaButton} onPress={handleLerContrato} activeOpacity={0.85}>
-          <Text style={s.ctaText}>Ler e aceitar contrato</Text>
+        <TouchableOpacity style={s.ctaButton} onPress={handleConfirmar} activeOpacity={0.85}>
+          <Text style={s.ctaText}>Confirmar e solicitar</Text>
         </TouchableOpacity>
       </View>
     </View>
