@@ -105,7 +105,8 @@ export default function ContratoLeituraScreen() {
       prazoDias: parseInt(params.prazoDias ?? '56', 10),
       taxaTotal: parseFloat(params.taxaTotal ?? '14.3'),
     });
-    router.replace({ pathname: '/emprestimo-detalhe', params: { id: String(newId) } });
+    router.dismissAll();
+    router.push({ pathname: '/emprestimo-detalhe', params: { id: String(newId) } });
   };
 
   return (

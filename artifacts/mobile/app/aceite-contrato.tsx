@@ -66,7 +66,8 @@ export default function AceiteContratoScreen() {
       prazoDias,
       taxaTotal,
     });
-    router.replace({ pathname: '/emprestimo-detalhe', params: { id: String(newId) } });
+    router.dismissAll();
+    router.push({ pathname: '/emprestimo-detalhe', params: { id: String(newId) } });
   };
 
   const handleLerContrato = () => {
