@@ -196,20 +196,6 @@ export default function AtivoDetalheScreen() {
           />
         )}
 
-        {/* ── Datas (toca → modal de timeline) ── */}
-        <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>Investido em</Text>
-            <Text style={s.dateValue}>{formatDataComAno(dataInvestimento)}</Text>
-          </View>
-          <View style={s.datesDivider} />
-          <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>{jaConcedido ? 'Vencimento' : 'Previsão de vencimento'}</Text>
-            <Text style={s.dateValue}>{formatDataComAno(dataVencimentoFinal)}</Text>
-          </View>
-          <Feather name="chevron-right" size={18} color={C.inkFaint} />
-        </TouchableOpacity>
-
         {/* ── Vencimentos (colapsável) ── */}
         {jaConcedido && parcelasTotal > 0 && (
           <View style={s.vencimentosCard}>
@@ -299,6 +285,20 @@ export default function AtivoDetalheScreen() {
           <Text style={s.propositoLabel}>Propósito declarado</Text>
           <Text style={s.propositoValue}>{proposito}</Text>
         </View>
+
+        {/* ── Datas (toca → modal de timeline) ── */}
+        <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.dateLabel}>Investido em</Text>
+            <Text style={s.dateValue}>{formatDataComAno(dataInvestimento)}</Text>
+          </View>
+          <View style={s.datesDivider} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.dateLabel}>{jaConcedido ? 'Vencimento' : 'Previsão de vencimento'}</Text>
+            <Text style={s.dateValue}>{formatDataComAno(dataVencimentoFinal)}</Text>
+          </View>
+          <Feather name="chevron-right" size={18} color={C.inkFaint} />
+        </TouchableOpacity>
 
         {/* ── Contrato ID ── */}
         <Text style={s.contratoId}>Contrato Nº {contratoId}</Text>
