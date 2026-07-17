@@ -447,7 +447,7 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 22,
   },
-  heroValueGroup: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  heroValueGroup: { flexDirection: 'row', alignItems: 'baseline', gap: 6, flex: 1, minWidth: 0 },
   currencyPrefix: {
     fontFamily: fonts.display,
     fontSize: fontSize['5xl'],
@@ -459,7 +459,8 @@ const s = StyleSheet.create({
     color: '#fff',
     letterSpacing: -1,
     paddingBottom: 3,
-    minWidth: 80,
+    flexShrink: 1,
+    minWidth: 60,
     borderBottomWidth: 1.5,
     borderBottomColor: 'rgba(255,255,255,0.4)',
   },
