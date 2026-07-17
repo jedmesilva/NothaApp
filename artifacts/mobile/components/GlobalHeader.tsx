@@ -21,11 +21,7 @@ export default function GlobalHeader() {
 
   const switchArea = (tab: 'credito' | 'investir') => {
     setArea(tab);
-    if (tab === 'investir') {
-      router.navigate('/carteira' as any);
-    } else {
-      router.navigate('/');
-    }
+    router.navigate('/');
   };
 
   return (

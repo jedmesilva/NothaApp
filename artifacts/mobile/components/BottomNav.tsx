@@ -60,6 +60,13 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
     if (!isActive && !event.defaultPrevented) navigation.navigate(tab.name);
   };
 
+  // "Início" no Investir aponta para carteira; quando o usuário está no
+  // index (scroll horizontal) na área investir, destacamos o tab Início.
+  const isTabActive = (tab: TabDef) => {
+    if (tab.name === 'carteira' && area === 'investir' && currentRouteName === 'index') return true;
+    return currentRouteName === tab.name;
+  };
+
   return (
     <View
       style={[
@@ -69,7 +76,7 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
     >
       <View style={s.pill}>
         {tabs.map((tab) => {
-          const isActive = currentRouteName === tab.name;
+          const isActive = isTabActive(tab);
           return (
             <TouchableOpacity
               key={`${tab.name}-${area}`}

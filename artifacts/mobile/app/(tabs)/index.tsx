@@ -21,6 +21,7 @@ import {
   ContaCard,
   InstallmentBadge,
 } from '@/components/ds';
+import CarteiraScreen from './carteira';
 
 const W = Dimensions.get('window').width;
 
@@ -39,28 +40,19 @@ export default function HomeScreen() {
   const isFocusedRef                = useRef(false);
   const bottomPad                   = 100;
 
-  // When this screen gains focus with area === 'investir', redirect to Carteira.
   useFocusEffect(
     useCallback(() => {
       isFocusedRef.current = true;
-      if (area === 'investir') {
-        router.navigate('/carteira' as any);
-        return () => { isFocusedRef.current = false; };
-      }
-      setActiveTab('credito');
-      scrollRef.current?.scrollTo({ x: 0, animated: false });
+      setActiveTab(area);
+      setTimeout(() => scrollRef.current?.scrollTo({ x: area === 'investir' ? W : 0, animated: false }), 50);
       return () => { isFocusedRef.current = false; };
     }, [area])
   );
 
   useEffect(() => {
     if (!isFocusedRef.current) return;
-    if (area === 'investir') {
-      router.navigate('/carteira' as any);
-      return;
-    }
-    setActiveTab('credito');
-    scrollRef.current?.scrollTo({ x: 0, animated: true });
+    setActiveTab(area);
+    scrollRef.current?.scrollTo({ x: area === 'investir' ? W : 0, animated: true });
   }, [area]);
 
   const hoje = new Date();
@@ -91,20 +83,13 @@ export default function HomeScreen() {
   const hour     = hoje.getHours();
   const saudacao = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
-  // When the user swipes to the Investir side, redirect to Carteira.
   const handleSwipeScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = setTimeout(() => {
-      if (Math.round(x / W) === 1) {
-        // Snap back and navigate to Carteira
-        scrollRef.current?.scrollTo({ x: 0, animated: false });
-        setArea('investir');
-        router.navigate('/carteira' as any);
-      } else {
-        setActiveTab('credito');
-        setArea('credito');
-      }
+      const newArea = Math.round(x / W) === 0 ? 'credito' : 'investir';
+      setActiveTab(newArea);
+      setArea(newArea);
     }, 100);
   };
 
@@ -212,8 +197,10 @@ export default function HomeScreen() {
           </LightCard>
         </ScrollView>
 
-        {/* ── Page 2: placeholder — swipe redirects to Carteira ─────── */}
-        <View style={{ width: W }} />
+        {/* ── Page 2: Carteira (início da área Investir) ────────────── */}
+        <View style={{ width: W, flex: 1 }}>
+          <CarteiraScreen />
+        </View>
       </ScrollView>
     </View>
   );
