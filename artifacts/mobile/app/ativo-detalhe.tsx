@@ -251,10 +251,7 @@ export default function AtivoDetalheScreen() {
                             <Text style={s.statusTagText}>Recebido</Text>
                           </>
                         ) : isAtrasada ? (
-                          <>
-                            <Feather name="alert-triangle" size={14} color={C.red} />
-                            <Text style={[s.statusTagText, { color: C.red }]}>Vencido</Text>
-                          </>
+                          <Text style={[s.statusTagText, { color: C.red }]}>Vencido</Text>
                         ) : (
                           <Text style={s.statusTagText}>A receber</Text>
                         )}
