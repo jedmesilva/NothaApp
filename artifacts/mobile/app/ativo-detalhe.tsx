@@ -105,6 +105,15 @@ export default function AtivoDetalheScreen() {
           <Text style={s.title}>Detalhes do ativo</Text>
         </View>
 
+        {/* ── Alert: tomador em atraso (topo, antes do hero) ── */}
+        {status === 'atrasado' && posicao.diasAtraso != null && (
+          <AlertBanner
+            style={{ marginHorizontal: spacing[4], marginBottom: 2 }}
+            title="Tomador em atraso"
+            message={`O pagamento está atrasado há ${posicao.diasAtraso} ${posicao.diasAtraso === 1 ? 'dia' : 'dias'}`}
+          />
+        )}
+
         {/* ── Hero dark card ── */}
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
@@ -186,15 +195,6 @@ export default function AtivoDetalheScreen() {
             ]}
           />
         </View>
-
-        {/* ── Alert: tomador em atraso ── */}
-        {status === 'atrasado' && posicao.diasAtraso != null && (
-          <AlertBanner
-            style={{ marginHorizontal: spacing[4], marginTop: spacing[4] }}
-            title="Tomador em atraso"
-            message={`O pagamento está atrasado há ${posicao.diasAtraso} ${posicao.diasAtraso === 1 ? 'dia' : 'dias'}`}
-          />
-        )}
 
         {/* ── Vencimentos (colapsável) ── */}
         {jaConcedido && parcelasTotal > 0 && (
