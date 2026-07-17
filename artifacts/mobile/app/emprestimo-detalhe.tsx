@@ -142,20 +142,6 @@ export default function EmprestimoDetalheScreen() {
           />
         </View>
 
-        {/* Dates row */}
-        <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>{jaConcedido ? 'Concedido em' : 'Solicitado em'}</Text>
-            <Text style={s.dateValue}>{formatData(jaConcedido ? dataConcessao : dataSolicitacao)}</Text>
-          </View>
-          <View style={s.datesDivider} />
-          <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>{jaConcedido ? 'Vencimento' : 'Previsão de vencimento'}</Text>
-            <Text style={s.dateValue}>{formatData(dataVencimentoFinal)}</Text>
-          </View>
-          <Feather name="chevron-right" size={18} color={C.inkFaint} />
-        </TouchableOpacity>
-
         {/* Parcelas */}
         <View style={s.sectionHeader}>
           <Text style={s.sectionTitle}>Pagamentos</Text>
@@ -196,6 +182,20 @@ export default function EmprestimoDetalheScreen() {
             );
           })}
         </View>
+
+        {/* Dates row */}
+        <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.dateLabel}>{jaConcedido ? 'Concedido em' : 'Solicitado em'}</Text>
+            <Text style={s.dateValue}>{formatData(jaConcedido ? dataConcessao : dataSolicitacao)}</Text>
+          </View>
+          <View style={s.datesDivider} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.dateLabel}>{jaConcedido ? 'Vencimento' : 'Previsão de vencimento'}</Text>
+            <Text style={s.dateValue}>{formatData(dataVencimentoFinal)}</Text>
+          </View>
+          <Feather name="chevron-right" size={18} color={C.inkFaint} />
+        </TouchableOpacity>
 
         <Text style={s.contratoId}>Contrato Nº {contratoId ?? `EMP-${id}`}</Text>
 
