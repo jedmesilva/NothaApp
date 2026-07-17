@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { formatBRL } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend, SplitRow, DetailGrid, Chip, ModalSheet } from '@/components/ds';
@@ -339,7 +340,7 @@ export default function OfertasScreen() {
           const pctOfertaClamped = Math.min(pctOferta, 100 - pctCaptado);
 
           return (
-            <View key={o.id} style={s.card}>
+            <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => router.push(`/ativo-detalhe?id=${o.id}` as any)}>
               {/* Eyebrow + badge */}
               <View style={s.cardTopRow}>
                 <Text style={s.eyebrow}>Retorno oferecido</Text>
@@ -392,20 +393,20 @@ export default function OfertasScreen() {
               <View style={s.btnRow}>
                 <TouchableOpacity
                   style={s.detalhesBtn}
-                  onPress={() => setSelectedOferta(o)}
+                  onPress={() => router.push(`/ativo-detalhe?id=${o.id}` as any)}
                   activeOpacity={0.8}
                 >
                   <Text style={s.detalhesBtnText}>Ver detalhes</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={s.aceitarBtn}
-                  onPress={() => handleAceitar(o)}
+                  onPress={(e) => { e.stopPropagation?.(); handleAceitar(o); }}
                   activeOpacity={0.85}
                 >
                   <Text style={s.aceitarBtnText}>Aceitar oferta</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>
