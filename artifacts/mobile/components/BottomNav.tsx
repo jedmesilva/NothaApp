@@ -30,10 +30,6 @@ const CREDITO_TABS: TabDef[] = [
 
 const INVESTIR_TABS: TabDef[] = [
   {
-    name: 'index', label: 'Início', area: 'investir',
-    icon: (a) => <Feather name="home" size={19} color={a ? WHITE : WHITE_MID} />,
-  },
-  {
     name: 'ofertas', label: 'Ofertas', area: 'investir',
     icon: (a) => <Feather name="tag" size={19} color={a ? WHITE : WHITE_MID} />,
   },
