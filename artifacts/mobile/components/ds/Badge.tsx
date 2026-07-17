@@ -6,10 +6,24 @@
  * context="light"  — shown on a white/light card (default)
  * context="dark"   — shown on the dark hero card (inverted colors)
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { palette as C, radii, fontSize, fonts } from '@/constants/theme';
+
+function ContadorCaptacao({ color }: { color: string }) {
+  const [seg, setSeg] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setSeg((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const hh = Math.floor(seg / 3600);
+  const mm = Math.floor((seg % 3600) / 60);
+  const ss = seg % 60;
+  const texto = hh > 0 ? `${hh}:${pad(mm)}:${pad(ss)}` : mm > 0 ? `${mm}:${pad(ss)}min` : `${ss}s`;
+  return <Text style={[s.timer, { color }]}>{texto}</Text>;
+}
 
 export type LoanStatus = 'analise' | 'captacao' | 'ativo' | 'atrasado' | 'quitado';
 
@@ -68,8 +82,18 @@ export function StatusBadge({ status, context = 'light', label }: Props) {
         style.border ? { borderWidth: 1, borderColor: style.border } : undefined,
       ]}
     >
-      <Feather name={icon as any} size={13} color={style.color} />
-      <Text style={[s.label, { color: style.color }]}>{text}</Text>
+      {status === 'captacao' ? (
+        <>
+          <ContadorCaptacao color={style.color} />
+          <Text style={[s.sep, { color: style.color }]}>·</Text>
+          <Text style={[s.label, { color: style.color }]}>{text}</Text>
+        </>
+      ) : (
+        <>
+          <Feather name={icon as any} size={13} color={style.color} />
+          <Text style={[s.label, { color: style.color }]}>{text}</Text>
+        </>
+      )}
     </View>
   );
 }
@@ -86,5 +110,13 @@ const s = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
+  },
+  timer: {
+    fontSize: fontSize.sm,
+    fontFamily: fonts.bold,
+  },
+  sep: {
+    fontSize: fontSize.sm,
+    opacity: 0.45,
   },
 });
