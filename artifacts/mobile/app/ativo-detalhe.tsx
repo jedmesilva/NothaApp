@@ -156,7 +156,7 @@ export default function AtivoDetalheScreen() {
                 <PoolLegend
                   context="dark"
                   items={[
-                    { color: '#fff',        label: `${posicao.numCredores} outros credores` },
+                    { color: '#fff',        label: 'outros credores' },
                     { color: C.onDarkFaint, label: 'minha participação' },
                   ]}
                 />

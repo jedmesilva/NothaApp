@@ -146,7 +146,7 @@ export default function AtivosScreen() {
                   style={{ marginBottom: 18 }}
                   footer={
                     <View style={s.legend}>
-                      <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: C.ink }]}     /><Text style={s.legendText}>Outros credores</Text></View>
+                      <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: C.ink }]}     /><Text style={s.legendText}>outros credores</Text></View>
                       <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: C.inkFaint }]} /><Text style={s.legendText}>Minha participação</Text></View>
                     </View>
                   }
