@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+// useRef still needed by OfertaSheet's intervalRef
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Platform, TextInput, Animated,
+  Platform, TextInput,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +10,7 @@ import { router } from 'expo-router';
 import { formatBRL } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend, SplitRow, DetailGrid, Chip, ModalSheet } from '@/components/ds';
+import { useToast } from '@/contexts/ToastContext';
 
 // ─── Dados mock ───────────────────────────────────────────────────────────────
 
@@ -51,60 +53,6 @@ const CICLOS_FILTRO = [
 const CICLO_PLURAL: Record<string, string> = {
   Diário: 'diários', Semanal: 'semanais', Mensal: 'mensais',
 };
-
-const TOAST_SECONDS = 6;
-
-// ─── Toast ────────────────────────────────────────────────────────────────────
-
-function ToastOfertaAceita({
-  oferta,
-  onClose,
-  onAcompanhar,
-}: {
-  oferta: Oferta;
-  onClose: () => void;
-  onAcompanhar: () => void;
-}) {
-  const progress = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.timing(progress, {
-      toValue: 0,
-      duration: TOAST_SECONDS * 1000,
-      useNativeDriver: false,
-    }).start();
-  }, []);
-
-  const widthInterp = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
-
-  return (
-    <View style={t.wrap}>
-      <View style={t.topRow}>
-        <View style={t.iconWrap}>
-          <Feather name="check" size={16} color="#fff" strokeWidth={2.6} />
-        </View>
-        <View style={t.textBlock}>
-          <Text style={t.title}>Oferta aceita</Text>
-          <Text style={t.subtitle}>R$ {formatBRL(oferta.valor)} investidos em {oferta.ofertaId}</Text>
-        </View>
-        <TouchableOpacity style={t.closeBtn} onPress={onClose} activeOpacity={0.8}>
-          <Feather name="x" size={14} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={t.actionBtn} onPress={onAcompanhar} activeOpacity={0.85}>
-        <Text style={t.actionBtnText}>Acompanhar captação</Text>
-      </TouchableOpacity>
-
-      <View style={t.progressTrack}>
-        <Animated.View style={[t.progressFill, { width: widthInterp }]} />
-      </View>
-    </View>
-  );
-}
 
 // ─── Offer detail sheet (Ver detalhes) ────────────────────────────────────────
 
@@ -235,6 +183,7 @@ function OfertaSheet({ oferta, onClose, onAceitar }: {
 
 export default function OfertasScreen() {
   const insets = useSafeAreaInsets();
+  const { showToast } = useToast();
 
   const [classificacaoFilter, setClassificacaoFilter] = useState('todos');
   const [cicloFilter,         setCicloFilter]         = useState('todos');
@@ -242,8 +191,6 @@ export default function OfertasScreen() {
   const [modalOpen,           setModalOpen]           = useState(false);
   const [selectedOferta,      setSelectedOferta]      = useState<Oferta | null>(null);
   const [aceitas,             setAceitas]             = useState<number[]>([]);
-  const [toast,               setToast]               = useState<Oferta | null>(null);
-  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [draftClassificacao, setDraftClassificacao] = useState(classificacaoFilter);
   const [draftCiclo,         setDraftCiclo]         = useState(cicloFilter);
@@ -258,22 +205,15 @@ export default function OfertasScreen() {
     return classificacaoOk && cicloOk && buscaOk;
   });
 
-  const closeToast = () => {
-    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    setToast(null);
-  };
-
   const handleAceitar = (oferta: Oferta) => {
     setAceitas((prev) => prev.includes(oferta.id) ? prev : [...prev, oferta.id]);
-    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    setToast(oferta);
-    toastTimeoutRef.current = setTimeout(() => setToast(null), TOAST_SECONDS * 1000);
-  };
-
-  const handleAcompanhar = () => {
-    closeToast();
-    setSelectedOferta(null);
-    // TODO: navegar para ativo-detalhe quando a captação fechar
+    showToast({
+      title: 'Oferta aceita',
+      subtitle: `R$ ${formatBRL(oferta.valor)} investidos em ${oferta.ofertaId}`,
+      actionLabel: 'Acompanhar captação',
+      onAction: () => {}, // TODO: navegar para ativo-detalhe quando a captação fechar
+      duration: 6000,
+    });
   };
 
   const openModal = () => {
@@ -292,8 +232,6 @@ export default function OfertasScreen() {
     setDraftClassificacao('todos');
     setDraftCiclo('todos');
   };
-
-  useEffect(() => () => { if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current); }, []);
 
   return (
     <View style={s.screen}>
@@ -472,15 +410,6 @@ export default function OfertasScreen() {
         </View>
       </ModalSheet>
 
-      {/* Toast */}
-      {toast && (
-        <ToastOfertaAceita
-          key={toast.id}
-          oferta={toast}
-          onClose={closeToast}
-          onAcompanhar={handleAcompanhar}
-        />
-      )}
     </View>
   );
 }
@@ -561,17 +490,3 @@ const bs = StyleSheet.create({
   closeBtnText:   { fontSize: fontSize.lg, fontFamily: fonts.bold, color: C.ink },
 });
 
-// Toast styles
-const t = StyleSheet.create({
-  wrap:         { position: 'absolute', bottom: 16, left: spacing[4], right: spacing[4], backgroundColor: C.dark, borderRadius: 18, padding: spacing[4], paddingBottom: spacing[3] },
-  topRow:       { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
-  iconWrap:     { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  textBlock:    { flex: 1 },
-  title:        { fontFamily: fonts.display, fontSize: fontSize['base+'], color: '#fff', marginBottom: 2 },
-  subtitle:     { fontSize: fontSize.xs, color: 'rgba(255,255,255,0.6)', fontFamily: fonts.regular },
-  closeBtn:     { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  actionBtn:    { width: '100%', paddingVertical: 11, borderRadius: radii.md, backgroundColor: '#fff', alignItems: 'center', marginBottom: 10 },
-  actionBtnText:{ fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.dark },
-  progressTrack:{ width: '100%', height: 3, borderRadius: radii.full, backgroundColor: 'rgba(255,255,255,0.16)', overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: '#fff', borderRadius: radii.full },
-});

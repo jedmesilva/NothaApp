@@ -1,10 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AreaProvider } from '@/contexts/AreaContext';
+import { ToastProvider } from '@/contexts/ToastContext';
+import type { ToastState } from '@/contexts/ToastContext';
+import GlobalToast from '@/components/GlobalToast';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -25,16 +29,26 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const [toast, setToast] = useState<ToastState>(null);
+  const handleToast = useCallback((t: ToastState) => setToast(t), []);
+
   return (
-    <AreaProvider>
-      <Stack screenOptions={{ headerBackTitle: 'Back' }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="emprestimo-detalhe" options={{ headerShown: false }} />
-        <Stack.Screen name="ativos" options={{ headerShown: false }} />
-        <Stack.Screen name="ativo-detalhe" options={{ headerShown: false }} />
-        <Stack.Screen name="conta" options={{ headerShown: false }} />
-      </Stack>
-    </AreaProvider>
+    <ToastProvider onToast={handleToast}>
+      <AreaProvider>
+        <View style={{ flex: 1 }}>
+          <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="emprestimo-detalhe" options={{ headerShown: false }} />
+            <Stack.Screen name="ativos" options={{ headerShown: false }} />
+            <Stack.Screen name="ativo-detalhe" options={{ headerShown: false }} />
+            <Stack.Screen name="conta" options={{ headerShown: false }} />
+          </Stack>
+
+          {/* Toast global — renderizado por cima de todas as telas */}
+          <GlobalToast toast={toast} onClose={() => setToast(null)} />
+        </View>
+      </AreaProvider>
+    </ToastProvider>
   );
 }
 
