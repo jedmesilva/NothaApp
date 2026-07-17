@@ -25,7 +25,7 @@ export default function EmprestimoDetalheScreen() {
   const [pagas, setPagas] = useState(baseEmprestimo.parcelasPagas);
   const [showTimeline, setShowTimeline] = useState(false);
 
-  const { valor, taxaJurosTotal, prazoDias, ciclo, parcelasTotal, status, contratoId, diasDesdeConcessao } = baseEmprestimo;
+  const { valor, taxaJurosTotal, prazoDias, ciclo, parcelasTotal, status, contratoId, diasDesdeConcessao, valorCaptado, numCredores } = baseEmprestimo;
   const cicloMeta       = CICLO_META[ciclo];
   const totalAPagar     = valor * (1 + taxaJurosTotal / 100);
   const valorParcela    = totalAPagar / parcelasTotal;
@@ -106,6 +106,26 @@ export default function EmprestimoDetalheScreen() {
             R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade} · {parcelasTotal}{' '}
             {parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
           </Text>
+
+          {status === 'captacao' && (
+            <PoolBar
+              label="Captação do pedido"
+              headLeft={`${Math.round(((valorCaptado ?? 0) / valor) * 100)}% captado`}
+              headRight={`R$ ${formatBRL(Math.round(valorCaptado ?? 0))} de R$ ${formatBRL(valor)}`}
+              segments={[{ pct: ((valorCaptado ?? 0) / valor) * 100, variant: 'primary' }]}
+              context="dark"
+              style={{ marginBottom: 22 }}
+              footer={
+                <PoolLegend
+                  context="dark"
+                  items={[
+                    { color: '#fff', label: 'captado' },
+                    { color: C.onDarkBorder, label: `${numCredores ?? 0} credores participando` },
+                  ]}
+                />
+              }
+            />
+          )}
 
           {(status === 'ativo' || status === 'atrasado' || status === 'quitado') && (
             <PoolBar
