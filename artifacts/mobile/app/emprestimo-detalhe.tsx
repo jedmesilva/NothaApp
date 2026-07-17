@@ -109,21 +109,12 @@ export default function EmprestimoDetalheScreen() {
 
           {status === 'captacao' && (
             <PoolBar
-              label="Captação do pedido"
+              label="Captação"
               headLeft={`${Math.round(((valorCaptado ?? 0) / valor) * 100)}% captado`}
               headRight={`R$ ${formatBRL(Math.round(valorCaptado ?? 0))} de R$ ${formatBRL(valor)}`}
               segments={[{ pct: ((valorCaptado ?? 0) / valor) * 100, variant: 'primary' }]}
               context="dark"
               style={{ marginBottom: 22 }}
-              footer={
-                <PoolLegend
-                  context="dark"
-                  items={[
-                    { color: '#fff', label: 'captado' },
-                    { color: C.onDarkBorder, label: 'aguardando captação completa' },
-                  ]}
-                />
-              }
             />
           )}
 
