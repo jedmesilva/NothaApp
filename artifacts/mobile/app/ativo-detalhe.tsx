@@ -111,7 +111,7 @@ export default function AtivoDetalheScreen() {
           <AlertBanner
             style={{ marginHorizontal: spacing[4], marginBottom: 2 }}
             title="Tomador em atraso"
-            message={`O pagamento está atrasado há ${posicao.diasAtraso} ${posicao.diasAtraso === 1 ? 'dia' : 'dias'}`}
+            message={`O vencimento está atrasado há ${posicao.diasAtraso} ${posicao.diasAtraso === 1 ? 'dia' : 'dias'}`}
           />
         )}
 
@@ -165,7 +165,7 @@ export default function AtivoDetalheScreen() {
             />
           ) : (
             <PoolBar
-              label="Pagamento do contrato"
+              label="Vencimento do contrato"
               headLeft={`${pctPago}% pago`}
               headRight={`R$ ${formatBRL(Math.round(recebidoValor))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
               segments={[{ pct: pctPago, variant: 'primary' }]}
@@ -192,7 +192,7 @@ export default function AtivoDetalheScreen() {
             context="dark"
             items={[
               { label: 'Prazo', value: `${prazoDias} dias` },
-              { label: 'Ciclo', value: cicloMeta.label, sub: `pagamentos ${PAGAMENTOS_LABEL[ciclo]}` },
+              { label: 'Ciclo', value: cicloMeta.label, sub: `vencimentos ${PAGAMENTOS_LABEL[ciclo]}` },
             ]}
           />
         </View>

@@ -136,7 +136,7 @@ export default function EmprestimosScreen() {
               {/* Payment progress */}
               {(loan.status === 'ativo' || isAtrasado) && (
                 <PoolBar
-                  label="Pagamento do empréstimo"
+                  label="Vencimento do empréstimo"
                   headLeft={`${percentPago}% pago`}
                   headRight={`R$ ${formatBRL(Math.round(valorPago))} de R$ ${formatBRL(Math.round(totalAPagar))}`}
                   segments={[{ pct: percentPago, variant: 'primary' }]}

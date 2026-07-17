@@ -110,7 +110,7 @@ function OfertaSheet({ oferta, onClose }: { oferta: typeof MOCK_OFERTAS[0]; onCl
 
       <DetailGrid
         items={[
-          { label: 'Prazo',    value: `${oferta.prazoDias} dias`, sub: `pagamentos ${oferta.ciclo.toLowerCase()}s` },
+          { label: 'Prazo',    value: `${oferta.prazoDias} dias`, sub: `vencimentos ${oferta.ciclo.toLowerCase()}s` },
           { label: 'Risco',    value: oferta.risco,               sub: `score ${oferta.tomadorScore}` },
           { label: 'Histórico', value: oferta.emprestimosAnteriores === 0 ? 'Primeiro' : `${numeroDoEmprestimo}º empréstimo` },
           { label: 'Já tomado', value: oferta.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(oferta.valorTotalTomado)}` },

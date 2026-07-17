@@ -153,7 +153,7 @@ export default function AtivosScreen() {
                 />
               ) : (
                 <PoolBar
-                  label="Pagamento do contrato"
+                  label="Vencimento do contrato"
                   headLeft={`${pctRecebido}% pago`}
                   headRight={`R$ ${formatBRL(Math.round(recebido))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
                   segments={[{ pct: pctRecebido, variant: 'primary' }]}
