@@ -165,26 +165,12 @@ export default function AtivoDetalheScreen() {
             />
           ) : (
             <PoolBar
-              label="Vencimento do contrato"
+              label="Pagamento"
               headLeft={`${pctPago}% pago`}
               headRight={`R$ ${formatBRL(Math.round(recebidoValor))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
               segments={[{ pct: pctPago, variant: 'primary' }]}
               context="dark"
               style={{ marginBottom: 20 }}
-              footer={
-                <PoolLegend
-                  context="dark"
-                  items={[
-                    { color: '#fff',          label: 'recebido' },
-                    {
-                      color: status === 'atrasado' ? '#ff6b6b' : C.onDarkBorder,
-                      label: status === 'atrasado' ? 'tomador em atraso'
-                           : status === 'quitado'  ? 'contrato encerrado' : 'em dia',
-                      bold: status === 'atrasado',
-                    },
-                  ]}
-                />
-              }
             />
           )}
 

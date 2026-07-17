@@ -156,20 +156,11 @@ export default function AtivosScreen() {
                 />
               ) : (
                 <PoolBar
-                  label="Vencimento do contrato"
+                  label="Pagamento"
                   headLeft={`${pctRecebido}% pago`}
                   headRight={`R$ ${formatBRL(Math.round(recebido))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
                   segments={[{ pct: pctRecebido, variant: 'primary' }]}
                   style={{ marginBottom: 18 }}
-                  footer={
-                    <Text style={[s.poolCaption, isAtrasado && { color: C.red, fontFamily: fonts.bold }]}>
-                      {isAtrasado
-                        ? `atrasado há ${(p as any).diasAtraso} dias`
-                        : isQuitado
-                          ? 'contrato encerrado'
-                          : `próximo em ${(p as any).proximaData}`}
-                    </Text>
-                  }
                 />
               )}
 
