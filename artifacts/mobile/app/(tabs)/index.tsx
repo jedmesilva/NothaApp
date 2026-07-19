@@ -220,7 +220,7 @@ const s = StyleSheet.create({
   progressCaption:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9, marginBottom: 22 },
   progressCaptionText: { fontSize: fontSize['sm+'], color: C.onDarkFaint, fontFamily: fonts.regular },
 
-  sectionTitle: { marginHorizontal: spacing[4], marginTop: 14, marginBottom: 2 },
+  sectionTitle: { marginHorizontal: spacing[4], marginTop: 14, marginBottom: 12 },
 
   // Hero card
   heroTopRow:    { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
