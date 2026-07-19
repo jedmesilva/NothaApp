@@ -38,6 +38,7 @@ function RootLayoutNav() {
         <View style={{ flex: 1 }}>
           <Stack screenOptions={{ headerBackTitle: 'Back' }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="emprestimos" options={{ headerShown: false }} />
             <Stack.Screen name="emprestimo-detalhe" options={{ headerShown: false }} />
             <Stack.Screen name="ativos" options={{ headerShown: false }} />
             <Stack.Screen name="ativo-detalhe" options={{ headerShown: false }} />
