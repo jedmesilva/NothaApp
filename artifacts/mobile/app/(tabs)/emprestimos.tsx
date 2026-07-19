@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { EMPRESTIMOS } from '@/data/loans';
 import { palette as C, fonts, fontSize, spacing } from '@/constants/theme';
+import { BackButton } from '@/components/ds';
 import { LoanCard } from '@/components/LoanCard';
 
 export default function EmprestimosScreen() {
@@ -12,6 +13,7 @@ export default function EmprestimosScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100, gap: 12 }}
       >
         <View style={st.header}>
+          <BackButton />
           <Text style={st.title}>Empréstimos</Text>
           <Text style={st.subtitle}>{EMPRESTIMOS.length} empréstimos no total</Text>
         </View>
