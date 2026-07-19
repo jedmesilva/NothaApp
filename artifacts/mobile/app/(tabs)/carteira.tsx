@@ -216,50 +216,50 @@ export default function CarteiraScreen() {
 
         {/* Ativos */}
         <SectionTitle style={s.sectionTitle}>Ativos</SectionTitle>
-        <LightCard>
-          <View style={{ marginBottom: 24 }}>
-            <Text style={s.statLabel}>Quantidade</Text>
-            <Text style={s.ativosCount}>{ativosCount}</Text>
-          </View>
-
-          {temAtraso && (
-            <AlertBanner
-              style={{ marginBottom: 18 }}
-              message={
-                <Text style={{ fontSize: fontSize['sm+'], color: C.red, fontFamily: fonts.regular, lineHeight: 18 }}>
-                  <Text style={{ fontFamily: fonts.bold }}>R$ {formatBRL(valorAtrasado)}</Text>
-                  {' '}vencido em {dataAtrasoLabel}, aguardando pagamento
-                </Text>
-              }
-            />
-          )}
-
-          {/* Timeline */}
-          <View style={s.timelineWrap}>
-            <View style={s.timelineTrack}>
-              <View style={[s.timelineDot, { left: 0 }]} />
-              <View style={[s.timelineDot, s.timelineDotAccent, { left: `${proximoPercent}%` as any }]} />
-              <View style={[s.timelineDot, { right: 0 }]} />
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/ativos' as any)}>
+          <LightCard>
+            <View style={s.ativosHeroRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.statLabel}>Quantidade</Text>
+                <Text style={s.ativosCount}>{ativosCount}</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color={C.inkFaint} style={{ marginTop: 4 }} />
             </View>
-          </View>
 
-          <View style={s.timelineLabels}>
-            <View style={{ maxWidth: '55%' }}>
-              <Text style={s.statLabel}>Próximo vencimento</Text>
-              <Text style={s.statValue}>{proximoLabel}</Text>
-              <Text style={s.statSub}>R$ {formatBRL(proximoValor)}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.statLabel}>Último vencimento</Text>
-              <Text style={s.statValue}>{ultimoLabel}</Text>
-              <Text style={s.statSub}>em {prazoLabel}</Text>
-            </View>
-          </View>
-        </LightCard>
+            {temAtraso && (
+              <AlertBanner
+                style={{ marginBottom: 18 }}
+                message={
+                  <Text style={{ fontSize: fontSize['sm+'], color: C.red, fontFamily: fonts.regular, lineHeight: 18 }}>
+                    <Text style={{ fontFamily: fonts.bold }}>R$ {formatBRL(valorAtrasado)}</Text>
+                    {' '}vencido em {dataAtrasoLabel}, aguardando pagamento
+                  </Text>
+                }
+              />
+            )}
 
-        <TouchableOpacity style={s.ativosLink} onPress={() => router.push('/ativos' as any)} activeOpacity={0.7}>
-          <Text style={s.ativosLinkText}>Ver todos os ativos</Text>
-          <Feather name="chevron-right" size={14} color={C.inkSoft} />
+            {/* Timeline */}
+            <View style={s.timelineWrap}>
+              <View style={s.timelineTrack}>
+                <View style={[s.timelineDot, { left: 0 }]} />
+                <View style={[s.timelineDot, s.timelineDotAccent, { left: `${proximoPercent}%` as any }]} />
+                <View style={[s.timelineDot, { right: 0 }]} />
+              </View>
+            </View>
+
+            <View style={s.timelineLabels}>
+              <View style={{ maxWidth: '55%' }}>
+                <Text style={s.statLabel}>Próximo vencimento</Text>
+                <Text style={s.statValue}>{proximoLabel}</Text>
+                <Text style={s.statSub}>R$ {formatBRL(proximoValor)}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={s.statLabel}>Último vencimento</Text>
+                <Text style={s.statValue}>{ultimoLabel}</Text>
+                <Text style={s.statSub}>em {prazoLabel}</Text>
+              </View>
+            </View>
+          </LightCard>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -277,14 +277,13 @@ const s = StyleSheet.create({
   statLabel:   { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 5 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   statSub:     { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
-  ativosCount: { fontFamily: fonts.display, fontSize: fontSize.display, color: C.ink, letterSpacing: -0.8, lineHeight: 38 },
+  ativosCount:    { fontFamily: fonts.display, fontSize: fontSize.display, color: C.ink, letterSpacing: -0.8, lineHeight: 38 },
+  ativosHeroRow:  { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 24 },
   timelineWrap:       { paddingHorizontal: 4, marginBottom: 14 },
   timelineTrack:      { position: 'relative', height: 3, backgroundColor: C.line, borderRadius: radii.full },
   timelineDot:        { position: 'absolute', top: -2, width: 7, height: 7, borderRadius: 4, backgroundColor: C.inkFaint },
   timelineDotAccent:  { width: 11, height: 11, top: -4, backgroundColor: C.dark },
   timelineLabels:     { flexDirection: 'row', justifyContent: 'space-between' },
-  ativosLink:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, marginHorizontal: spacing[4], marginBottom: 14, paddingVertical: 4 },
-  ativosLinkText: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
   periodChips:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
   chartReturnValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: C.ink, letterSpacing: -0.6 },
   chartReturnSub:   { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.medium, marginTop: 4, marginBottom: 12 },
