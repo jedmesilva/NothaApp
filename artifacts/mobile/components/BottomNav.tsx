@@ -18,12 +18,7 @@ const WHITE       = '#FFFFFF';
 const WHITE_MID   = 'rgba(255,255,255,0.50)';
 const WHITE_SOFT  = 'rgba(255,255,255,0.12)';
 
-const CREDITO_TABS: TabDef[] = [
-  {
-    name: 'index', label: 'Início', area: 'credito',
-    icon: (a) => <Feather name="home" size={19} color={a ? WHITE : WHITE_MID} />,
-  },
-];
+const CREDITO_TABS: TabDef[] = [];
 
 const INVESTIR_TABS: TabDef[] = [
   {
@@ -70,6 +65,8 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
     if (tab.name === 'carteira' && area === 'investir' && currentRouteName === 'index') return true;
     return currentRouteName === tab.name;
   };
+
+  if (tabs.length === 0) return null;
 
   return (
     <View
