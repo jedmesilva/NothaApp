@@ -10,27 +10,28 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { useArea } from '@/contexts/AreaContext';
-import { formatBRL, addDays, formatRelativeDueDate } from '@/data/loans';
+import {
+  EMPRESTIMOS,
+  CICLO_META,
+  formatBRL,
+  addDays,
+  formatRelativeDueDate,
+} from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   DarkCard, LightCard,
-  PrimaryButton, GhostButton,
-  ThinBar,
+  PrimaryButton,
+  ThinBar, PoolBar,
   Eyebrow, BigValue, SectionTitle,
   ContaCard,
-  InstallmentBadge,
 } from '@/components/ds';
 import CarteiraScreen from './carteira';
 
 const W = Dimensions.get('window').width;
 
 const CICLO_DIAS: Record<string, number> = { diario: 1, semanal: 7, mensal: 30 };
-
-const emprestimosAtivos = [
-  { id: 1, valor: 8500,  taxaJurosTotal: 20, prazoDias: 60, ciclo: 'mensal',  parcelasTotal: 2,  parcelasPagas: 0, diasDesdeConcessao: 36, status: 'atrasado' },
-  { id: 2, valor: 3200,  taxaJurosTotal: 12, prazoDias: 90, ciclo: 'semanal', parcelasTotal: 13, parcelasPagas: 6, diasDesdeConcessao: 42, status: 'ativo' },
-];
 
 export default function HomeScreen() {
   const { area, setArea, registerScrollTo } = useArea();
@@ -40,7 +41,6 @@ export default function HomeScreen() {
   const isFocusedRef                = useRef(false);
   const bottomPad                   = 100;
 
-  // Registra o scroll para que o GlobalHeader possa acioná-lo via contexto
   useEffect(() => {
     registerScrollTo((a) => {
       setActiveTab(a);
@@ -66,17 +66,38 @@ export default function HomeScreen() {
   const saldoConta       = 8500;
   const depositoRecente  = 8500;
 
-  const proximasParcelas = emprestimosAtivos.map((loan) => {
-    const cicloDias     = CICLO_DIAS[loan.ciclo];
-    const totalAPagar   = loan.valor * (1 + loan.taxaJurosTotal / 100);
-    const valorParcela  = totalAPagar / loan.parcelasTotal;
-    const saldoDevedor  = (loan.parcelasTotal - loan.parcelasPagas) * valorParcela;
-    const dataConcessao = addDays(hoje, -loan.diasDesdeConcessao);
+  // Empréstimos ativos (ativo + atrasado) — base de dados real
+  const activeLoans = EMPRESTIMOS.filter(
+    (e) => e.status === 'ativo' || e.status === 'atrasado'
+  );
+
+  // Próximas parcelas de cada empréstimo ativo
+  const proximasParcelas = activeLoans.map((loan) => {
+    const cicloDias    = CICLO_DIAS[loan.ciclo];
+    const totalAPagar  = loan.valor * (1 + loan.taxaJurosTotal / 100);
+    const valorParcela = totalAPagar / loan.parcelasTotal;
+    const saldoDevedor = (loan.parcelasTotal - loan.parcelasPagas) * valorParcela;
+    const dataConcessao = addDays(hoje, -(loan.diasDesdeConcessao ?? 0));
     const dataProxima   = addDays(dataConcessao, (loan.parcelasPagas + 1) * cicloDias);
     const diasParaVencer = Math.round((dataProxima.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     const estado = diasParaVencer < 0 ? 'vencida' : diasParaVencer <= 5 ? 'proxima' : 'futura';
-    return { loanId: loan.id, valorParcela, saldoDevedor, parcelasRestantes: loan.parcelasTotal - loan.parcelasPagas, data: dataProxima, estado };
+    return { loanId: loan.id, valorParcela, saldoDevedor, parcelasRestantes: loan.parcelasTotal - loan.parcelasPagas, data: dataProxima, diasParaVencer, estado };
   }).sort((a, b) => a.data.getTime() - b.data.getTime());
+
+  // Total de vencimentos já atrasados (passado de hoje)
+  const totalVencimentosAtrasados = activeLoans.reduce((soma, loan) => {
+    const cicloDias     = CICLO_DIAS[loan.ciclo];
+    const dataConcessao = addDays(hoje, -(loan.diasDesdeConcessao ?? 0));
+    let atrasados = 0;
+    for (let i = loan.parcelasPagas + 1; i <= loan.parcelasTotal; i++) {
+      const dataVenc = addDays(dataConcessao, i * cicloDias);
+      if (dataVenc < hoje) atrasados++;
+    }
+    return soma + atrasados;
+  }, 0);
+
+  // Próximo vencimento futuro (não atrasado)
+  const proximoVencimentoGeral = proximasParcelas.find((p) => p.diasParaVencer >= 0) ?? null;
 
   const divida = {
     totalEmAberto: proximasParcelas.reduce((s, p) => s + p.saldoDevedor, 0),
@@ -144,60 +165,152 @@ export default function HomeScreen() {
             />
           ) : null}
 
-          {/* Vencimentos card */}
-          <SectionTitle style={s.vencSectionTitle}>Vencimentos</SectionTitle>
-          <LightCard>
-            <Eyebrow>Total em aberto</Eyebrow>
-            <BigValue context="light" size="display" style={{ lineHeight: 36, marginBottom: 16 }}>
-              R$ {formatBRL(Math.round(divida.totalEmAberto))}
-            </BigValue>
+          {/* ── Meus Empréstimos ──────────────────────────────────── */}
+          <SectionTitle style={s.sectionTitle}>Meus Empréstimos</SectionTitle>
 
-            <View style={s.statsRow}>
-              <View style={s.statBlock}>
-                <Eyebrow style={{ marginBottom: 4 }}>Em atraso</Eyebrow>
-                <Text style={s.statValue}>{proximasParcelas.filter((p) => p.estado === 'vencida').length}</Text>
+          {/* Hero card — tappable, leva para o histórico completo */}
+          <TouchableOpacity
+            style={s.emprestimosHero}
+            activeOpacity={0.85}
+            onPress={() => router.push('/emprestimos' as any)}
+          >
+            <View style={s.heroTopRow}>
+              <View>
+                <Text style={s.heroValue}>R$ {formatBRL(Math.round(divida.totalEmAberto))}</Text>
+                <Text style={s.heroSubtitle}>
+                  {activeLoans.length} {activeLoans.length === 1 ? 'empréstimo' : 'empréstimos'} em aberto
+                </Text>
               </View>
-              <View style={s.statDivider} />
-              <View style={s.statBlock}>
-                <Eyebrow style={{ marginBottom: 4 }}>Próximas (5 dias)</Eyebrow>
-                <Text style={s.statValue}>{proximasParcelas.filter((p) => p.estado === 'proxima').length}</Text>
-              </View>
+              <Feather name="chevron-right" size={20} color={C.inkFaint} style={{ marginTop: 4 }} />
             </View>
 
-            {proximasParcelas.map((p, idx) => {
-              const isVencida   = p.estado === 'vencida';
-              const isProxima   = p.estado === 'proxima';
-              const accentColor = isVencida ? C.red : isProxima ? C.amber : C.inkFaint;
-              const stateLabel  = formatRelativeDueDate(p.data);
-              const btnBg       = isVencida ? C.red : C.ink;
-              const isLast      = idx === proximasParcelas.length - 1;
-              return (
-                <TouchableOpacity
-                  key={p.loanId}
-                  style={[s.parcelaRow, !isLast && !isVencida && s.parcelaRowSep, isVencida && s.parcelaRowVencida]}
-                  activeOpacity={0.75}
-                  onPress={() => router.push(`/emprestimo-detalhe?id=${p.loanId}` as any)}
-                >
-                  <InstallmentBadge
-                    variant={isVencida ? 'overdue' : isProxima ? 'proxima' : 'future'}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[s.installState, { color: accentColor }]}>{stateLabel}</Text>
-                    <Text style={s.installValue}>R$ {formatBRL(Math.round(p.valorParcela))}</Text>
-                  </View>
-                  <TouchableOpacity style={[s.payBtn, { backgroundColor: btnBg }]} activeOpacity={0.8} onPress={() => {}}>
-                    <Text style={s.payBtnText}>Pagar</Text>
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              );
-            })}
+            {proximoVencimentoGeral && (
+              <View style={s.proximoVencRow}>
+                <Feather name="calendar" size={14} color={C.inkFaint} />
+                <Text style={s.proximoVencText}>
+                  Próximo vencimento{' '}
+                  <Text style={s.proximoVencStrong}>
+                    {formatRelativeDueDate(proximoVencimentoGeral.data)}
+                  </Text>
+                  {' · '}R$ {formatBRL(Math.round(proximoVencimentoGeral.valorParcela))}
+                </Text>
+              </View>
+            )}
 
-            <GhostButton
-              label="Ver todos os empréstimos"
-              onPress={() => router.push('/emprestimos' as any)}
-              style={{ marginTop: 8 }}
-            />
-          </LightCard>
+            {totalVencimentosAtrasados > 0 ? (
+              <View style={[s.statusStrip, s.statusStripAtrasado]}>
+                <Feather name="alert-triangle" size={15} color={C.red} />
+                <Text style={[s.statusStripText, { color: C.red }]}>
+                  {totalVencimentosAtrasados}{' '}
+                  {totalVencimentosAtrasados === 1 ? 'vencimento em atraso' : 'vencimentos em atraso'}
+                </Text>
+              </View>
+            ) : (
+              <View style={[s.statusStrip, s.statusStripEmDia]}>
+                <Feather name="check" size={15} color={C.ink} />
+                <Text style={[s.statusStripText, { color: C.ink }]}>Em dia</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {/* Card individual por empréstimo ativo */}
+          {activeLoans.map((loan) => {
+            const totalAPagar  = loan.valor * (1 + loan.taxaJurosTotal / 100);
+            const valorParcela = totalAPagar / loan.parcelasTotal;
+            const saldoDevedor = (loan.parcelasTotal - loan.parcelasPagas) * valorParcela;
+            const percentPago  = loan.parcelasTotal > 0
+              ? Math.round((loan.parcelasPagas / loan.parcelasTotal) * 100) : 0;
+            const isAtrasado   = loan.status === 'atrasado';
+            const cicloLabel   = CICLO_META[loan.ciclo]?.label ?? '';
+
+            const proxInfo = proximasParcelas.find((p) => p.loanId === loan.id);
+            const diasDiff = proxInfo
+              ? Math.abs(Math.round((proxInfo.data.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)))
+              : 0;
+
+            return (
+              <TouchableOpacity
+                key={loan.id}
+                style={[s.loanCard, isAtrasado && s.loanCardAtrasado]}
+                activeOpacity={0.85}
+                onPress={() => router.push(`/emprestimo-detalhe?id=${loan.id}` as any)}
+              >
+                {/* Valor + badge de status */}
+                <View style={s.loanTopRow}>
+                  <View>
+                    <Text style={s.loanValue}>R$ {formatBRL(loan.valor)}</Text>
+                    <Text style={s.loanLabel}>
+                      {loan.parcelasTotal}x de R$ {formatBRL(Math.round(valorParcela))} ({cicloLabel})
+                    </Text>
+                  </View>
+                  <View style={[s.loanBadge, isAtrasado ? s.loanBadgeAtrasado : s.loanBadgeAtivo]}>
+                    <Feather
+                      name={isAtrasado ? 'alert-triangle' : 'check'}
+                      size={12}
+                      color={isAtrasado ? C.red : C.ink}
+                    />
+                    <Text style={[s.loanBadgeText, { color: isAtrasado ? C.red : C.ink }]}>
+                      {isAtrasado ? 'Atrasado' : 'Ativo'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Progresso de parcelas */}
+                <View style={s.progressHeaderRow}>
+                  <Text style={[s.progressLeft, isAtrasado && { color: C.red }]}>
+                    {loan.parcelasPagas}/{loan.parcelasTotal} parcelas
+                  </Text>
+                  <Text style={[s.progressRight, isAtrasado && { color: C.red }]}>
+                    R$ {formatBRL(Math.round(saldoDevedor))}
+                  </Text>
+                </View>
+                <View style={s.progressTrack}>
+                  <View
+                    style={[
+                      s.progressFill,
+                      { width: `${percentPago}%` as any, backgroundColor: isAtrasado ? C.red : C.ink },
+                    ]}
+                  />
+                </View>
+                <Text style={[s.loanMeta, isAtrasado && { color: C.red, fontFamily: fonts.bold }]}>
+                  {isAtrasado
+                    ? `Venceu há ${diasDiff} dias`
+                    : `Próximo vencimento em ${diasDiff} dias`}
+                </Text>
+
+                {/* Grade 2×2 de detalhes */}
+                <View style={s.detailGrid}>
+                  <View style={s.detailCell}>
+                    <Text style={s.detailLabel}>Prazo</Text>
+                    <Text style={s.detailValue}>{loan.prazoDias} dias</Text>
+                  </View>
+                  <View style={s.detailCell}>
+                    <Text style={s.detailLabel}>Ciclo</Text>
+                    <Text style={s.detailValue}>{cicloLabel}</Text>
+                  </View>
+                  <View style={s.detailCell}>
+                    <Text style={s.detailLabel}>Taxa total</Text>
+                    <Text style={s.detailValue}>{loan.taxaJurosTotal}%</Text>
+                  </View>
+                  <View style={s.detailCell}>
+                    <Text style={s.detailLabel}>Total a pagar</Text>
+                    <Text style={s.detailValue}>R$ {formatBRL(Math.round(totalAPagar))}</Text>
+                  </View>
+                </View>
+
+                {/* Botão de pagamento */}
+                <TouchableOpacity
+                  style={[s.payBtn, { backgroundColor: isAtrasado ? C.red : C.ink }]}
+                  activeOpacity={0.8}
+                  onPress={(e) => { e.stopPropagation?.(); }}
+                >
+                  <Text style={s.payBtnText}>
+                    {isAtrasado ? 'Pagar vencimento em atraso' : 'Pagar próximo vencimento'}
+                  </Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {/* ── Page 2: Carteira (início da área Investir) ────────────── */}
@@ -211,21 +324,69 @@ export default function HomeScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
+
   greeting:     { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[4], fontSize: fontSize.lg, color: C.inkSoft, fontFamily: fonts.regular },
   greetingName: { color: C.ink, fontFamily: fonts.bold },
   totalText:    { fontSize: fontSize.md, color: C.onDarkMid, fontFamily: fonts.medium, marginBottom: 16, marginTop: 6 },
   progressCaption:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9, marginBottom: 22 },
   progressCaptionText: { fontSize: fontSize['sm+'], color: C.onDarkFaint, fontFamily: fonts.regular },
-  vencSectionTitle: { marginHorizontal: spacing[4], marginTop: 14, marginBottom: 10 },
-  statsRow:    { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
-  statBlock:   { flex: 1 },
-  statDivider: { width: 1, height: 34, backgroundColor: C.line, marginHorizontal: 18 },
-  statValue:   { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, letterSpacing: -0.3 },
-  parcelaRow:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
-  parcelaRowSep:     { borderBottomWidth: 1, borderBottomColor: C.line },
-  parcelaRowVencida: { backgroundColor: C.redBg, borderRadius: radii.card, paddingHorizontal: 12, marginHorizontal: -12 },
-  installState: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, marginBottom: 4 },
-  installValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink },
-  payBtn:     { paddingHorizontal: 14, paddingVertical: 9, borderRadius: radii.md },
+
+  sectionTitle: { marginHorizontal: spacing[4], marginTop: 14, marginBottom: 10 },
+
+  // ── Hero card ──────────────────────────────────────────────────────────
+  emprestimosHero: {
+    marginHorizontal: spacing[4],
+    marginBottom: 12,
+    backgroundColor: C.card,
+    borderRadius: radii.card,
+    padding: 20,
+  },
+  heroTopRow:  { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 0 },
+  heroValue:   { fontFamily: fonts.display, fontSize: 34, color: C.ink, letterSpacing: -0.6 },
+  heroSubtitle: { fontFamily: fonts.display, fontSize: 15, color: C.inkSoft, marginTop: 4 },
+
+  proximoVencRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: C.line },
+  proximoVencText:  { flex: 1, fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular },
+  proximoVencStrong: { fontFamily: fonts.bold, color: C.ink },
+
+  statusStrip:        { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, padding: 12, borderRadius: radii.md },
+  statusStripAtrasado: { backgroundColor: C.redBg },
+  statusStripEmDia:    { backgroundColor: '#ECECEF' },
+  statusStripText:    { fontSize: fontSize['sm+'], fontFamily: fonts.bold },
+
+  // ── Loan cards ─────────────────────────────────────────────────────────
+  loanCard: {
+    marginHorizontal: spacing[4],
+    marginBottom: 12,
+    backgroundColor: C.card,
+    borderRadius: radii.card,
+    padding: 20,
+  },
+  loanCardAtrasado: { borderWidth: 1.5, borderColor: 'rgba(192,57,43,0.28)' },
+
+  loanTopRow:  { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 },
+  loanValue:   { fontFamily: fonts.display, fontSize: 22, color: C.ink, letterSpacing: -0.3, marginBottom: 3 },
+  loanLabel:   { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular },
+
+  loanBadge:         { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radii.full },
+  loanBadgeAtivo:    { backgroundColor: '#ECECEF' },
+  loanBadgeAtrasado: { backgroundColor: C.redBg },
+  loanBadgeText:     { fontSize: 11.5, fontFamily: fonts.bold },
+
+  progressHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  progressLeft:  { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
+  progressRight: { fontFamily: fonts.display, fontSize: fontSize['sm+'], color: C.inkSoft },
+
+  progressTrack: { height: 14, borderRadius: radii.full, backgroundColor: C.line, overflow: 'hidden', marginBottom: 9 },
+  progressFill:  { height: '100%', borderRadius: radii.full },
+
+  loanMeta: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 18 },
+
+  detailGrid: { flexDirection: 'row', flexWrap: 'wrap', borderTopWidth: 1, borderBottomWidth: 1, borderColor: C.line, paddingVertical: 18, marginBottom: 18, gap: 16 },
+  detailCell:  { width: '45%' },
+  detailLabel: { fontSize: 11.5, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
+  detailValue: { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
+
+  payBtn:     { width: '100%', paddingVertical: 14, borderRadius: radii.md, alignItems: 'center' },
   payBtnText: { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
 });

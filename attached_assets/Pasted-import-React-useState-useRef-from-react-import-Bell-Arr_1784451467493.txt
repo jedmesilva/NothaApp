@@ -1,0 +1,1400 @@
+import React, { useState, useRef } from 'react';
+import { Bell, ArrowDown, Plus, ChevronRight, Home, AlertTriangle, TrendingUp, Wallet, Tag, ArrowLeft, ArrowUpRight, Check, Calendar } from 'lucide-react';
+
+// Paleta monocromática: só tons de preto, cinza e branco — sem cor de destaque
+const colors = {
+  bg: '#F4F5F7',
+  card: '#FFFFFF',
+  dark: '#15151D',
+  darkSoft: '#26262F',
+  ink: '#15151D',
+  inkSoft: '#6C707A',
+  inkFaint: '#A2A6AF',
+  line: '#EBEBF0',
+  chipUrgent: '#ECECEF',
+  chipMuted: '#F4F5F7',
+  // Únicas cores fora do monocromático — reservadas só pra sinalizar urgência real
+  // de vencimento (vencida/próxima). Não usadas em mais nada na tela.
+  red: '#C0392B',
+  redBg: '#FBEAE8',
+  amber: '#A6690A',
+  amberBg: '#FCF1DC',
+};
+
+const styles = {
+  screen: {
+    width: '100%',
+    maxWidth: 420,
+    margin: '0 auto',
+    backgroundColor: colors.bg,
+    minHeight: '100vh',
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    color: colors.ink,
+    paddingBottom: 104,
+    overflowX: 'hidden',
+    boxSizing: 'border-box',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '22px 20px 8px',
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: '50%',
+    backgroundColor: colors.dark,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff',
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontWeight: 700,
+    fontSize: 16,
+    flexShrink: 0,
+    border: 'none',
+    cursor: 'pointer',
+  },
+  tabWrap: {
+    display: 'flex',
+    backgroundColor: colors.card,
+    borderRadius: 999,
+    padding: 4,
+    flex: 1,
+    margin: '0 14px',
+    maxWidth: 240,
+  },
+  tabBase: {
+    flex: 1,
+    textAlign: 'center',
+    padding: '9px 0',
+    borderRadius: 999,
+    fontSize: 13.5,
+    fontWeight: 600,
+    cursor: 'pointer',
+    border: 'none',
+    background: 'none',
+    transition: 'all 0.15s ease',
+  },
+  bellWrap: {
+    position: 'relative',
+    flexShrink: 0,
+    cursor: 'pointer',
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifDot: {
+    position: 'absolute',
+    top: 8,
+    right: 9,
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    backgroundColor: colors.ink,
+    border: `1.5px solid ${colors.card}`,
+  },
+  // Container de swipe — Crédito e Investir são duas páginas lado a lado,
+  // sincronizadas com o toggle do header (arrastar o conteúdo move o toggle,
+  // tocar no toggle rola o conteúdo)
+  swipeContainer: {
+    display: 'flex',
+    overflowX: 'auto',
+    scrollSnapType: 'x mandatory',
+    WebkitOverflowScrolling: 'touch',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  swipePage: {
+    width: '100%',
+    minWidth: '100%',
+    maxWidth: '100%',
+    flexShrink: 0,
+    scrollSnapAlign: 'start',
+    boxSizing: 'border-box',
+    overflowX: 'hidden',
+  },
+
+  greeting: {
+    padding: '16px 20px 18px',
+    fontSize: 15,
+    color: colors.inkSoft,
+  },
+  greetingName: {
+    color: colors.ink,
+    fontWeight: 700,
+  },
+
+  // Hero — limite, cartão escuro com gradiente, o elemento de assinatura da tela
+  primaryCard: {
+    borderRadius: 28,
+    margin: '0 16px 14px',
+    padding: '28px 24px 26px',
+    background: `linear-gradient(150deg, ${colors.dark} 0%, ${colors.darkSoft} 100%)`,
+    color: '#fff',
+  },
+  eyebrow: {
+    fontSize: 12,
+    fontWeight: 600,
+    letterSpacing: 0.3,
+    color: 'rgba(255,255,255,0.55)',
+    marginBottom: 10,
+  },
+  bigValue: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 42,
+    fontWeight: 700,
+    letterSpacing: -1,
+    lineHeight: 1.05,
+    color: '#fff',
+  },
+  totalRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 18,
+  },
+  totalText: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'rgba(255,255,255,0.5)',
+  },
+  progressTrack: {
+    width: '100%',
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 999,
+  },
+  progressCaption: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: 12.5,
+    color: 'rgba(255,255,255,0.45)',
+    marginTop: 9,
+    marginBottom: 22,
+  },
+  primaryButton: {
+    width: '100%',
+    padding: '17px 0',
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    color: colors.dark,
+    fontSize: 15.5,
+    fontWeight: 700,
+    border: 'none',
+    cursor: 'pointer',
+    letterSpacing: 0.1,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    color: 'rgba(255,255,255,0.35)',
+    cursor: 'not-allowed',
+  },
+
+  actionButtonRow: {
+    display: 'flex',
+    gap: 10,
+  },
+  actionButton: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: '13px 0',
+    borderRadius: 14,
+    backgroundColor: '#F4F5F7',
+    border: 'none',
+    fontSize: 14.5,
+    fontWeight: 600,
+    color: colors.ink,
+    cursor: 'pointer',
+  },
+
+  // Saldo em conta — versão resumo, com link "Ver conta"
+  contaResumoCard: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 24,
+    margin: '0 16px 20px',
+    padding: '20px 22px',
+    backgroundColor: colors.card,
+  },
+  contaResumoValue: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 24,
+    fontWeight: 700,
+    letterSpacing: -0.3,
+    marginBottom: 3,
+  },
+  contaResumoCaption: {
+    fontSize: 13,
+    color: colors.inkSoft,
+  },
+  verContaLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    background: 'none',
+    border: 'none',
+    fontSize: 13.5,
+    fontWeight: 600,
+    color: colors.ink,
+    cursor: 'pointer',
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+  },
+
+  vencimentosSectionTitle: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 17,
+    fontWeight: 700,
+    padding: '0 20px 12px',
+  },
+  totalAbertoValue: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 34,
+    fontWeight: 700,
+    letterSpacing: -0.6,
+  },
+  // Tela de Conta — overlay em tela cheia, aberto ao tocar no avatar
+  contaOverlay: {
+    position: 'fixed',
+    inset: 0,
+    backgroundColor: colors.bg,
+    zIndex: 60,
+    overflowY: 'auto',
+    width: '100%',
+    maxWidth: 420,
+    margin: '0 auto',
+  },
+  contaHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '22px 20px 4px',
+  },
+  contaBackButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: 'none',
+    cursor: 'pointer',
+    flexShrink: 0,
+  },
+  contaTitle: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 18,
+    fontWeight: 700,
+    letterSpacing: -0.2,
+  },
+  contaHero: {
+    borderRadius: 28,
+    margin: '18px 16px 14px',
+    padding: '26px 24px 24px',
+    background: `linear-gradient(150deg, ${colors.dark} 0%, ${colors.darkSoft} 100%)`,
+    color: '#fff',
+  },
+  contaSaldoValue: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 40,
+    fontWeight: 700,
+    letterSpacing: -1,
+    marginBottom: 20,
+  },
+  extratoSection: {
+    margin: '0 16px 14px',
+    padding: '20px 20px 8px',
+    borderRadius: 22,
+    backgroundColor: colors.card,
+  },
+  extratoTitle: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 15,
+    fontWeight: 700,
+    marginBottom: 14,
+  },
+  extratoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    paddingBottom: 14,
+    marginBottom: 14,
+    borderBottom: `1px solid ${colors.line}`,
+  },
+  extratoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: colors.chipUrgent,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  extratoDesc: {
+    fontSize: 13.5,
+    fontWeight: 600,
+    marginBottom: 2,
+  },
+  extratoData: {
+    fontSize: 12,
+    color: colors.inkFaint,
+  },
+  extratoValor: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 14.5,
+    fontWeight: 700,
+    flexShrink: 0,
+  },
+
+  // Ofertas — lista de empréstimos em captação disponíveis pra investir
+  ofertasHeader: {
+    padding: '20px 20px 6px',
+  },
+  ofertasTitle: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 22,
+    fontWeight: 700,
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  ofertasSubtitle: {
+    fontSize: 13.5,
+    color: colors.inkSoft,
+  },
+  saldoChip: {
+    margin: '14px 20px 4px',
+    padding: '10px 14px',
+    borderRadius: 12,
+    backgroundColor: colors.chipUrgent,
+    fontSize: 12.5,
+    color: colors.inkSoft,
+    fontWeight: 600,
+  },
+  ofertaCard: {
+    borderRadius: 22,
+    margin: '14px 16px 0',
+    padding: '24px 20px 22px',
+    backgroundColor: colors.card,
+  },
+  ofertaEyebrow: {
+    fontSize: 12,
+    fontWeight: 600,
+    letterSpacing: 0.3,
+    color: colors.inkFaint,
+    marginBottom: 6,
+  },
+  ofertaRetornoValor: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 44,
+    fontWeight: 700,
+    letterSpacing: -1.1,
+    lineHeight: 1,
+    marginBottom: 8,
+  },
+  ofertaRetornoSign: {
+    fontSize: 24,
+    fontWeight: 700,
+    marginRight: 2,
+  },
+  ofertaCaption: {
+    fontSize: 13.5,
+    color: colors.inkSoft,
+    marginBottom: 18,
+  },
+  ofertaSplitRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: 22,
+  },
+  ofertaSplitBlock: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  ofertaSplitBlockRight: {
+    alignItems: 'flex-end',
+  },
+  ofertaSplitLabel: {
+    fontSize: 11.5,
+    color: colors.inkFaint,
+    marginBottom: 4,
+    fontWeight: 600,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+  },
+  ofertaSplitValue: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 21,
+    fontWeight: 700,
+    letterSpacing: -0.3,
+  },
+  ofertaGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    rowGap: 16,
+    columnGap: 12,
+    borderTop: `1px solid ${colors.line}`,
+    borderBottom: `1px solid ${colors.line}`,
+    padding: '18px 0',
+    marginBottom: 18,
+  },
+  ofertaButton: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: '17px 0',
+    borderRadius: 16,
+    backgroundColor: colors.dark,
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 700,
+    border: 'none',
+    cursor: 'pointer',
+  },
+  poolBlock: {},
+  poolTopRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 8,
+  },
+  poolLabel: {
+    fontSize: 11.5,
+    color: colors.inkFaint,
+    fontWeight: 600,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+  },
+  poolValue: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 13,
+    fontWeight: 700,
+    color: colors.inkSoft,
+  },
+  poolTrack: {
+    display: 'flex',
+    width: '100%',
+    height: 14,
+    borderRadius: 999,
+    backgroundColor: colors.line,
+    overflow: 'hidden',
+    marginBottom: 9,
+  },
+  poolSegCaptado: {
+    height: '100%',
+    backgroundColor: colors.ink,
+  },
+  poolSegOferta: {
+    height: '100%',
+    backgroundColor: colors.inkFaint,
+    backgroundImage:
+      'repeating-linear-gradient(45deg, rgba(255,255,255,0.4) 0, rgba(255,255,255,0.4) 3px, transparent 3px, transparent 7px)',
+  },
+  poolCaption: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 14,
+    fontSize: 12.5,
+    color: colors.inkSoft,
+  },
+  poolCaptionItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  poolCaptionDotCaptado: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+    backgroundColor: colors.ink,
+    flexShrink: 0,
+  },
+  poolCaptionDotOferta: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+    backgroundColor: colors.inkFaint,
+    backgroundImage:
+      'repeating-linear-gradient(45deg, rgba(255,255,255,0.5) 0, rgba(255,255,255,0.5) 1.5px, transparent 1.5px, transparent 3.5px)',
+    flexShrink: 0,
+  },
+  poolCaptionDotRestante: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+    backgroundColor: colors.line,
+    border: `1px solid ${colors.inkFaint}`,
+    flexShrink: 0,
+  },
+  detailLabel: {
+    fontSize: 11.5,
+    color: colors.inkFaint,
+    marginBottom: 3,
+    fontWeight: 600,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+  },
+  detailValue: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 16,
+    fontWeight: 600,
+  },
+  detailSubvalue: {
+    fontSize: 11.5,
+    color: colors.inkFaint,
+    marginTop: 2,
+  },
+
+  // "Meus Empréstimos" — hero da seção: card inteiro é a área de toque (leva
+  // pro histórico completo, incluindo quitados e encerrados). O chevron ao
+  // lado do valor é só o indicador visual de que o card navega — não tem
+  // handler próprio, pra não duplicar a área de clique.
+  emprestimosHero: {
+    borderRadius: 24,
+    margin: '0 16px 12px',
+    padding: '20px 22px 20px',
+    backgroundColor: colors.card,
+    cursor: 'pointer',
+  },
+  emprestimosHeroTopRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  emprestimosHeroChevron: {
+    marginTop: 6,
+    flexShrink: 0,
+  },
+  // Subtítulo da contagem de empréstimos — pertence ao valor total (é o
+  // detalhamento dele, não uma métrica à parte), por isso mesma família
+  // tipográfica do valor grande, só que menor. Peso maior que uma legenda
+  // comum porque é uma informação que o usuário precisa captar de relance.
+  heroSubtitle: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 15.5,
+    fontWeight: 600,
+    color: colors.inkSoft,
+    marginTop: 4,
+  },
+  // Linha de "próximo vencimento" — informação de preparo (quando é, quanto
+  // é), separada da faixa de status abaixo (que é reforço comportamental).
+  // Fica neutra de propósito: não é feedback sobre o passado, é aviso sobre
+  // o que vem a seguir.
+  proximoVencimentoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTop: `1px solid ${colors.line}`,
+  },
+  proximoVencimentoText: {
+    fontSize: 13.5,
+    color: colors.inkSoft,
+  },
+  proximoVencimentoStrong: {
+    fontWeight: 700,
+    color: colors.ink,
+  },
+  // Faixa única de status de pagamento — substitui o antigo grid de stats.
+  // Só fica vermelha quando há atraso real; fora isso é neutra/positiva,
+  // nunca mostra um "0" solto nem usa a palavra "atraso" quando não se aplica.
+  statusStrip: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 18,
+    padding: '12px 14px',
+    borderRadius: 14,
+  },
+  statusStripAtrasado: {
+    backgroundColor: colors.redBg,
+    color: colors.red,
+  },
+  statusStripEmDia: {
+    backgroundColor: colors.chipUrgent,
+    color: colors.ink,
+  },
+  statusStripText: {
+    fontSize: 13.5,
+    fontWeight: 700,
+  },
+
+  // Card individual de empréstimo — reaproveita ofertaGrid/poolTrack (mesma
+  // grade de detalhes e barra de progresso usadas do lado do investidor), pra
+  // manter os dois lados do app na mesma linguagem visual
+  loanCard: {
+    borderRadius: 24,
+    margin: '0 16px 12px',
+    padding: '20px 20px 18px',
+    backgroundColor: colors.card,
+  },
+  loanCardAtrasado: {
+    border: '1.5px solid rgba(192, 57, 43, 0.28)',
+  },
+  loanTopRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 16,
+  },
+  loanValue: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 22,
+    fontWeight: 700,
+    letterSpacing: -0.3,
+    marginBottom: 3,
+  },
+  loanLabel: {
+    fontSize: 12.5,
+    fontWeight: 500,
+    color: colors.inkSoft,
+  },
+  statusBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '6px 10px',
+    borderRadius: 999,
+    fontSize: 11.5,
+    fontWeight: 700,
+    flexShrink: 0,
+  },
+  statusBadgeAtivo: {
+    backgroundColor: colors.chipUrgent,
+    color: colors.ink,
+  },
+  statusBadgeAtrasado: {
+    backgroundColor: colors.redBg,
+    color: colors.red,
+  },
+  progressTopRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  progressTopLeft: {
+    fontSize: 12.5,
+    fontWeight: 600,
+    color: colors.inkSoft,
+  },
+  progressTopRight: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 12.5,
+    fontWeight: 700,
+    color: colors.inkSoft,
+  },
+  loanPayButton: {
+    width: '100%',
+    marginTop: 4,
+    padding: '13px 0',
+    borderRadius: 14,
+    backgroundColor: colors.red,
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 700,
+    border: 'none',
+    cursor: 'pointer',
+  },
+  loanPayButtonAtivo: {
+    width: '100%',
+    marginTop: 4,
+    padding: '13px 0',
+    borderRadius: 14,
+    backgroundColor: colors.dark,
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 700,
+    border: 'none',
+    cursor: 'pointer',
+  },
+
+  // Investir — placeholder simples, mesma linguagem visual
+  investirEmpty: {
+    margin: '60px 16px 0',
+    padding: '40px 24px',
+    borderRadius: 28,
+    backgroundColor: colors.card,
+    textAlign: 'center',
+  },
+  investirIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: colors.chipUrgent,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 18px',
+  },
+  investirTitle: {
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 18,
+    fontWeight: 700,
+    marginBottom: 8,
+  },
+  investirCaption: {
+    fontSize: 13.5,
+    color: colors.inkSoft,
+    lineHeight: 1.5,
+  },
+
+  // Bottom nav — flutuante, estilo pill
+  bottomNav: {
+    position: 'fixed',
+    bottom: 16,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 'calc(100% - 32px)',
+    maxWidth: 388,
+    display: 'flex',
+    justifyContent: 'space-around',
+    backgroundColor: colors.dark,
+    borderRadius: 20,
+    padding: '10px 8px',
+  },
+  navItemCompact: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '10px 10px',
+    borderRadius: 999,
+  },
+  navLabelCompact: {
+    fontSize: 12,
+    fontWeight: 600,
+  },
+};
+
+export default function CreditoHomeScreenVariante() {
+  const [activeTab, setActiveTab] = useState('credito');
+  const [showConta, setShowConta] = useState(false);
+  const [activeInvestNav, setActiveInvestNav] = useState('inicio');
+  const scrollRef = useRef(null);
+  const scrollTimeoutRef = useRef(null);
+
+  // Tocar no toggle rola o conteúdo até a página correspondente
+  const goToTab = (tab) => {
+    setActiveTab(tab);
+    const container = scrollRef.current;
+    if (!container) return;
+    container.scrollTo({ left: tab === 'credito' ? 0 : container.clientWidth, behavior: 'smooth' });
+  };
+
+  // Arrastar o conteúdo atualiza o toggle — mas só quando a rolagem sossega,
+  // não a cada frame do gesto/animação (senão o toggle pisca entre estados
+  // intermediários até a rolagem terminar)
+  const handleSwipeScroll = (e) => {
+    const container = e.target;
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => {
+      const index = Math.round(container.scrollLeft / container.clientWidth);
+      setActiveTab(index === 0 ? 'credito' : 'investir');
+    }, 100);
+  };
+
+  const limiteTotal = 10000;
+  const limiteDisponivel = 1500;
+  const limiteUsado = limiteTotal - limiteDisponivel;
+  const percentUsado = Math.round((limiteUsado / limiteTotal) * 100);
+
+  const saldoConta = 8500;
+
+  const extrato = [
+    { id: 1, desc: 'Depósito via Pix', data: '10 de julho', valor: 500, tipo: 'entrada' },
+    { id: 2, desc: 'Pagamento de vencimento', data: '05 de julho', valor: -331, tipo: 'saida' },
+    { id: 3, desc: 'Saque', data: '28 de junho', valor: -300, tipo: 'saida' },
+    { id: 4, desc: 'Empréstimo liberado', data: '20 de junho', valor: 3200, tipo: 'entrada' },
+  ];
+
+  // Ofertas — os mesmos empréstimos em captação que aparecem em "Empréstimos"
+  // do lado do tomador, aqui do lado do investidor (credor em potencial)
+  const CICLO_LABEL = { diario: 'Diário', semanal: 'Semanal', mensal: 'Mensal' };
+  const ofertas = [
+    {
+      id: 3,
+      valorTotalPedido: 5000,
+      taxaJurosTotal: 18,
+      prazoDias: 45,
+      ciclo: 'semanal',
+      jaCaptado: 3100,
+      valorOferta: 900,
+      numCredores: 14,
+      risco: 'Médio',
+      tomadorScore: 'B',
+      emprestimosAnteriores: 3,
+      valorTotalTomado: 12400,
+    },
+    {
+      id: 6,
+      valorTotalPedido: 12000,
+      taxaJurosTotal: 22,
+      prazoDias: 90,
+      ciclo: 'mensal',
+      jaCaptado: 4200,
+      valorOferta: 2000,
+      numCredores: 8,
+      risco: 'Alto',
+      tomadorScore: 'C',
+      emprestimosAnteriores: 1,
+      valorTotalTomado: 3000,
+    },
+    {
+      id: 7,
+      valorTotalPedido: 2500,
+      taxaJurosTotal: 10,
+      prazoDias: 15,
+      ciclo: 'diario',
+      jaCaptado: 2100,
+      valorOferta: 300,
+      numCredores: 22,
+      risco: 'Baixo',
+      tomadorScore: 'A',
+      emprestimosAnteriores: 6,
+      valorTotalTomado: 28500,
+    },
+  ];
+
+  const formatBRL = (value) =>
+    value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  const addDays = (date, days) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  };
+
+  // Mesmos empréstimos (e mesma lógica de datas) da tela de Empréstimos — os
+  // números do resumo abaixo vêm de agregar os empréstimos ativos/atrasados,
+  // não de um valor solto e desconectado
+  const CICLO_DIAS = { diario: 1, semanal: 7, mensal: 30 };
+  const emprestimosAtivos = [
+    {
+      id: 1,
+      valor: 8500,
+      taxaJurosTotal: 20,
+      prazoDias: 60,
+      ciclo: 'mensal',
+      vencimentosTotal: 2,
+      vencimentosPagos: 0,
+      diasDesdeConcessao: 36,
+      status: 'atrasado',
+    },
+    {
+      id: 2,
+      valor: 3200,
+      taxaJurosTotal: 12,
+      prazoDias: 90,
+      ciclo: 'semanal',
+      vencimentosTotal: 13,
+      vencimentosPagos: 6,
+      diasDesdeConcessao: 42,
+      status: 'ativo',
+    },
+  ];
+
+  const hoje = new Date();
+
+  // Conta quantos vencimentos não pagos de cada empréstimo já venceram — olhando
+  // todos os vencimentos restantes, não só o próximo, já que o usuário pode ter
+  // acumulado mais de um em atraso
+  const totalVencimentosAtrasados = emprestimosAtivos.reduce((soma, loan) => {
+    const cicloDias = CICLO_DIAS[loan.ciclo];
+    const dataConcessao = addDays(hoje, -loan.diasDesdeConcessao);
+    let atrasadosDoEmprestimo = 0;
+    for (let i = loan.vencimentosPagos + 1; i <= loan.vencimentosTotal; i++) {
+      const dataVencimento = addDays(dataConcessao, i * cicloDias);
+      if (dataVencimento < hoje) atrasadosDoEmprestimo++;
+    }
+    return soma + atrasadosDoEmprestimo;
+  }, 0);
+
+  const proximosVencimentos = emprestimosAtivos
+    .map((loan) => {
+      const cicloDias = CICLO_DIAS[loan.ciclo];
+      const totalAPagar = loan.valor * (1 + loan.taxaJurosTotal / 100);
+      const valorVencimento = totalAPagar / loan.vencimentosTotal;
+      const saldoDevedor = (loan.vencimentosTotal - loan.vencimentosPagos) * valorVencimento;
+      const dataConcessao = addDays(hoje, -loan.diasDesdeConcessao);
+      const dataProximoVencimento = addDays(dataConcessao, (loan.vencimentosPagos + 1) * cicloDias);
+      const diasParaVencer = Math.round((dataProximoVencimento - hoje) / (1000 * 60 * 60 * 24));
+      const estado = diasParaVencer < 0 ? 'vencida' : diasParaVencer <= 5 ? 'proxima' : 'futura';
+      return {
+        loanId: loan.id,
+        loanValor: loan.valor,
+        valorVencimento,
+        saldoDevedor,
+        vencimentosRestantes: loan.vencimentosTotal - loan.vencimentosPagos,
+        data: dataProximoVencimento,
+        diasParaVencer,
+        estado,
+      };
+    })
+    .sort((a, b) => a.data - b.data);
+
+  const divida = {
+    totalEmAberto: proximosVencimentos.reduce((soma, p) => soma + p.saldoDevedor, 0),
+    vencimentosRestantes: proximosVencimentos.reduce((soma, p) => soma + p.vencimentosRestantes, 0),
+  };
+
+  // O vencimento mais próximo que ainda não venceu, entre todos os empréstimos
+  // — é o que interessa pro usuário se organizar. Vencimentos já atrasados
+  // ficam de fora daqui porque esses já são sinalizados pela faixa de status.
+  const proximoVencimentoGeral = proximosVencimentos.find((p) => p.diasParaVencer >= 0) || null;
+
+  const formatDiasParaVencer = (dias) => {
+    if (dias === 0) return 'hoje';
+    if (dias === 1) return 'amanhã';
+    return `em ${dias} dias`;
+  };
+
+  const hour = new Date().getHours();
+  const saudacao = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+
+  // Em produção: navigation.navigate('Emprestimos') — leva pro histórico
+  // completo (ativos, quitados e encerrados), não só o resumo mostrado aqui
+  const verTodosEmprestimos = () => {};
+
+  return (
+    <div className="credito-home-screen" style={styles.screen}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+        .credito-home-screen, .credito-home-screen *, .credito-home-screen *::before, .credito-home-screen *::after {
+          box-sizing: border-box;
+        }
+        .swipe-container::-webkit-scrollbar { display: none; }
+        .swipe-container { scrollbar-width: none; -ms-overflow-style: none; }
+      `}</style>
+
+      <div style={styles.header}>
+        <button style={styles.avatar} onClick={() => setShowConta(true)}>R</button>
+
+        <div style={styles.tabWrap}>
+          <button
+            style={{
+              ...styles.tabBase,
+              backgroundColor: activeTab === 'credito' ? colors.dark : 'transparent',
+              color: activeTab === 'credito' ? '#fff' : colors.inkSoft,
+            }}
+            onClick={() => goToTab('credito')}
+          >
+            Crédito
+          </button>
+          <button
+            style={{
+              ...styles.tabBase,
+              backgroundColor: activeTab === 'investir' ? colors.dark : 'transparent',
+              color: activeTab === 'investir' ? '#fff' : colors.inkSoft,
+            }}
+            onClick={() => goToTab('investir')}
+          >
+            Investir
+          </button>
+        </div>
+
+        <div style={styles.bellWrap}>
+          <Bell size={19} color={colors.ink} strokeWidth={1.8} />
+          <div style={styles.notifDot} />
+        </div>
+      </div>
+
+      <div className="swipe-container" style={styles.swipeContainer} ref={scrollRef} onScroll={handleSwipeScroll}>
+        <div style={styles.swipePage}>
+          <div style={styles.greeting}>
+            {saudacao}, <span style={styles.greetingName}>Rafael</span>
+          </div>
+
+      <div style={styles.primaryCard}>
+        <div style={styles.eyebrow}>Limite disponível</div>
+        <div style={styles.bigValue}>R$ {formatBRL(limiteDisponivel)}</div>
+
+        <div style={styles.totalRow}>
+          <span style={styles.totalText}>de R$ {formatBRL(limiteTotal)}</span>
+        </div>
+
+        <div style={styles.progressTrack}>
+          <div style={{ ...styles.progressFill, width: `${percentUsado}%` }} />
+        </div>
+        <div style={styles.progressCaption}>
+          <span>R$ {formatBRL(limiteUsado)} utilizados</span>
+          <span>{percentUsado}%</span>
+        </div>
+
+        <button
+          style={{
+            ...styles.primaryButton,
+            ...(limiteDisponivel <= 0 ? styles.primaryButtonDisabled : {}),
+          }}
+          disabled={limiteDisponivel <= 0}
+        >
+          {limiteDisponivel > 0 ? 'Solicitar empréstimo' : 'Limite esgotado'}
+        </button>
+      </div>
+
+      <div style={styles.contaResumoCard}>
+        <div>
+          <div style={styles.contaResumoValue}>+R$ {formatBRL(saldoConta)},00</div>
+          <div style={styles.contaResumoCaption}>disponível em conta</div>
+        </div>
+        <button style={styles.verContaLink} onClick={() => setShowConta(true)}>
+          Ver conta
+          <ChevronRight size={16} strokeWidth={2} />
+        </button>
+      </div>
+
+      <div style={styles.vencimentosSectionTitle}>Meus Empréstimos</div>
+
+      {/* Card inteiro é a área de toque — leva pro histórico completo.
+          O chevron ao lado do valor é só indicador visual, sem handler próprio,
+          pra não ter duas áreas de clique competindo dentro do mesmo card. */}
+      <div style={styles.emprestimosHero} onClick={verTodosEmprestimos}>
+        <div style={styles.emprestimosHeroTopRow}>
+          <div>
+            <div style={styles.totalAbertoValue}>R$ {formatBRL(Math.round(divida.totalEmAberto))}</div>
+            <div style={styles.heroSubtitle}>
+              {emprestimosAtivos.length} {emprestimosAtivos.length === 1 ? 'empréstimo' : 'empréstimos'} em aberto
+            </div>
+          </div>
+          <ChevronRight size={18} color={colors.inkFaint} strokeWidth={2} style={styles.emprestimosHeroChevron} />
+        </div>
+
+        {proximoVencimentoGeral && (
+          <div style={styles.proximoVencimentoRow}>
+            <Calendar size={15} color={colors.inkFaint} strokeWidth={2} />
+            <span style={styles.proximoVencimentoText}>
+              Próximo vencimento{' '}
+              <span style={styles.proximoVencimentoStrong}>
+                {formatDiasParaVencer(proximoVencimentoGeral.diasParaVencer)}
+              </span>
+              {' · '}R$ {formatBRL(Math.round(proximoVencimentoGeral.valorVencimento))}
+            </span>
+          </div>
+        )}
+
+        {/* Faixa de status de pagamento — placeholder pro estado positivo até
+            definirmos a mecânica de reforço (streak de dias em dia, etc).
+            Só vira vermelha quando existe atraso de verdade; fora isso é
+            reforço neutro/positivo, nunca a palavra "atraso" sem necessidade. */}
+        {totalVencimentosAtrasados > 0 ? (
+          <div style={{ ...styles.statusStrip, ...styles.statusStripAtrasado }}>
+            <AlertTriangle size={16} strokeWidth={2.2} />
+            <span style={styles.statusStripText}>
+              {totalVencimentosAtrasados} {totalVencimentosAtrasados === 1 ? 'vencimento em atraso' : 'vencimentos em atraso'}
+            </span>
+          </div>
+        ) : (
+          <div style={{ ...styles.statusStrip, ...styles.statusStripEmDia }}>
+            <Check size={16} strokeWidth={2.4} />
+            <span style={styles.statusStripText}>Em dia</span>
+          </div>
+        )}
+      </div>
+
+      {emprestimosAtivos.map((loan) => {
+        const cicloDias = CICLO_DIAS[loan.ciclo];
+        const totalAPagar = loan.valor * (1 + loan.taxaJurosTotal / 100);
+        const valorVencimento = totalAPagar / loan.vencimentosTotal;
+        const saldoDevedor = (loan.vencimentosTotal - loan.vencimentosPagos) * valorVencimento;
+        const percentPago = Math.round((loan.vencimentosPagos / loan.vencimentosTotal) * 100);
+        const isAtrasado = loan.status === 'atrasado';
+
+        const proximaInfo = proximosVencimentos.find((p) => p.loanId === loan.id);
+        const diasDiff = proximaInfo
+          ? Math.abs(Math.round((proximaInfo.data - hoje) / (1000 * 60 * 60 * 24)))
+          : 0;
+
+        return (
+          <div key={loan.id} style={{ ...styles.loanCard, ...(isAtrasado ? styles.loanCardAtrasado : {}) }}>
+            <div style={styles.loanTopRow}>
+              <div>
+                <div style={styles.loanValue}>R$ {formatBRL(loan.valor)}</div>
+                <div style={styles.loanLabel}>
+                  {loan.vencimentosTotal}x de R$ {formatBRL(Math.round(valorVencimento))} ({CICLO_LABEL[loan.ciclo]})
+                </div>
+              </div>
+              <div style={{ ...styles.statusBadge, ...(isAtrasado ? styles.statusBadgeAtrasado : styles.statusBadgeAtivo) }}>
+                {isAtrasado ? <AlertTriangle size={13} strokeWidth={2.4} /> : <Check size={13} strokeWidth={2.4} />}
+                {isAtrasado ? 'Atrasado' : 'Ativo'}
+              </div>
+            </div>
+
+            <div style={styles.progressTopRow}>
+              <span style={{ ...styles.progressTopLeft, ...(isAtrasado ? { color: colors.red } : {}) }}>
+                {loan.vencimentosPagos}/{loan.vencimentosTotal} vencimentos
+              </span>
+              <span style={{ ...styles.progressTopRight, ...(isAtrasado ? { color: colors.red } : {}) }}>
+                R$ {formatBRL(Math.round(saldoDevedor))}
+              </span>
+            </div>
+            <div style={styles.poolTrack}>
+              <div
+                style={{
+                  ...styles.poolSegCaptado,
+                  ...(isAtrasado ? { backgroundColor: colors.red } : {}),
+                  width: `${percentPago}%`,
+                }}
+              />
+            </div>
+            <div style={{ ...styles.detailSubvalue, marginBottom: 18, ...(isAtrasado ? { color: colors.red, fontWeight: 700 } : {}) }}>
+              {isAtrasado ? `Venceu há ${diasDiff} dias` : `Próximo vencimento em ${diasDiff} dias`}
+            </div>
+
+            <div style={styles.ofertaGrid}>
+              <div>
+                <div style={styles.detailLabel}>Prazo</div>
+                <div style={styles.detailValue}>{loan.prazoDias} dias</div>
+              </div>
+              <div>
+                <div style={styles.detailLabel}>Ciclo</div>
+                <div style={styles.detailValue}>{CICLO_LABEL[loan.ciclo]}</div>
+              </div>
+              <div>
+                <div style={styles.detailLabel}>Taxa total</div>
+                <div style={styles.detailValue}>{loan.taxaJurosTotal}%</div>
+              </div>
+              <div>
+                <div style={styles.detailLabel}>Total a pagar</div>
+                <div style={styles.detailValue}>R$ {formatBRL(Math.round(totalAPagar))}</div>
+              </div>
+            </div>
+
+            {isAtrasado ? (
+              <button style={styles.loanPayButton}>Pagar vencimento em atraso</button>
+            ) : (
+              <button style={styles.loanPayButtonAtivo}>Pagar próximo vencimento</button>
+            )}
+          </div>
+        );
+      })}
+        </div>
+
+        <div style={styles.swipePage}>
+          {activeInvestNav === 'ofertas' ? (
+            <>
+              <div style={styles.ofertasHeader}>
+                <div style={styles.ofertasTitle}>Ofertas</div>
+                <div style={styles.ofertasSubtitle}>{ofertas.length} empréstimos disponíveis pra investir</div>
+              </div>
+
+              <div style={styles.saldoChip}>Seu saldo disponível: R$ {formatBRL(saldoConta)}</div>
+
+              {ofertas.map((oferta) => {
+                const percentCaptado = Math.round((oferta.jaCaptado / oferta.valorTotalPedido) * 100);
+                const percentOferta = Math.round((oferta.valorOferta / oferta.valorTotalPedido) * 100);
+                const percentOfertaClamped = Math.min(percentOferta, 100 - percentCaptado);
+                const percentRestante = Math.max(0, 100 - percentCaptado - percentOferta);
+                const retornoValor = Math.round(oferta.valorOferta * (oferta.taxaJurosTotal / 100));
+                return (
+                  <div key={oferta.id} style={styles.ofertaCard}>
+                    <div style={styles.ofertaEyebrow}>Retorno oferecido</div>
+                    <div style={styles.ofertaRetornoValor}>
+                      <span style={styles.ofertaRetornoSign}>+</span>
+                      {oferta.taxaJurosTotal}%
+                    </div>
+                    <div style={styles.ofertaCaption}>
+                      Rendimento de R$ {formatBRL(retornoValor)} em {oferta.prazoDias} dias
+                    </div>
+
+                    <div style={styles.ofertaSplitRow}>
+                      <div style={styles.ofertaSplitBlock}>
+                        <div style={styles.ofertaSplitLabel}>Valor a investir</div>
+                        <div style={styles.ofertaSplitValue}>R$ {formatBRL(oferta.valorOferta)}</div>
+                      </div>
+                      <div style={{ ...styles.ofertaSplitBlock, ...styles.ofertaSplitBlockRight }}>
+                        <div style={styles.ofertaSplitLabel}>Retorno</div>
+                        <div style={styles.ofertaSplitValue}>R$ {formatBRL(retornoValor)}</div>
+                      </div>
+                    </div>
+
+                    <div style={styles.ofertaGrid}>
+                      <div>
+                        <div style={styles.detailLabel}>Prazo</div>
+                        <div style={styles.detailValue}>{oferta.prazoDias} dias</div>
+                        <div style={styles.detailSubvalue}>vencimentos {CICLO_LABEL[oferta.ciclo].toLowerCase()}s</div>
+                      </div>
+                      <div>
+                        <div style={styles.detailLabel}>Risco</div>
+                        <div style={styles.detailValue}>{oferta.risco}</div>
+                        <div style={styles.detailSubvalue}>score {oferta.tomadorScore}</div>
+                      </div>
+                      <div>
+                        <div style={styles.detailLabel}>Histórico</div>
+                        <div style={styles.detailValue}>
+                          {oferta.emprestimosAnteriores === 0
+                            ? 'Primeiro empréstimo'
+                            : `${oferta.emprestimosAnteriores}º empréstimo`}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={styles.detailLabel}>Já tomado</div>
+                        <div style={styles.detailValue}>
+                          {oferta.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(oferta.valorTotalTomado)}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={styles.poolBlock}>
+                      <div style={styles.poolTopRow}>
+                        <span style={styles.poolLabel}>Captação do pedido</span>
+                        <span style={styles.poolValue}>
+                          R$ {formatBRL(oferta.jaCaptado)} de R$ {formatBRL(oferta.valorTotalPedido)}
+                        </span>
+                      </div>
+                      <div style={styles.poolTrack}>
+                        <div style={{ ...styles.poolSegCaptado, width: `${percentCaptado}%` }} />
+                        <div style={{ ...styles.poolSegOferta, width: `${percentOfertaClamped}%` }} />
+                      </div>
+                      <div style={styles.poolCaption}>
+                        <span style={styles.poolCaptionItem}>
+                          <span style={styles.poolCaptionDotCaptado} />
+                          {percentCaptado}% já captado
+                        </span>
+                        <span style={styles.poolCaptionItem}>
+                          <span style={styles.poolCaptionDotOferta} />
+                          {percentOferta}% esta oferta
+                        </span>
+                        <span style={styles.poolCaptionItem}>
+                          <span style={styles.poolCaptionDotRestante} />
+                          {percentRestante}% captando
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 20 }}>
+                      <button style={styles.ofertaButton}>
+                        <Check size={17} strokeWidth={2.4} />
+                        Investir
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <div style={styles.investirEmpty}>
+              <div style={styles.investirIcon}>
+                <TrendingUp size={24} color={colors.ink} strokeWidth={1.8} />
+              </div>
+              <div style={styles.investirTitle}>
+                {activeInvestNav === 'carteira' ? 'Carteira em breve' : 'Início em breve'}
+              </div>
+              <div style={styles.investirCaption}>
+                Estamos preparando essa área. Em breve você vai ver isso por aqui.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {activeTab === 'investir' && (
+        <div style={styles.bottomNav}>
+          {[
+            { key: 'inicio', label: 'Início', Icon: Home },
+            { key: 'ofertas', label: 'Ofertas', Icon: Tag },
+            { key: 'carteira', label: 'Carteira', Icon: Wallet },
+          ].map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              style={{
+                ...styles.navItemCompact,
+                backgroundColor: activeInvestNav === key ? 'rgba(255,255,255,0.12)' : 'transparent',
+              }}
+              onClick={() => setActiveInvestNav(key)}
+            >
+              <Icon
+                size={18}
+                color={activeInvestNav === key ? '#fff' : 'rgba(255,255,255,0.5)'}
+                strokeWidth={2}
+              />
+              <span
+                style={{
+                  ...styles.navLabelCompact,
+                  color: activeInvestNav === key ? '#fff' : 'rgba(255,255,255,0.5)',
+                }}
+              >
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showConta && (
+        <div style={styles.contaOverlay}>
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+          `}</style>
+
+          <div style={styles.contaHeader}>
+            <button style={styles.contaBackButton} onClick={() => setShowConta(false)}>
+              <ArrowLeft size={18} color={colors.ink} strokeWidth={2} />
+            </button>
+            <div style={styles.contaTitle}>Conta</div>
+          </div>
+
+          <div style={styles.contaHero}>
+            <div style={styles.eyebrow}>Saldo em conta</div>
+            <div style={styles.contaSaldoValue}>R$ {formatBRL(saldoConta)}</div>
+            <div style={styles.actionButtonRow}>
+              <button style={{ ...styles.actionButton, backgroundColor: 'rgba(255,255,255,0.12)', border: 'none', color: '#fff' }}>
+                <ArrowDown size={17} strokeWidth={2} />
+                Sacar
+              </button>
+              <button style={{ ...styles.actionButton, backgroundColor: 'rgba(255,255,255,0.12)', border: 'none', color: '#fff' }}>
+                <Plus size={17} strokeWidth={2} />
+                Depositar
+              </button>
+            </div>
+          </div>
+
+          <div style={styles.extratoSection}>
+            <div style={styles.extratoTitle}>Extrato</div>
+            {extrato.map((item) => (
+              <div key={item.id} style={styles.extratoRow}>
+                <div style={styles.extratoIcon}>
+                  {item.tipo === 'entrada' ? (
+                    <ArrowDown size={16} color={colors.ink} strokeWidth={2} />
+                  ) : (
+                    <ArrowUpRight size={16} color={colors.ink} strokeWidth={2} />
+                  )}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={styles.extratoDesc}>{item.desc}</div>
+                  <div style={styles.extratoData}>{item.data}</div>
+                </div>
+                <div style={styles.extratoValor}>
+                  {item.valor > 0 ? '+' : '-'} R$ {formatBRL(Math.abs(item.valor))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

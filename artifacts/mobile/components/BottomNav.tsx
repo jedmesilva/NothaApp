@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useArea } from '@/contexts/AreaContext';
 import { palette as C, fonts, fontSize, radii, shadows } from '@/constants/theme';
@@ -22,10 +22,6 @@ const CREDITO_TABS: TabDef[] = [
   {
     name: 'index', label: 'Início', area: 'credito',
     icon: (a) => <Feather name="home" size={19} color={a ? WHITE : WHITE_MID} />,
-  },
-  {
-    name: 'emprestimos', label: 'Empréstimos', area: 'credito',
-    icon: (a) => <MaterialCommunityIcons name="bank-outline" size={19} color={a ? WHITE : WHITE_MID} />,
   },
 ];
 
