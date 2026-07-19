@@ -215,7 +215,7 @@ export default function CarteiraScreen() {
         </LightCard>
 
         {/* Ativos */}
-        <SectionTitle style={s.sectionTitle}>Ativos</SectionTitle>
+        <SectionTitle style={s.sectionTitle}>Meus Ativos</SectionTitle>
         <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/ativos' as any)}>
           <LightCard>
             <View style={s.ativosHeroRow}>
