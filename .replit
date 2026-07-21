@@ -18,19 +18,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "notha mobile"
-
-[[workflows.workflow]]
-name = "notha mobile"
-author = "agent"
+args = "artifacts/mobile: expo"
 
 [[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=18115 pnpm --filter @workspace/mobile run dev"
-waitForPort = 18115
-
-[workflows.workflow.metadata]
-outputType = "webview"
+task = "workflow.run"
+args = "artifacts/api-server: API Server"
 
 [agent]
 stack = "PNPM_WORKSPACE"
