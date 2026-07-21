@@ -9,8 +9,6 @@ interface Props {
   onClose: () => void;
 }
 
-const GREEN = '#22C55E';
-
 export default function GlobalToast({ toast, onClose }: Props) {
   const progress   = useRef(new Animated.Value(1)).current;
   const translateY = useRef(new Animated.Value(80)).current;
@@ -26,23 +24,23 @@ export default function GlobalToast({ toast, onClose }: Props) {
     opacity.setValue(0);
     progress.setValue(1);
 
-    // Entrance: spring slide-up + quick fade-in
+    // Entrada: spring de baixo para cima + fade rápido
     Animated.parallel([
       Animated.spring(translateY, {
         toValue: 0,
-        damping: 18,
-        stiffness: 220,
-        mass: 0.9,
+        damping: 20,
+        stiffness: 240,
+        mass: 0.85,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 150,
+        duration: 140,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Auto-dismiss progress
+    // Barra de progresso (auto-dismiss)
     exitAnim.current = Animated.timing(progress, {
       toValue: 0,
       duration,
@@ -58,21 +56,22 @@ export default function GlobalToast({ toast, onClose }: Props) {
   const widthInterp = progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
   return (
-    <View style={s.overlay} pointerEvents="box-none">
+    <View style={s.wrap} pointerEvents="box-none">
       <Animated.View style={[s.card, { transform: [{ translateY }], opacity }]}>
+        <View style={s.progressTrack}>
+          <Animated.View style={[s.progressFill, { width: widthInterp }]} />
+        </View>
 
         <View style={s.topRow}>
           <View style={s.iconWrap}>
-            <Feather name="check" size={17} color="#fff" strokeWidth={2.8} />
+            <Feather name="check" size={16} color="#fff" strokeWidth={2.6} />
           </View>
-
           <View style={s.textBlock}>
             <Text style={s.title}>{toast.title}</Text>
             {toast.subtitle ? <Text style={s.subtitle}>{toast.subtitle}</Text> : null}
           </View>
-
           <TouchableOpacity style={s.closeBtn} onPress={onClose} activeOpacity={0.8}>
-            <Feather name="x" size={14} color="rgba(255,255,255,0.45)" />
+            <Feather name="x" size={14} color="#fff" />
           </TouchableOpacity>
         </View>
 
@@ -83,112 +82,42 @@ export default function GlobalToast({ toast, onClose }: Props) {
             activeOpacity={0.85}
           >
             <Text style={s.actionBtnText}>{toast.actionLabel}</Text>
-            <Feather name="arrow-right" size={14} color={C.dark} style={{ marginLeft: 6 }} />
           </TouchableOpacity>
         ) : null}
-
-        {/* Progress bar at bottom edge */}
-        <View style={s.progressTrack}>
-          <Animated.View style={[s.progressFill, { width: widthInterp }]} />
-        </View>
       </Animated.View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  overlay: {
+  wrap: {
     position: 'absolute',
-    bottom: 104,
+    bottom: 100,
     left: spacing[4],
     right: spacing[4],
     zIndex: 9999,
   },
   card: {
-    backgroundColor: '#1C1C26',
-    borderRadius: 22,
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[4],
+    backgroundColor: C.dark,
+    borderRadius: 18,
+    padding: spacing[4],
     paddingBottom: spacing[3],
     overflow: 'hidden',
-    // Float above everything with a strong shadow
+    // Sombra forte para flutuar acima do conteúdo
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.5,
-    shadowRadius: 28,
-    elevation: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 18,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 14,
-  },
-  iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: GREEN,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    // Glow under the icon
-    shadowColor: GREEN,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-  },
-  textBlock: {
-    flex: 1,
-    paddingTop: 3,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: fontSize.lg,
-    color: '#fff',
-    marginBottom: 3,
-  },
-  subtitle: {
-    fontSize: fontSize['sm+'],
-    color: 'rgba(255,255,255,0.55)',
-    fontFamily: fonts.regular,
-    lineHeight: 17,
-  },
-  closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    marginTop: 2,
-  },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: radii.lg,
-    backgroundColor: '#fff',
-    marginBottom: 14,
-  },
-  actionBtnText: {
-    fontSize: fontSize.md,
-    fontFamily: fonts.bold,
-    color: C.dark,
-  },
-  progressTrack: {
-    marginHorizontal: -spacing[4],
-    marginBottom: -spacing[3],
-    height: 3,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: GREEN,
-  },
+  topRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
+  iconWrap:  { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  textBlock: { flex: 1 },
+  title:     { fontFamily: fonts.display, fontSize: fontSize['base+'], color: '#fff', marginBottom: 2 },
+  subtitle:  { fontSize: fontSize.xs, color: 'rgba(255,255,255,0.6)', fontFamily: fonts.regular },
+  closeBtn:  { width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  actionBtn:     { width: '100%', paddingVertical: 11, borderRadius: radii.md, backgroundColor: '#fff', alignItems: 'center', marginBottom: 10 },
+  actionBtnText: { fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.dark },
+  progressTrack: { marginHorizontal: -spacing[4], marginTop: -spacing[4], marginBottom: spacing[3], height: 3, backgroundColor: 'rgba(255,255,255,0.16)', overflow: 'hidden' },
+  progressFill:  { height: '100%', backgroundColor: '#fff', borderRadius: radii.full },
 });
