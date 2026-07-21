@@ -63,7 +63,7 @@ export default function SaquePixScreen() {
       if (chavesHistorico.length > 5) chavesHistorico.pop();
     }
     router.push({
-      pathname: '/saque-comprovante',
+      pathname: '/saque-confirmacao',
       params: { valor: String(valorCentavos), chave: chaveNormalizada },
     });
   };

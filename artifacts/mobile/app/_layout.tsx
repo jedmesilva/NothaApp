@@ -48,6 +48,7 @@ function RootLayoutNav() {
             <Stack.Screen name="contrato-leitura" options={{ headerShown: false }} />
             <Stack.Screen name="saque-valor" options={{ headerShown: false }} />
             <Stack.Screen name="saque-pix" options={{ headerShown: false }} />
+            <Stack.Screen name="saque-confirmacao" options={{ headerShown: false }} />
             <Stack.Screen name="saque-comprovante" options={{ headerShown: false }} />
             <Stack.Screen name="depositar" options={{ headerShown: false }} />
           </Stack>
