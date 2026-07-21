@@ -211,7 +211,7 @@ export default function OfertasScreen() {
       title: 'Oferta aceita',
       subtitle: `R$ ${formatBRL(oferta.valor)} investidos em ${oferta.ofertaId}`,
       actionLabel: 'Acompanhar captação',
-      onAction: () => {}, // TODO: navegar para ativo-detalhe quando a captação fechar
+      onAction: () => router.push(`/ativo-detalhe?id=${oferta.id}` as any),
       duration: 6000,
     });
   };
