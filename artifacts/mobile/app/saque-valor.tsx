@@ -58,16 +58,18 @@ export default function SaqueValorScreen() {
 
         <View style={s.valueRow}>
           <Text style={[s.prefix, valorCentavos === 0 && s.prefixDim]}>R$</Text>
-          <TextInput
-            style={s.input}
-            value={inputText}
-            onChangeText={handleChangeText}
-            keyboardType="numeric"
-            placeholder="0,00"
-            placeholderTextColor={C.onDarkFaint}
-            selectionColor="rgba(255,255,255,0.5)"
-            autoFocus
-          />
+          <View style={s.inputWrap}>
+            <TextInput
+              style={s.input}
+              value={inputText}
+              onChangeText={handleChangeText}
+              keyboardType="numeric"
+              placeholder="0,00"
+              placeholderTextColor={C.onDarkFaint}
+              selectionColor="rgba(255,255,255,0.5)"
+              autoFocus
+            />
+          </View>
         </View>
 
         {/* Linha de saldo disponível */}
@@ -152,14 +154,19 @@ const s = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: fontSize['5xl'],
     color: '#fff',
+    flexShrink: 0,
   },
   prefixDim: { color: C.onDarkFaint },
+  inputWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
   input: {
     fontFamily: fonts.display,
     fontSize: fontSize['7xl'],
     color: '#fff',
     letterSpacing: -1,
-    flex: 1,
+    flexShrink: 1,
     borderBottomWidth: 1.5,
     borderBottomColor: 'rgba(255,255,255,0.35)',
     paddingBottom: 4,
