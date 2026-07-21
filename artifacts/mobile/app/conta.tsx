@@ -40,8 +40,8 @@ export default function ContaScreen() {
           <Eyebrow context="dark">Saldo em conta</Eyebrow>
           <Text style={s.bigValue}>R$ {formatBRL(saldoConta)}</Text>
           <ActionRow
-            left={{ icon: 'arrow-down', label: 'Sacar',    context: 'dark' }}
-            right={{ icon: 'plus',      label: 'Depositar', context: 'dark' }}
+            left={{ icon: 'arrow-down', label: 'Sacar',     context: 'dark', onPress: () => router.push('/saque-valor' as any) }}
+            right={{ icon: 'plus',      label: 'Depositar',  context: 'dark', onPress: () => router.push('/depositar' as any) }}
             style={{ marginTop: 20 }}
           />
         </View>
