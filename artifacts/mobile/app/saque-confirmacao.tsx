@@ -198,12 +198,6 @@ export default function SaqueConfirmacaoScreen() {
         style={[s.overlay, { opacity: overlayOpacity }]}
         pointerEvents={loading ? 'auto' : 'none'}
       >
-        {/* Anel de pulso */}
-        <Animated.View style={[
-          s.pulseRing,
-          { transform: [{ scale: pulseScale }], opacity: pulseOpacity },
-        ]} />
-
         {/* Círculo central com spinner */}
         <View style={s.overlayCircle}>
           <ActivityIndicator size="large" color="#fff" />
