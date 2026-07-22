@@ -102,30 +102,33 @@ export default function PerfilScreen() {
       <View style={s.header}>
         <BackButton onPress={() => router.back()} />
         <Text style={s.title}>Perfil</Text>
-        {/* Mais opções */}
-        <TouchableOpacity
-          style={s.maisBtn}
-          onPress={() => router.push('/dados-pessoais' as any)}
-          activeOpacity={0.75}
-        >
-          <Feather name="settings" size={17} color={C.ink} />
-        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
 
-        {/* Avatar + nome */}
-        <View style={s.hero}>
+        {/* Card de usuário — tappable → dados pessoais */}
+        <TouchableOpacity
+          style={s.userCard}
+          onPress={() => router.push('/dados-pessoais' as any)}
+          activeOpacity={0.8}
+        >
           <View style={s.avatar}>
             <Text style={s.avatarText}>{USUARIO.iniciais}</Text>
           </View>
-          <Text style={s.nome}>{USUARIO.nome}</Text>
-          <Text style={s.email}>{USUARIO.email}</Text>
-          <View style={s.membroRow}>
-            <Feather name="calendar" size={12} color={C.inkFaint} />
-            <Text style={s.membroText}>Membro desde {USUARIO.membroDesde}</Text>
+
+          <View style={s.userInfo}>
+            <Text style={s.nome}>{USUARIO.nome}</Text>
+            <Text style={s.email}>{USUARIO.email}</Text>
+            <View style={s.membroRow}>
+              <Feather name="calendar" size={11} color={C.inkFaint} />
+              <Text style={s.membroText}>Membro desde {USUARIO.membroDesde}</Text>
+            </View>
           </View>
-        </View>
+
+          <View style={s.editHint}>
+            <Feather name="chevron-right" size={18} color={C.inkFaint} />
+          </View>
+        </TouchableOpacity>
 
         {/* Selos */}
         <View style={s.section}>
@@ -168,31 +171,6 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* Menu de opções */}
-        <View style={s.section}>
-          <Text style={s.sectionLabel}>Conta</Text>
-          <View style={s.menuCard}>
-            <MenuRow
-              icon="user"
-              label="Dados pessoais"
-              sublabel="Nome, e-mail, telefone, endereço"
-              onPress={() => router.push('/dados-pessoais' as any)}
-            />
-            <MenuRow
-              icon="credit-card"
-              label="Minha conta"
-              sublabel="Saldo, extrato e movimentações"
-              onPress={() => router.push('/conta' as any)}
-            />
-            <MenuRow
-              icon="bell"
-              label="Notificações"
-              onPress={() => router.push('/notificacoes' as any)}
-              last
-            />
-          </View>
-        </View>
-
         {/* Sair */}
         <TouchableOpacity style={s.sairBtn} activeOpacity={0.75}>
           <Feather name="log-out" size={16} color={C.red} />
@@ -221,47 +199,52 @@ const s = StyleSheet.create({
     color: C.ink,
     letterSpacing: -0.2,
   },
-  maisBtn: {
-    width: 38, height: 38,
-    borderRadius: radii.xl,
-    backgroundColor: C.card,
-    alignItems: 'center', justifyContent: 'center',
-  },
-
-  // Hero
-  hero: {
+  // Card de usuário tappable
+  userCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 28,
-    paddingHorizontal: spacing[5],
+    gap: spacing[4],
+    marginHorizontal: spacing[4],
+    marginTop: 8,
+    marginBottom: 4,
+    padding: spacing[4],
+    backgroundColor: C.card,
+    borderRadius: radii.cardLg,
   },
   avatar: {
-    width: 80, height: 80,
-    borderRadius: 40,
+    width: 56, height: 56,
+    borderRadius: 28,
     backgroundColor: C.dark,
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 14,
+    flexShrink: 0,
   },
   avatarText: {
     fontFamily: fonts.display,
-    fontSize: fontSize['7xl'],
+    fontSize: fontSize['4xl'],
     color: '#fff',
   },
+  userInfo: { flex: 1 },
   nome: {
-    fontFamily: fonts.display,
-    fontSize: fontSize['4xl'],
+    fontFamily: fonts.bold,
+    fontSize: fontSize.lg,
     color: C.ink,
-    letterSpacing: -0.3,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   email: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     fontFamily: fonts.regular,
     color: C.inkSoft,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   membroRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   membroText: { fontSize: fontSize.xs, fontFamily: fonts.regular, color: C.inkFaint },
+  editHint: {
+    width: 32, height: 32,
+    borderRadius: radii.xl,
+    backgroundColor: C.chipUrgent,
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
 
   // Seções
   section: { marginHorizontal: spacing[4], marginBottom: 20 },
