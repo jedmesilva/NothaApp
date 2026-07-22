@@ -54,10 +54,14 @@ export default function GlobalHeader() {
         </View>
 
         {/* Bell */}
-        <View style={s.bellWrap}>
+        <TouchableOpacity
+          style={s.bellWrap}
+          onPress={() => router.push('/notificacoes' as any)}
+          activeOpacity={0.75}
+        >
           <Ionicons name="notifications-outline" size={19} color={C.ink} />
           <View style={s.notifDot} />
-        </View>
+        </TouchableOpacity>
       </View>
   );
 }
