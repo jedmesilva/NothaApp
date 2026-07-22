@@ -47,6 +47,8 @@ function RootLayoutNav() {
             <Stack.Screen name="aceite-contrato" options={{ headerShown: false }} />
             <Stack.Screen name="contrato-leitura" options={{ headerShown: false }} />
             <Stack.Screen name="notificacoes" options={{ headerShown: false }} />
+            <Stack.Screen name="perfil" options={{ headerShown: false }} />
+            <Stack.Screen name="dados-pessoais" options={{ headerShown: false }} />
             <Stack.Screen name="saque-valor" options={{ headerShown: false }} />
             <Stack.Screen name="saque-pix" options={{ headerShown: false }} />
             <Stack.Screen name="saque-confirmacao" options={{ headerShown: false }} />
