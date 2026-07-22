@@ -69,8 +69,10 @@ export default function SaquePixScreen() {
   };
 
   const selecionarHistorico = (item: typeof chavesHistorico[0]) => {
-    setChave(item.chave);
-    inputRef.current?.focus();
+    router.push({
+      pathname: '/saque-confirmacao',
+      params: { valor: String(valorCentavos), chave: item.chave },
+    });
   };
 
   return (
