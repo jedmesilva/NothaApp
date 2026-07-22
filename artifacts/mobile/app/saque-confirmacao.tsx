@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Platform, ScrollView,
+  Animated, Easing, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -34,6 +35,9 @@ function dadosFicticiosPorChave(chave: string) {
   return { nome: 'Destinatário', banco: 'Banco desconhecido', agencia: null };
 }
 
+// Duração do estado de processamento antes de navegar (ms)
+const PROCESSING_DURATION = 2400;
+
 export default function SaqueConfirmacaoScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
@@ -54,23 +58,64 @@ export default function SaqueConfirmacaoScreen() {
     hour: '2-digit', minute: '2-digit',
   });
 
+  // --- Loading state ---
+  const [loading, setLoading] = useState(false);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const pulseScale     = useRef(new Animated.Value(1)).current;
+  const pulseOpacity   = useRef(new Animated.Value(0.15)).current;
+
+  // Loop de pulso enquanto processa
+  useEffect(() => {
+    if (!loading) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulseScale,   { toValue: 1.18, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0,    duration: 800, easing: Easing.in(Easing.ease),   useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(pulseScale,   { toValue: 1,    duration: 0,   useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0.15, duration: 0,   useNativeDriver: true }),
+        ]),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [loading]);
+
   const handleConfirmar = () => {
-    router.push({
-      pathname: '/saque-comprovante',
-      params: { valor: String(valorCentavos), chave },
-    });
+    if (loading) return;
+    setLoading(true);
+
+    // Fade in do overlay
+    Animated.timing(overlayOpacity, {
+      toValue: 1,
+      duration: 280,
+      useNativeDriver: true,
+    }).start();
+
+    // Navega após a duração de processamento
+    setTimeout(() => {
+      router.push({
+        pathname: '/saque-comprovante',
+        params: { valor: String(valorCentavos), chave },
+      });
+    }, PROCESSING_DURATION);
   };
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
       {/* Header */}
       <View style={s.header}>
-        <BackButton onPress={() => router.back()} />
+        <BackButton onPress={() => !loading && router.back()} />
         <Text style={s.title}>Confirmação</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}
+        pointerEvents={loading ? 'none' : 'auto'}
+      >
         {/* Valor em destaque */}
         <View style={s.heroCard}>
           <Text style={s.eyebrow}>Você está sacando</Text>
@@ -117,21 +162,58 @@ export default function SaqueConfirmacaoScreen() {
             Verifique os dados antes de confirmar. Transferências Pix não podem ser canceladas após o envio.
           </Text>
         </View>
-
       </ScrollView>
 
       {/* CTAs fixos */}
       <View style={[s.ctaBar, { paddingBottom: Math.max(insets.bottom, 18) }]}>
         <View style={s.ctaDouble}>
-          <TouchableOpacity style={s.ctaBtnGhost} onPress={() => router.back()} activeOpacity={0.75}>
+          <TouchableOpacity
+            style={[s.ctaBtnGhost, loading && s.ctaBtnHidden]}
+            onPress={() => router.back()}
+            disabled={loading}
+            activeOpacity={0.75}
+          >
             <Text style={s.ctaGhostText}>Voltar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.ctaBtn} onPress={handleConfirmar} activeOpacity={0.85}>
-            <Feather name="check" size={16} color="#fff" />
-            <Text style={s.ctaText}>Confirmar saque</Text>
+          <TouchableOpacity
+            style={[s.ctaBtn, loading && s.ctaBtnLoading]}
+            onPress={handleConfirmar}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Feather name="check" size={16} color="#fff" />
+            )}
+            <Text style={s.ctaText}>
+              {loading ? 'Processando...' : 'Confirmar saque'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Overlay de processamento */}
+      <Animated.View
+        style={[s.overlay, { opacity: overlayOpacity }]}
+        pointerEvents={loading ? 'auto' : 'none'}
+      >
+        {/* Anel de pulso */}
+        <Animated.View style={[
+          s.pulseRing,
+          { transform: [{ scale: pulseScale }], opacity: pulseOpacity },
+        ]} />
+
+        {/* Círculo central com spinner */}
+        <View style={s.overlayCircle}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+
+        <Text style={s.overlayTitle}>Processando</Text>
+        <Text style={s.overlaySubtitle}>
+          Enviando{'\u00A0'}R${'\u00A0'}{formatBRL(valorReais)} via Pix…
+        </Text>
+      </Animated.View>
     </View>
   );
 }
@@ -289,4 +371,43 @@ const s = StyleSheet.create({
   },
   ctaText:      { fontFamily: fonts.bold, fontSize: fontSize['lg+'], color: '#fff', letterSpacing: 0.1 },
   ctaGhostText: { fontFamily: fonts.bold, fontSize: fontSize['lg+'], color: C.ink },
+  ctaBtnLoading: { backgroundColor: C.inkSoft },
+  ctaBtnHidden:  { opacity: 0 },
+
+  // Overlay de processamento
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: C.dark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  pulseRing: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  overlayCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  overlayTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSize['3xl'],
+    color: '#fff',
+    letterSpacing: -0.3,
+  },
+  overlaySubtitle: {
+    fontFamily: fonts.regular,
+    fontSize: fontSize.md,
+    color: C.onDarkSoft,
+  },
 });
