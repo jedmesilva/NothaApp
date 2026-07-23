@@ -147,7 +147,7 @@ export default function AtivoDetalheScreen() {
   const timelineEvents: TimelineEvent[] = [
     { label: 'Solicitação',        date: dataSolicitacao,                                done: true         },
     { label: 'Captação iniciada',  date: dataCaptacaoIniciada,                           done: true         },
-    { label: 'Investido',          ...(jaInvestiu ? { date: dataInvestimento } : {}),    done: jaInvestiu   },
+    { label: 'Investimento realizado', ...(jaInvestiu ? { date: dataInvestimento } : {}), done: jaInvestiu   },
     { label: 'Captação concluída', ...(jaConcedido ? { date: dataCaptacaoConcluida } : {}), done: jaConcedido },
     { label: 'Concedido',          ...(jaConcedido ? { date: dataConcessao } : {}),      done: jaConcedido  },
     { label: 'Pagamentos',         done: todosRecebidos, progress: { value: jaConcedido ? parcelasRecebidas : 0, total: jaConcedido ? parcelasTotal : parcelasPrevistas } },
