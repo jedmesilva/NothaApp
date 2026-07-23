@@ -34,7 +34,7 @@ const CICLO_DIAS: Record<string, number> = { diario: 1, semanal: 7, mensal: 30 }
 export default function HomeScreen() {
   const { area, setArea, registerScrollTo } = useArea();
   const { user } = useAuth();
-  const { data: walletData } = useWallet();
+  const { data: walletData, isLoading: walletLoading } = useWallet();
   const [activeTab, setActiveTab]   = useState<'credito' | 'investir'>('credito');
   const scrollRef                   = useRef<ScrollView>(null);
   const scrollTimeoutRef            = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,11 +147,9 @@ export default function HomeScreen() {
           </DarkCard>
 
           {/* Saldo / depósito em conta */}
-          {depositoRecente > 0 ? (
-            <ContaCard variant="deposito" valor={depositoRecente} onPress={() => router.push('/conta' as any)} />
-          ) : saldoConta > 0 ? (
+          {!walletLoading && walletData && (
             <ContaCard variant="saldo" valor={saldoConta} onPress={() => router.push('/conta' as any)} />
-          ) : null}
+          )}
 
           {/* ── Meus Empréstimos ──────────────────────────────────── */}
           <SectionTitle style={s.sectionTitle}>Meus Empréstimos</SectionTitle>
