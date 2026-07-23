@@ -233,11 +233,7 @@ export default function EmprestimoDetalheScreen() {
               {i < timelineEvents.length - 1 && (
                 <View style={[s.timelineLine, event.done && s.timelineLineDone]} />
               )}
-              <View style={[
-                s.timelineDot,
-                !event.done && s.timelineDotPending,
-                isProgress && !allPaid && s.timelineDotProgress,
-              ]} />
+              <View style={[s.timelineDot, !event.done && s.timelineDotPending]} />
               <View style={{ flex: 1 }}>
                 <View style={s.timelineLabelRow}>
                   <Text style={[s.timelineLabel, !event.done && s.timelineLabelPending]}>
@@ -309,7 +305,6 @@ const s = StyleSheet.create({
   timelineRow:         { flexDirection: 'row', gap: 14, paddingBottom: 18, position: 'relative' },
   timelineDot:         { width: 10, height: 10, borderRadius: 5, backgroundColor: C.ink, marginTop: 4, zIndex: 1, flexShrink: 0 },
   timelineDotPending:  { backgroundColor: C.line },
-  timelineDotProgress: { backgroundColor: C.inkSoft },
   timelineLine:        { position: 'absolute', left: 4, top: 14, bottom: -4, width: 2, backgroundColor: C.line },
   timelineLineDone:    { backgroundColor: C.ink },
   timelineLabelRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
