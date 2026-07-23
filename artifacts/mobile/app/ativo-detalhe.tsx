@@ -181,7 +181,7 @@ export default function AtivoDetalheScreen() {
             <PoolBar
               label="Captação"
               headLeft={`${pctCaptado + pctPosClamped}% captado`}
-              headRight={`R$ ${formatBRL(Math.min(posicao.jaCaptado + valorInvestido, posicao.valorTotalPedido))} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
+              headRight={`R$ ${formatBRL(posicao.jaCaptado + valorInvestido)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
               segments={[
                 { pct: pctCaptado,    variant: 'primary' },
                 { pct: pctPosClamped, variant: 'secondary' },

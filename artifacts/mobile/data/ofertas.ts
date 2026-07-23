@@ -43,7 +43,7 @@ export const MOCK_OFERTAS: Oferta[] = [
     id: 3, ofertaId: 'OFR-2026-40220',
     valor: 500, taxaRetorno: 2.1, prazoDias: 15, ciclo: 'Diário',
     risco: 'Baixo', tomadorScore: 'A',
-    valorTotalPedido: 1800, jaCaptado: 1500,
+    valorTotalPedido: 1800, jaCaptado: 1200,
     emprestimosAnteriores: 6, valorTotalTomado: 28500,
     cidade: 'Porto Alegre, RS', proposito: 'Pagamento de fornecedor urgente',
   },
