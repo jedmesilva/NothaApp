@@ -2,8 +2,8 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, usersTable } from "@workspace/db";
-import { signToken, setAuthCookie, COOKIE_NAME } from "../lib/auth.js";
+import { db, usersTable, revokedTokensTable } from "@workspace/db";
+import { signToken, setAuthCookie, extractRawToken, verifyToken, COOKIE_NAME } from "../lib/auth.js";
 import { requireAuth, type AuthRequest } from "../middlewares/auth.js";
 
 const router = Router();
@@ -51,8 +51,6 @@ router.post("/register", async (req, res) => {
   const token = signToken({ userId: user.id, email: user.email });
   setAuthCookie(res, token);
 
-  // Return token in body so mobile clients can store it (cookies are not
-  // automatically managed in React Native's fetch implementation).
   res.status(201).json({ user: { id: user.id, name: user.name, email: user.email }, token });
 });
 
@@ -84,7 +82,21 @@ router.post("/login", async (req, res) => {
 });
 
 // POST /api/auth/logout
-router.post("/logout", (_req, res) => {
+router.post("/logout", async (req, res) => {
+  const token = extractRawToken(req);
+
+  if (token) {
+    const payload = verifyToken(token);
+    if (payload) {
+      // Adiciona o jti à blocklist até a expiração natural do token
+      const expiresAt = new Date((payload as any).exp * 1000);
+      await db
+        .insert(revokedTokensTable)
+        .values({ jti: payload.jti, expiresAt })
+        .onConflictDoNothing();
+    }
+  }
+
   res.clearCookie(COOKIE_NAME);
   res.json({ ok: true });
 });
