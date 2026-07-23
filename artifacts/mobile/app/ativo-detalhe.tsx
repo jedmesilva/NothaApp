@@ -28,6 +28,12 @@ import type { LoanStatus, TimelineEvent } from '@/components/ds';
 const PAGAMENTOS_LABEL: Record<string, string> = {
   diario: 'diários', semanal: 'semanais', mensal: 'mensais',
 };
+const CICLO_UNIT: Record<string, string> = {
+  diario: 'dia', semanal: 'semana', mensal: 'mês',
+};
+const CICLO_UNIT_PLURAL: Record<string, string> = {
+  diario: 'dias', semanal: 'semanas', mensal: 'meses',
+};
 
 export default function AtivoDetalheScreen() {
   const insets = useSafeAreaInsets();
@@ -255,7 +261,7 @@ export default function AtivoDetalheScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={s.sectionToggleTitle}>Previsão de vencimentos</Text>
                 <Text style={s.sectionToggleSummary}>
-                  {parcelasPrevistas} pagamentos · R$ {formatBRL(Math.round(valorRecebimento))} cada · A partir da concessão
+                  R$ {formatBRL(Math.round(valorRecebimento))}/{CICLO_UNIT[ciclo]} · {parcelasPrevistas} {parcelasPrevistas === 1 ? CICLO_UNIT[ciclo] : CICLO_UNIT_PLURAL[ciclo]}
                 </Text>
               </View>
               <Feather
