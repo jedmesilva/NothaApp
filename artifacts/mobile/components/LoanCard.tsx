@@ -79,7 +79,7 @@ export function LoanCard({ loan }: Props) {
 
       <DetailGrid
         items={[
-          { label: 'Prazo',      value: `${loan.prazoDias} dias`, sub: `vence ${formatDataShort(dataVencimento)}` },
+          { label: 'Prazo',      value: `${loan.prazoDias} dias`, sub: jaConcedido ? `vence ${formatDataShort(dataVencimento)}` : undefined },
           { label: 'Ciclo',      value: cicloMeta.label, sub: `R$ ${formatBRL(Math.round(valorParcela))}/${cicloMeta.unidade}` },
           { label: 'Taxa total', value: `${loan.taxaJurosTotal}%` },
           { label: loan.status === 'quitado' ? 'Total pago' : 'Total a pagar', value: `R$ ${formatBRL(Math.round(totalAPagar))}` },

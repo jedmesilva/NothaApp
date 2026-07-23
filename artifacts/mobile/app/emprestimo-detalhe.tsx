@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { CICLO_META, formatBRL, addDays, formatData } from '@/data/loans';
+import { CICLO_META, formatBRL, addDays, formatData, formatDataShort } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, StatusBadge, PoolBar, DetailGrid, InstallmentBadge, AlertBanner, ModalSheet, Timeline } from '@/components/ds';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
@@ -159,7 +159,7 @@ export default function EmprestimoDetalheScreen() {
           <DetailGrid
             context="dark"
             items={[
-              { label: 'Prazo',      value: `${prazoDias} dias`,               sub: `vence ${formatData(dataVencimentoFinal)}` },
+              { label: 'Prazo',      value: `${prazoDias} dias`,               sub: jaConcedido ? `vence ${formatDataShort(dataVencimentoFinal)}` : undefined },
               { label: 'Ciclo',      value: cicloMeta.label,                   sub: `R$ ${formatBRL(Math.round(valorParcela))}/${cicloMeta.unidade}` },
               { label: 'Taxa total', value: `${taxaJurosTotal}%` },
               { label: status === 'quitado' ? 'Total pago' : 'Total a pagar', value: `R$ ${formatBRL(Math.round(totalAPagar))}` },
