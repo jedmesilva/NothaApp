@@ -424,9 +424,7 @@ export default function AtivoDetalheScreen() {
         style={{ padding: spacing[5], paddingTop: spacing[4] }}
       >
         <View style={s.modalHeader}>
-          <Text style={s.modalTitle}>
-            {isOferta ? 'Cronograma previsto' : 'Histórico do ativo'}
-          </Text>
+          <Text style={s.modalTitle}>Histórico</Text>
           <TouchableOpacity style={s.modalClose} onPress={() => setShowTimeline(false)}>
             <Feather name="x" size={16} color={C.ink} />
           </TouchableOpacity>

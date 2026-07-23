@@ -215,7 +215,7 @@ export default function EmprestimoDetalheScreen() {
         style={{ padding: spacing[5], paddingTop: spacing[4] }}
       >
         <View style={s.modalHeader}>
-          <Text style={s.modalTitle}>Histórico do empréstimo</Text>
+          <Text style={s.modalTitle}>Histórico</Text>
           <TouchableOpacity style={s.modalClose} onPress={() => setShowTimeline(false)} activeOpacity={0.8}>
             <Feather name="x" size={16} color={C.ink} />
           </TouchableOpacity>
