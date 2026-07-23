@@ -36,20 +36,29 @@ export default function EmprestimoDetalheScreen() {
     ? addDays(hoje, -diasDesdeConcessao)
     : addDays(hoje, -pagas * cicloMeta.dias);
   const valorPago         = pagas * valorParcela;
-  const dataConcessao     = dataBase;
-  const dataSolicitacao   = addDays(dataConcessao, -3);
-  const dataAprovacao     = addDays(dataSolicitacao, 1);
-  const dataVencimentoFinal = addDays(dataConcessao, prazoDias);
-  const proximaData       = formatData(addDays(dataBase, (pagas + 1) * cicloMeta.dias));
-  const jaConcedido       = status !== 'analise' && status !== 'captacao';
+  const dataConcessao          = dataBase;
+  const dataSolicitacao        = addDays(dataConcessao, -3);
+  const dataCaptacaoIniciada   = addDays(dataSolicitacao, 1);
+  const dataCaptacaoConcluida  = addDays(dataConcessao, -1);
+  const dataVencimentoFinal    = addDays(dataConcessao, prazoDias);
+  const proximaData            = formatData(addDays(dataBase, (pagas + 1) * cicloMeta.dias));
+  const jaConcedido            = status !== 'analise' && status !== 'captacao';
+  const jaCaptacaoIniciada     = status !== 'analise';
+  const todosPagesPagos        = pagas >= parcelasTotal;
 
-  const timelineEvents = [
-    { label: 'Solicitado',      date: dataSolicitacao,     done: true },
-    { label: 'Aprovado',        date: dataAprovacao,       done: true },
-    { label: 'Concedido',       date: dataConcessao,       done: jaConcedido },
-    status === 'quitado'
-      ? { label: 'Quitado',             date: dataVencimentoFinal, done: true }
-      : { label: 'Vencimento final',    date: dataVencimentoFinal, done: false },
+  type TimelineEvent =
+    | { label: string; date: Date; done: boolean; progress?: undefined }
+    | { label: string; date: null;  done: boolean; progress: { value: number; total: number } };
+
+  const timelineEvents: TimelineEvent[] = [
+    { label: 'Solicitado',          date: dataSolicitacao,       done: true              },
+    { label: 'Captação iniciada',   date: dataCaptacaoIniciada,  done: jaCaptacaoIniciada },
+    { label: 'Captação concluída',  date: dataCaptacaoConcluida, done: jaConcedido        },
+    { label: 'Concedido',           date: dataConcessao,         done: jaConcedido        },
+    { label: 'Pagamentos',          date: null,                  done: todosPagesPagos,   progress: { value: pagas, total: parcelasTotal } },
+    { label: status === 'quitado' || todosPagesPagos ? 'Quitado' : 'Vencimento final',
+      date: dataVencimentoFinal,
+      done: status === 'quitado' || todosPagesPagos },
   ];
 
   const parcelas = Array.from({ length: parcelasTotal }, (_, i) => {
@@ -216,18 +225,47 @@ export default function EmprestimoDetalheScreen() {
           </TouchableOpacity>
         </View>
 
-        {timelineEvents.map((event, i) => (
-          <View key={event.label} style={s.timelineRow}>
-            {i < timelineEvents.length - 1 && <View style={s.timelineLine} />}
-            <View style={[s.timelineDot, !event.done && s.timelineDotPending]} />
-            <View style={{ flex: 1 }}>
-              <Text style={[s.timelineLabel, !event.done && s.timelineLabelPending]}>{event.label}</Text>
-              <Text style={s.timelineDate}>
-                {event.done ? formatDataHora(event.date) : formatData(event.date)}
-              </Text>
+        {timelineEvents.map((event, i) => {
+          const isProgress = event.progress !== undefined;
+          const allPaid    = isProgress && event.progress.value >= event.progress.total;
+          return (
+            <View key={event.label} style={s.timelineRow}>
+              {i < timelineEvents.length - 1 && (
+                <View style={[s.timelineLine, event.done && s.timelineLineDone]} />
+              )}
+              <View style={[
+                s.timelineDot,
+                !event.done && s.timelineDotPending,
+                isProgress && !allPaid && s.timelineDotProgress,
+              ]} />
+              <View style={{ flex: 1 }}>
+                <View style={s.timelineLabelRow}>
+                  <Text style={[s.timelineLabel, !event.done && s.timelineLabelPending]}>
+                    {event.label}
+                  </Text>
+                  {isProgress && (
+                    <View style={[s.progressPill, allPaid && s.progressPillDone]}>
+                      <Text style={[s.progressPillText, allPaid && s.progressPillTextDone]}>
+                        {event.progress.value}/{event.progress.total}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                {isProgress ? (
+                  <Text style={s.timelineDate}>
+                    {allPaid
+                      ? 'Todos os pagamentos realizados'
+                      : `${event.progress.total - event.progress.value} ${event.progress.total - event.progress.value === 1 ? 'restante' : 'restantes'}`}
+                  </Text>
+                ) : (
+                  <Text style={s.timelineDate}>
+                    {event.done ? formatDataHora(event.date) : formatData(event.date)}
+                  </Text>
+                )}
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ModalSheet>
     </View>
   );
@@ -268,11 +306,18 @@ const s = StyleSheet.create({
   modalHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
   modalTitle:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink },
   modalClose:   { width: 32, height: 32, borderRadius: 10, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
-  timelineRow:  { flexDirection: 'row', gap: 14, paddingBottom: 18, position: 'relative' },
-  timelineDot:        { width: 10, height: 10, borderRadius: 5, backgroundColor: C.ink, marginTop: 4, zIndex: 1 },
-  timelineDotPending: { backgroundColor: C.line },
-  timelineLine:       { position: 'absolute', left: 4, top: 14, bottom: -4, width: 2, backgroundColor: C.line },
-  timelineLabel:        { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink, marginBottom: 2 },
+  timelineRow:         { flexDirection: 'row', gap: 14, paddingBottom: 18, position: 'relative' },
+  timelineDot:         { width: 10, height: 10, borderRadius: 5, backgroundColor: C.ink, marginTop: 4, zIndex: 1, flexShrink: 0 },
+  timelineDotPending:  { backgroundColor: C.line },
+  timelineDotProgress: { backgroundColor: C.inkSoft },
+  timelineLine:        { position: 'absolute', left: 4, top: 14, bottom: -4, width: 2, backgroundColor: C.line },
+  timelineLineDone:    { backgroundColor: C.ink },
+  timelineLabelRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  timelineLabel:        { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink },
   timelineLabelPending: { color: C.inkFaint, fontFamily: fonts.semibold },
   timelineDate:         { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular },
+  progressPill:         { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full, backgroundColor: C.chipMuted },
+  progressPillDone:     { backgroundColor: C.ink },
+  progressPillText:     { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
+  progressPillTextDone: { color: '#fff' },
 });
