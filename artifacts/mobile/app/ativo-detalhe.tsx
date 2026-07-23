@@ -430,6 +430,7 @@ export default function AtivoDetalheScreen() {
       <ModalSheet
         visible={showTimeline}
         onClose={() => setShowTimeline(false)}
+        grabber={false}
         style={{ padding: spacing[5], paddingTop: spacing[4] }}
       >
         <View style={s.modalHeader}>
