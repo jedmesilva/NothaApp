@@ -178,7 +178,9 @@ export default function HomeScreen() {
                       ? 'Nenhum empréstimo ativo'
                       : !hasActive
                         ? `${pendingLoans.length} ${pendingLoans.length === 1 ? 'empréstimo' : 'empréstimos'} em análise`
-                        : `${activeLoans.length} ${activeLoans.length === 1 ? 'empréstimo' : 'empréstimos'} em aberto`}
+                        : pendingLoans.length > 0
+                          ? `${activeLoans.length} em aberto · ${pendingLoans.length} em análise`
+                          : `${activeLoans.length} ${activeLoans.length === 1 ? 'empréstimo' : 'empréstimos'} em aberto`}
                   </BodyText>
                 </View>
                 <Feather name="chevron-right" size={20} color={C.inkFaint} style={{ marginTop: 4 }} />
