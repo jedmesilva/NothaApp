@@ -16,17 +16,17 @@ import { formatData, formatDataHora } from '@/data/loans';
 
 export type TimelineEvent =
   | {
+      /** Etapas com data: forneça `date` apenas quando `done: true` */
       label: string;
-      date: Date;
+      date?: Date;
       done: boolean;
-      estimado?: boolean;
       progress?: undefined;
     }
   | {
+      /** Etapa de progresso (ex: Pagamentos X/N) — sem data */
       label: string;
       date?: undefined;
       done: boolean;
-      estimado?: undefined;
       progress: { value: number; total: number };
     };
 
@@ -67,21 +67,19 @@ export function Timeline({ events }: Props) {
                 )}
               </View>
 
-              <Text style={s.sub}>
-                {isProgress
-                  ? allPaid
+              {isProgress ? (
+                <Text style={s.sub}>
+                  {allPaid
                     ? 'Todos os pagamentos realizados'
                     : `${event.progress.total - event.progress.value} ${
                         event.progress.total - event.progress.value === 1
                           ? 'restante'
                           : 'restantes'
-                      }`
-                  : event.done
-                  ? formatDataHora(event.date)
-                  : event.estimado
-                  ? `~${formatData(event.date)}`
-                  : formatData(event.date)}
-              </Text>
+                      }`}
+                </Text>
+              ) : event.date ? (
+                <Text style={s.sub}>{formatDataHora(event.date)}</Text>
+              ) : null}
             </View>
           </View>
         );

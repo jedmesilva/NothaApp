@@ -90,11 +90,12 @@ export default function AtivoDetalheScreen() {
   const jaConcedido    = status !== 'captacao';
   const hoje           = new Date();
   const dataConcessao  = jaConcedido ? addDays(hoje, -(posicao.diasDesdeConcessao ?? 0)) : hoje;
-  // dataInvestimento só é relevante quando o usuário já investiu (não para ofertas em captação)
-  const dataInvestimento    = addDays(dataConcessao, -2);
-  const dataVencimentoFinal = addDays(dataConcessao, prazoDias);
-  // Durante captação as datas futuras são estimativas — concessão ainda não ocorreu
-  const vencimentoEhEstimado = !jaConcedido;
+  const dataSolicitacao       = addDays(dataConcessao, -3);
+  const dataCaptacaoIniciada  = addDays(dataSolicitacao, 1);
+  const dataCaptacaoConcluida = addDays(dataConcessao, -1);
+  const dataInvestimento      = addDays(dataConcessao, -2);
+  const dataVencimentoFinal   = addDays(dataConcessao, prazoDias);
+  const vencimentoEhEstimado  = !jaConcedido;
 
   // Pool bar data
   // Calcula o total combinado primeiro, depois deriva os segmentos — nunca soma arredondamentos individuais
@@ -139,30 +140,19 @@ export default function AtivoDetalheScreen() {
   const parcelasRestantes = parcelasTotal - parcelasRecebidas;
   const saldoRestante     = valorRecebimento * parcelasRestantes;
 
-  // Timeline — conteúdo varia conforme o contexto:
-  // isOferta: usuário ainda não investiu → linha do tempo futura/prevista
-  // captação (carteira): usuário investiu mas empréstimo ainda não concedido
-  // jaConcedido: empréstimo ativo, atrasado ou quitado
-  const timelineEvents = isOferta
-    ? [
-        { label: 'Em captação',             date: hoje,                done: true,  estimado: false },
-        { label: 'Concessão do empréstimo', date: dataConcessao,       done: false, estimado: true  },
-        { label: 'Vencimento estimado',     date: dataVencimentoFinal, done: false, estimado: true  },
-      ]
-    : jaConcedido
-    ? [
-        { label: 'Investido',          date: dataInvestimento,    done: true,  estimado: false },
-        { label: 'Captação concluída', date: dataConcessao,       done: true,  estimado: false },
-        status === 'quitado'
-          ? { label: 'Quitado',         date: dataVencimentoFinal, done: true,  estimado: false }
-          : { label: 'Vencimento final', date: dataVencimentoFinal, done: false, estimado: false },
-      ]
-    : [
-        // Carteira em captação: já investiu, aguardando concessão
-        { label: 'Investido',               date: dataInvestimento,    done: true,  estimado: false },
-        { label: 'Captação concluída',      date: dataConcessao,       done: false, estimado: true  },
-        { label: 'Vencimento estimado',     date: dataVencimentoFinal, done: false, estimado: true  },
-      ];
+  const jaInvestiu     = !isOferta;
+  const todosRecebidos = jaConcedido && parcelasRecebidas >= parcelasTotal && parcelasTotal > 0;
+  const jaEncerrado    = status === 'quitado' || todosRecebidos;
+
+  const timelineEvents: TimelineEvent[] = [
+    { label: 'Solicitação',        date: dataSolicitacao,                                done: true         },
+    { label: 'Captação iniciada',  date: dataCaptacaoIniciada,                           done: true         },
+    { label: 'Investido',          ...(jaInvestiu ? { date: dataInvestimento } : {}),    done: jaInvestiu   },
+    { label: 'Captação concluída', ...(jaConcedido ? { date: dataCaptacaoConcluida } : {}), done: jaConcedido },
+    { label: 'Concedido',          ...(jaConcedido ? { date: dataConcessao } : {}),      done: jaConcedido  },
+    { label: 'Pagamentos',         done: todosRecebidos, progress: { value: jaConcedido ? parcelasRecebidas : 0, total: jaConcedido ? parcelasTotal : parcelasPrevistas } },
+    { label: 'Encerrado',          ...(jaEncerrado ? { date: dataVencimentoFinal } : {}), done: jaEncerrado },
+  ];
 
   const numeroDoContrato = emprestimosAnteriores === 0 ? 'Primeiro' : `${emprestimosAnteriores + 1}º empréstimo`;
 
