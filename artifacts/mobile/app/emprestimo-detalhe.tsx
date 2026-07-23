@@ -55,24 +55,36 @@ export default function EmprestimoDetalheScreen() {
   const jaCaptacaoIniciada = status !== 'analise';
 
   // ── Parcelas ──────────────────────────────────────────────────────────────
-  // Usa parcelas reais do banco quando disponíveis; caso contrário, calcula.
-  const parcelas = data.installments.length > 0
-    ? data.installments.map((inst) => ({
-        numero:  inst.installmentNumber,
-        data:    new Date(inst.dueDate),
-        status:  inst.status === 'paid' ? 'paga' : inst.status === 'overdue' ? 'atrasada' : 'pendente',
-        paidAt:  inst.paidAt ? new Date(inst.paidAt) : null,
-        amountCents: inst.amountCents,
+  // Quando ainda não concedido (análise/captação), mostra previsão relativa
+  // à concessão em vez de datas fictícias.
+  const parcelasPrevisao = !jaConcedido
+    ? Array.from({ length: parcelasTotal }, (_, i) => ({
+        numero:         i + 1,
+        diasAposConcessao: (i + 1) * cicloMeta.dias,
+        amountCents:    Math.round(valorParcela * 100),
       }))
-    : Array.from({ length: parcelasTotal }, (_, i) => {
-        const numero = i + 1;
-        const data_  = addDays(dataBase, numero * cicloMeta.dias);
-        const pagas  = emprestimo.parcelasPagas;
-        let pStatus  = 'pendente';
-        if (numero <= pagas)  pStatus = 'paga';
-        else if (data_ < hoje) pStatus = 'atrasada';
-        return { numero, data: data_, status: pStatus, paidAt: null, amountCents: Math.round(valorParcela * 100) };
-      });
+    : null;
+
+  // Usa parcelas reais do banco quando disponíveis; caso contrário, calcula.
+  const parcelas = jaConcedido
+    ? data.installments.length > 0
+      ? data.installments.map((inst) => ({
+          numero:  inst.installmentNumber,
+          data:    new Date(inst.dueDate),
+          status:  inst.status === 'paid' ? 'paga' : inst.status === 'overdue' ? 'atrasada' : 'pendente',
+          paidAt:  inst.paidAt ? new Date(inst.paidAt) : null,
+          amountCents: inst.amountCents,
+        }))
+      : Array.from({ length: parcelasTotal }, (_, i) => {
+          const numero = i + 1;
+          const data_  = addDays(dataBase, numero * cicloMeta.dias);
+          const pagas  = emprestimo.parcelasPagas;
+          let pStatus  = 'pendente';
+          if (numero <= pagas)  pStatus = 'paga';
+          else if (data_ < hoje) pStatus = 'atrasada';
+          return { numero, data: data_, status: pStatus, paidAt: null, amountCents: Math.round(valorParcela * 100) };
+        })
+    : [];
 
   const pagas             = parcelas.filter((p) => p.status === 'paga').length;
   const parcelasAtrasadas = parcelas.filter((p) => p.status === 'atrasada');
@@ -167,49 +179,74 @@ export default function EmprestimoDetalheScreen() {
 
         {/* Parcelas */}
         <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>Vencimentos</Text>
-          <Text style={s.sectionCount}>{parcelasRestantes} restantes</Text>
+          <Text style={s.sectionTitle}>
+            {jaConcedido ? 'Vencimentos' : 'Previsão de vencimentos'}
+          </Text>
+          {jaConcedido
+            ? <Text style={s.sectionCount}>{parcelasRestantes} restantes</Text>
+            : <Text style={s.sectionCount}>{parcelasTotal} parcelas</Text>
+          }
         </View>
 
+        {/* Aviso de datas estimadas para captação/análise */}
+        {!jaConcedido && (
+          <Text style={s.estimadoInfo}>
+            As datas serão confirmadas após a conclusão da captação.
+          </Text>
+        )}
+
         <View style={s.list}>
-          {parcelas.map((p) => {
-            const isPaga     = p.status === 'paga';
-            const isAtrasada = p.status === 'atrasada';
-            const valorParcelaDisplay = p.amountCents
-              ? p.amountCents / 100
-              : Math.round(valorParcela);
-            return (
-              <View
-                key={p.numero}
-                style={[s.parcelaCard, isAtrasada && s.parcelaCardAtrasada, isPaga && { opacity: 0.55 }]}
-              >
-                <InstallmentBadge
-                  variant={isPaga ? 'paid' : isAtrasada ? 'overdue' : 'default'}
-                  label={String(p.numero)}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.parcelaLabel, isAtrasada && { color: C.red, fontFamily: fonts.bold }]}>
-                    {isPaga
-                      ? `Pago em ${formatData(p.paidAt ?? p.data)}`
-                      : isAtrasada
-                        ? `Venceu em ${formatData(p.data)}`
-                        : `Vence em ${formatData(p.data)}`}
-                  </Text>
-                  <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorParcelaDisplay))}</Text>
-                </View>
-                {isPaga ? (
-                  <View style={s.pagoLabel}>
-                    <Feather name="check" size={14} color={C.inkSoft} />
-                    <Text style={s.pagoText}>Pago</Text>
+          {jaConcedido
+            ? parcelas.map((p) => {
+                const isPaga     = p.status === 'paga';
+                const isAtrasada = p.status === 'atrasada';
+                const valorParcelaDisplay = p.amountCents
+                  ? p.amountCents / 100
+                  : Math.round(valorParcela);
+                return (
+                  <View
+                    key={p.numero}
+                    style={[s.parcelaCard, isAtrasada && s.parcelaCardAtrasada, isPaga && { opacity: 0.55 }]}
+                  >
+                    <InstallmentBadge
+                      variant={isPaga ? 'paid' : isAtrasada ? 'overdue' : 'default'}
+                      label={String(p.numero)}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.parcelaLabel, isAtrasada && { color: C.red, fontFamily: fonts.bold }]}>
+                        {isPaga
+                          ? `Pago em ${formatData(p.paidAt ?? p.data)}`
+                          : isAtrasada
+                            ? `Venceu em ${formatData(p.data)}`
+                            : `Vence em ${formatData(p.data)}`}
+                      </Text>
+                      <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorParcelaDisplay))}</Text>
+                    </View>
+                    {isPaga ? (
+                      <View style={s.pagoLabel}>
+                        <Feather name="check" size={14} color={C.inkSoft} />
+                        <Text style={s.pagoText}>Pago</Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity style={[s.payBtn, isAtrasada && s.payBtnAtrasado]} activeOpacity={0.85}>
+                        <Text style={s.payBtnText}>Pagar</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                ) : (
-                  <TouchableOpacity style={[s.payBtn, isAtrasada && s.payBtnAtrasado]} activeOpacity={0.85}>
-                    <Text style={s.payBtnText}>Pagar</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })}
+                );
+              })
+            : (parcelasPrevisao ?? []).map((p) => (
+                <View key={p.numero} style={s.parcelaCard}>
+                  <InstallmentBadge variant="default" label={String(p.numero)} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.parcelaLabel}>
+                      ~{p.diasAposConcessao} dias após a concessão
+                    </Text>
+                    <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(p.amountCents / 100))}</Text>
+                  </View>
+                </View>
+              ))
+          }
         </View>
 
         {/* Dates row */}
@@ -266,7 +303,8 @@ const s = StyleSheet.create({
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
   dateLabel: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
   dateValue: { fontFamily: fonts.display, fontSize: fontSize['md+'], color: C.ink },
-  sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: spacing[5], paddingBottom: 12 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: spacing[5], paddingBottom: 8 },
+  estimadoInfo:  { paddingHorizontal: spacing[5], paddingBottom: 12, fontSize: fontSize.sm, fontFamily: fonts.regular, color: C.inkFaint },
   sectionTitle:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
   sectionCount:  { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.regular },
   list: { gap: 10, paddingHorizontal: spacing[4] },
