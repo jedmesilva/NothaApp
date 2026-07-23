@@ -3,8 +3,8 @@
  *
  * Features:
  *   - Entrada com spring / saída com timing suave
- *   - Drag-to-dismiss com detecção de velocidade
- *   - Backdrop com opacidade animada em sincronia com a posição do sheet
+ *   - Backdrop com opacidade animada via shared value dedicado
+ *   - Drag-to-dismiss com detecção de posição e velocidade
  *   - Tap no backdrop fecha o sheet
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,13 +13,11 @@ import {
   Modal,
   Platform,
   StyleSheet,
-  TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
   ViewStyle,
 } from 'react-native';
 import Animated, {
-  Extrapolation,
-  interpolate,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -37,20 +35,18 @@ const SPRING: Parameters<typeof withSpring>[1] = {
   stiffness: 400,
   mass: 0.8,
 };
-const OUT_DURATION  = 280; // ms para a saída
-const DISMISS_PX    = 80;  // px arrastados para acionar dismiss
-const DISMISS_VEL   = 800; // px/s de velocidade para acionar dismiss
+const OPEN_BACKDROP_MS  = 250; // ms para o backdrop aparecer
+const OUT_MS            = 260; // ms para a saída
+const DISMISS_PX        = 80;  // px arrastados para acionar dismiss
+const DISMISS_VEL       = 800; // px/s de velocidade para acionar dismiss
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  /** Padding extra no fundo (padrão: resposta à safe area) */
   bottomPad?: number;
-  /** Cor de fundo do sheet (padrão: C.card) */
   bgColor?: string;
   style?: ViewStyle;
-  /** Se exibe a barrinha de arraste no topo (padrão true) */
   grabber?: boolean;
 };
 
@@ -68,41 +64,57 @@ export function ModalSheet({
     bottomPad ??
     (Platform.OS === 'web' ? 28 : insets.bottom > 0 ? insets.bottom + 12 : 28);
 
-  // mounted controla se o Modal está na árvore. É separado de visible para
-  // permitir animar a saída antes de desmontar.
   const [mounted, setMounted] = useState(visible);
 
-  const translateY = useSharedValue(SCREEN_H);
-  const sheetH     = useRef(SCREEN_H); // altura real medida no onLayout
-  const closing    = useRef(false);
+  // translateY controla a posição vertical do sheet
+  const translateY      = useSharedValue(SCREEN_H);
+  // backdropOpacity é um shared value dedicado — sem depender de refs em worklets
+  const backdropOpacity = useSharedValue(0);
 
-  // Mantém referência estável ao onClose para evitar stale closures nas worklets
+  // Altura real do sheet (medida no onLayout), usada apenas em código JS
+  const sheetH  = useRef(SCREEN_H);
+  // Evita double-dismiss quando o parent reage ao onClose setando visible=false
+  const closing = useRef(false);
+
+  // Referência estável ao onClose para não criar closures antigas nas worklets
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
-  // Chamado na thread JS após a animação de saída completar
+  // Chamado na thread JS após a animação de saída terminar
   const handleDismissed = useCallback(() => {
     setMounted(false);
     onCloseRef.current();
+    // Reseta closing SÓ depois de unmount para impedir que o useEffect do
+    // visible=false dispare um segundo dismiss enquanto ainda animamos
     closing.current = false;
   }, []);
+
+  const animateOut = useCallback(() => {
+    // Anima backdrop e sheet de forma independente; sheet pode usar a altura
+    // real porque isso roda na thread JS, não num worklet
+    backdropOpacity.value = withTiming(0, { duration: OUT_MS });
+    translateY.value = withTiming(sheetH.current, { duration: OUT_MS }, () => {
+      runOnJS(handleDismissed)();
+    });
+  }, [backdropOpacity, handleDismissed, translateY]);
 
   const dismiss = useCallback(() => {
     if (closing.current) return;
     closing.current = true;
-    translateY.value = withTiming(sheetH.current, { duration: OUT_DURATION }, () => {
-      runOnJS(handleDismissed)();
-    });
-  }, [handleDismissed, translateY]);
+    animateOut();
+  }, [animateOut]);
 
   // Abre o sheet ao montar
   useEffect(() => {
     if (mounted) {
       closing.current = false;
-      translateY.value = sheetH.current; // começa fora da tela
-      translateY.value = withSpring(0, SPRING);
+      translateY.value      = sheetH.current;
+      backdropOpacity.value = 0;
+      translateY.value      = withSpring(0, SPRING);
+      backdropOpacity.value = withTiming(1, { duration: OPEN_BACKDROP_MS });
     }
-  }, [mounted, translateY]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
 
   // Reage a mudanças externas de visible
   useEffect(() => {
@@ -111,13 +123,20 @@ export function ModalSheet({
     } else {
       dismiss();
     }
-  }, [visible, dismiss]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   // ── Gesto de arrastar ────────────────────────────────────────────────────
   const pan = Gesture.Pan()
     .onUpdate((e) => {
-      // Só permite arrastar para baixo
-      if (e.translationY > 0) translateY.value = e.translationY;
+      if (e.translationY > 0) {
+        translateY.value      = e.translationY;
+        // Dimmer o backdrop proporcionalmente enquanto arrasta
+        backdropOpacity.value = Math.max(
+          0,
+          1 - e.translationY / (sheetH.current || SCREEN_H),
+        );
+      }
     })
     .onEnd((e) => {
       const shouldDismiss =
@@ -126,7 +145,8 @@ export function ModalSheet({
         runOnJS(dismiss)();
       } else {
         // Snap de volta para aberto
-        translateY.value = withSpring(0, SPRING);
+        translateY.value      = withSpring(0, SPRING);
+        backdropOpacity.value = withTiming(1, { duration: OPEN_BACKDROP_MS });
       }
     });
 
@@ -136,12 +156,7 @@ export function ModalSheet({
   }));
 
   const backdropAnimStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      translateY.value,
-      [0, sheetH.current],
-      [1, 0],
-      Extrapolation.CLAMP,
-    ),
+    opacity: backdropOpacity.value,
   }));
 
   if (!mounted) return null;
@@ -155,16 +170,14 @@ export function ModalSheet({
       onRequestClose={dismiss}
     >
       <View style={s.root}>
-        {/* Backdrop ─ toca fora para fechar */}
+        {/* Backdrop com opacidade animada */}
         <Animated.View style={[s.backdrop, backdropAnimStyle]}>
-          <TouchableOpacity
-            style={StyleSheet.absoluteFillObject}
-            activeOpacity={1}
-            onPress={dismiss}
-          />
+          <TouchableWithoutFeedback onPress={dismiss}>
+            <View style={StyleSheet.absoluteFillObject} />
+          </TouchableWithoutFeedback>
         </Animated.View>
 
-        {/* Sheet ─ arrastável */}
+        {/* Sheet arrastável */}
         <GestureDetector gesture={pan}>
           <Animated.View
             style={[
