@@ -195,7 +195,7 @@ export default function AtivoDetalheScreen() {
                   context="dark"
                   items={[
                     { color: '#fff',        label: 'outros credores' },
-                    { color: C.onDarkFaint, label: 'minha participação' },
+                    { color: C.onDarkFaint, label: isOferta ? 'esta oferta' : 'minha participação' },
                   ]}
                 />
               }
