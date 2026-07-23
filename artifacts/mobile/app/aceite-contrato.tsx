@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import { BackButton, DetailGrid } from '@/components/ds';
 import { formatData } from '@/data/loans';
 import { useCreateLoan } from '@/hooks/useLoans';
+import type { CreateLoanInput } from '@/hooks/useLoans';
 
 const fmtBRL = (n: number) =>
   n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -61,16 +62,25 @@ export default function AceiteContratoScreen() {
 
   const ciclo = CICLO_META[cicloKey] ?? CICLO_META.semanal;
 
-  const handleConfirmar = () => {
-    const newId = createEmprestimo({
-      valorCentavos: parseInt(params.valorCentavos ?? '50000', 10),
-      cicloKey,
+  const createLoan = useCreateLoan();
+
+  const handleConfirmar = async () => {
+    const input: CreateLoanInput = {
+      amountCents: parseInt(params.valorCentavos ?? '50000', 10),
+      cicloKey: cicloKey as CreateLoanInput['cicloKey'],
       numPeriodos,
       prazoDias,
       taxaTotal,
-    });
-    router.dismissAll();
-    router.push({ pathname: '/emprestimo-detalhe', params: { id: String(newId) } });
+    };
+
+    try {
+      const result = await createLoan.mutateAsync(input);
+      router.dismissAll();
+      router.push({ pathname: '/emprestimo-detalhe', params: { id: result.loan.id } });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao criar solicitação. Tente novamente.';
+      Alert.alert('Erro', message);
+    }
   };
 
   const handleLerContrato = () => {
@@ -174,8 +184,17 @@ export default function AceiteContratoScreen() {
 
       {/* Fixed CTA */}
       <View style={[s.ctaBar, { paddingBottom: Math.max(insets.bottom, 18) }]}>
-        <TouchableOpacity style={s.ctaButton} onPress={handleConfirmar} activeOpacity={0.85}>
-          <Text style={s.ctaText}>Confirmar e solicitar</Text>
+        <TouchableOpacity
+          style={[s.ctaButton, createLoan.isPending && s.ctaButtonDisabled]}
+          onPress={handleConfirmar}
+          activeOpacity={0.85}
+          disabled={createLoan.isPending}
+        >
+          {createLoan.isPending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={s.ctaText}>Confirmar e solicitar</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -287,6 +306,9 @@ const s = StyleSheet.create({
     borderRadius: radii.xl,
     paddingVertical: 17,
     alignItems: 'center',
+  },
+  ctaButtonDisabled: {
+    opacity: 0.6,
   },
   ctaText: { fontFamily: fonts.bold, fontSize: fontSize['lg+'], color: '#fff', letterSpacing: 0.1 },
 });
