@@ -2,7 +2,8 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type BottomTabBarProps = any;
 import { useArea } from '@/contexts/AreaContext';
 import { palette as C, fonts, fontSize, radii, shadows } from '@/constants/theme';
 import { router } from 'expo-router';
@@ -50,7 +51,7 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
     if (tab.name === 'emprestimos') setArea('credito');
     if (tab.name === 'ofertas') setArea('investir');
 
-    const route = state.routes.find((r) => r.name === tab.name);
+    const route = state.routes.find((r: { name: string; key: string }) => r.name === tab.name);
     const isActive = currentRouteName === tab.name;
     const event = navigation.emit({
       type: 'tabPress',

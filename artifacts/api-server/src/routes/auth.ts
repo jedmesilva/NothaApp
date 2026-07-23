@@ -51,7 +51,9 @@ router.post("/register", async (req, res) => {
   const token = signToken({ userId: user.id, email: user.email });
   setAuthCookie(res, token);
 
-  res.status(201).json({ id: user.id, name: user.name, email: user.email });
+  // Return token in body so mobile clients can store it (cookies are not
+  // automatically managed in React Native's fetch implementation).
+  res.status(201).json({ user: { id: user.id, name: user.name, email: user.email }, token });
 });
 
 // POST /api/auth/login
@@ -78,7 +80,7 @@ router.post("/login", async (req, res) => {
   const token = signToken({ userId: user.id, email: user.email });
   setAuthCookie(res, token);
 
-  res.json({ id: user.id, name: user.name, email: user.email });
+  res.json({ user: { id: user.id, name: user.name, email: user.email }, token });
 });
 
 // POST /api/auth/logout

@@ -51,7 +51,7 @@ export default function EmprestimoDetalheScreen() {
     { label: 'Captação iniciada',   date: dataCaptacaoIniciada,  done: jaCaptacaoIniciada },
     { label: 'Captação concluída',  date: dataCaptacaoConcluida, done: jaConcedido        },
     { label: 'Concedido',           date: dataConcessao,         done: jaConcedido        },
-    { label: 'Pagamentos',          date: null,                  done: todosPagesPagos,   progress: { value: pagas, total: parcelasTotal } },
+    { label: 'Pagamentos',          date: undefined,             done: todosPagesPagos,   progress: { value: pagas, total: parcelasTotal } },
     { label: 'Quitado',
       date: dataVencimentoFinal,
       done: status === 'quitado' || todosPagesPagos },

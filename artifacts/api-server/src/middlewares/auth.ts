@@ -10,7 +10,17 @@ export function requireAuth(
   res: Response,
   next: NextFunction,
 ): void {
-  const token: string | undefined = req.cookies?.[COOKIE_NAME];
+  // 1. Cookie httpOnly (web / browser)
+  let token: string | undefined = req.cookies?.[COOKIE_NAME];
+
+  // 2. Authorization: Bearer <token> (mobile / React Native)
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      token = authHeader.slice(7);
+    }
+  }
+
   if (!token) {
     res.status(401).json({ error: "Não autenticado" });
     return;

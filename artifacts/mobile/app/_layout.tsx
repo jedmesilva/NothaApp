@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AreaProvider } from '@/contexts/AreaContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import type { ToastState } from '@/contexts/ToastContext';
 import GlobalToast from '@/components/GlobalToast';
 import {
@@ -20,43 +21,54 @@ import {
   SpaceGrotesk_600SemiBold,
   SpaceGrotesk_700Bold,
 } from '@expo-google-fonts/space-grotesk';
-import { Stack } from 'expo-router';
+import { Stack, router, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const { user, loading } = useAuth();
+  const segments = useSegments();
   const [toast, setToast] = useState<ToastState>(null);
   const handleToast = useCallback((t: ToastState) => setToast(t), []);
+
+  useEffect(() => {
+    if (loading) return;
+    const inAuthGroup = segments[0] === '(auth)';
+    if (!user && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (user && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [user, loading, segments]);
 
   return (
     <ToastProvider onToast={handleToast}>
       <AreaProvider>
         <View style={{ flex: 1 }}>
           <Stack screenOptions={{ headerBackTitle: 'Back' }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="emprestimos" options={{ headerShown: false }} />
-            <Stack.Screen name="emprestimo-detalhe" options={{ headerShown: false }} />
-            <Stack.Screen name="ativos" options={{ headerShown: false }} />
-            <Stack.Screen name="ativo-detalhe" options={{ headerShown: false }} />
-            <Stack.Screen name="conta" options={{ headerShown: false }} />
-            <Stack.Screen name="novo-emprestimo" options={{ headerShown: false }} />
-            <Stack.Screen name="aceite-contrato" options={{ headerShown: false }} />
-            <Stack.Screen name="contrato-leitura" options={{ headerShown: false }} />
-            <Stack.Screen name="notificacoes" options={{ headerShown: false }} />
-            <Stack.Screen name="saque-valor" options={{ headerShown: false }} />
-            <Stack.Screen name="saque-pix" options={{ headerShown: false }} />
-            <Stack.Screen name="saque-confirmacao" options={{ headerShown: false }} />
-            <Stack.Screen name="saque-comprovante" options={{ headerShown: false }} />
-            <Stack.Screen name="depositar" options={{ headerShown: false }} />
-            <Stack.Screen name="perfil" options={{ headerShown: false }} />
-            <Stack.Screen name="dados-pessoais" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)"              options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)"              options={{ headerShown: false }} />
+            <Stack.Screen name="emprestimos"         options={{ headerShown: false }} />
+            <Stack.Screen name="emprestimo-detalhe"  options={{ headerShown: false }} />
+            <Stack.Screen name="ativos"              options={{ headerShown: false }} />
+            <Stack.Screen name="ativo-detalhe"       options={{ headerShown: false }} />
+            <Stack.Screen name="conta"               options={{ headerShown: false }} />
+            <Stack.Screen name="novo-emprestimo"     options={{ headerShown: false }} />
+            <Stack.Screen name="aceite-contrato"     options={{ headerShown: false }} />
+            <Stack.Screen name="contrato-leitura"    options={{ headerShown: false }} />
+            <Stack.Screen name="notificacoes"        options={{ headerShown: false }} />
+            <Stack.Screen name="saque-valor"         options={{ headerShown: false }} />
+            <Stack.Screen name="saque-pix"           options={{ headerShown: false }} />
+            <Stack.Screen name="saque-confirmacao"   options={{ headerShown: false }} />
+            <Stack.Screen name="saque-comprovante"   options={{ headerShown: false }} />
+            <Stack.Screen name="depositar"           options={{ headerShown: false }} />
+            <Stack.Screen name="perfil"              options={{ headerShown: false }} />
+            <Stack.Screen name="dados-pessoais"      options={{ headerShown: false }} />
           </Stack>
 
-          {/* Toast global — renderizado por cima de todas as telas */}
           <GlobalToast toast={toast} onClose={() => setToast(null)} />
         </View>
       </AreaProvider>
@@ -88,7 +100,9 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView>
             <KeyboardProvider>
-              <RootLayoutNav />
+              <AuthProvider>
+                <RootLayoutNav />
+              </AuthProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>

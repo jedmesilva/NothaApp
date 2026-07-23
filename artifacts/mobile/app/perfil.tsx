@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,36 +6,58 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton } from '@/components/ds';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Mock user — trocar por contexto de autenticação quando disponível
-const USER = {
-  nome: 'Rafael Mendes',
-  email: 'rafael@email.com',
-  iniciais: 'R',
-};
-
-// Selos que o usuário conquistou (placeholder até a UI de selos ser definida)
 const SELOS_CONQUISTADOS: { id: string; label: string; icone: string }[] = [
   { id: 'primeiro-emprestimo', label: 'Primeiro Empréstimo', icone: '🏅' },
   { id: 'pagamento-em-dia',    label: 'Pagador Pontual',     icone: '⭐' },
 ];
 
-// Selos bloqueados (exemplo de progressão)
 const SELOS_BLOQUEADOS: { id: string; label: string; icone: string }[] = [
-  { id: 'cinco-emprestimos',  label: '5 Empréstimos',   icone: '🔒' },
-  { id: 'investidor',         label: 'Primeiro Investimento', icone: '🔒' },
-  { id: 'indicacao',          label: 'Trouxe Amigos',   icone: '🔒' },
+  { id: 'cinco-emprestimos', label: '5 Empréstimos',         icone: '🔒' },
+  { id: 'investidor',        label: 'Primeiro Investimento', icone: '🔒' },
+  { id: 'indicacao',         label: 'Trouxe Amigos',         icone: '🔒' },
 ];
 
 export default function PerfilScreen() {
+  const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const iniciais = user?.name
+    ? user.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+    : '?';
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Sair da conta',
+      'Tem certeza que deseja sair?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            setLoggingOut(true);
+            try {
+              await logout();
+              // AuthContext atualiza user → _layout redireciona para (auth)/login
+            } finally {
+              setLoggingOut(false);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
@@ -49,35 +71,31 @@ export default function PerfilScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 48 }}
       >
-        {/* ── Card do usuário (clicável → dados pessoais) ── */}
+        {/* ── Card do usuário ── */}
         <TouchableOpacity
           style={s.userCard}
           activeOpacity={0.82}
           onPress={() => router.push('/dados-pessoais' as any)}
         >
-          {/* Avatar grande */}
           <View style={s.avatar}>
-            <Text style={s.avatarText}>{USER.iniciais}</Text>
+            <Text style={s.avatarText}>{iniciais}</Text>
           </View>
 
-          {/* Nome e e-mail */}
           <View style={s.userInfo}>
-            <Text style={s.userName}>{USER.nome}</Text>
-            <Text style={s.userEmail}>{USER.email}</Text>
+            <Text style={s.userName}>{user?.name ?? '—'}</Text>
+            <Text style={s.userEmail}>{user?.email ?? '—'}</Text>
           </View>
 
-          {/* Indicação de que é clicável */}
           <View style={s.editHint}>
             <Text style={s.editHintText}>Editar dados</Text>
             <Feather name="chevron-right" size={14} color={C.inkSoft} />
           </View>
         </TouchableOpacity>
 
-        {/* ── Seção de selos ── */}
+        {/* ── Selos ── */}
         <Text style={s.sectionLabel}>Selos</Text>
 
         <View style={s.selosCard}>
-          {/* Conquistados */}
           {SELOS_CONQUISTADOS.length > 0 && (
             <>
               <Text style={s.selosSubtitle}>Conquistados</Text>
@@ -94,12 +112,10 @@ export default function PerfilScreen() {
             </>
           )}
 
-          {/* Divisor */}
           {SELOS_CONQUISTADOS.length > 0 && SELOS_BLOQUEADOS.length > 0 && (
             <View style={s.divider} />
           )}
 
-          {/* Bloqueados */}
           {SELOS_BLOQUEADOS.length > 0 && (
             <>
               <Text style={s.selosSubtitle}>Em breve</Text>
@@ -116,6 +132,17 @@ export default function PerfilScreen() {
             </>
           )}
         </View>
+
+        {/* ── Sair ── */}
+        <TouchableOpacity
+          style={s.logoutBtn}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+          disabled={loggingOut}
+        >
+          <Feather name="log-out" size={18} color={C.red} />
+          <Text style={s.logoutText}>{loggingOut ? 'Saindo…' : 'Sair da conta'}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -138,7 +165,6 @@ const s = StyleSheet.create({
     letterSpacing: -0.2,
   },
 
-  // ── Card do usuário ──
   userCard: {
     marginHorizontal: spacing[4],
     marginBottom: 8,
@@ -148,114 +174,47 @@ const s = StyleSheet.create({
     gap: spacing[4],
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 72, height: 72, borderRadius: 36,
     backgroundColor: C.dark,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
+    alignItems: 'center', justifyContent: 'center', alignSelf: 'center',
   },
-  avatarText: {
-    color: '#fff',
-    fontFamily: fonts.display,
-    fontSize: 30,
-    lineHeight: 36,
-  },
-  userInfo: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  userName: {
-    fontFamily: fonts.display,
-    fontSize: fontSize['2xl'],
-    color: C.ink,
-    letterSpacing: -0.2,
-  },
-  userEmail: {
-    fontFamily: fonts.regular,
-    fontSize: fontSize['sm+'],
-    color: C.inkFaint,
-  },
+  avatarText: { color: '#fff', fontFamily: fonts.display, fontSize: 30, lineHeight: 36 },
+  userInfo:   { alignItems: 'center', gap: 4 },
+  userName:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.2 },
+  userEmail:  { fontFamily: fonts.regular, fontSize: fontSize['sm+'], color: C.inkFaint },
   editHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingTop: spacing[3],
-    borderTopWidth: 1,
-    borderTopColor: C.line,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 4, paddingTop: spacing[3], borderTopWidth: 1, borderTopColor: C.line,
   },
-  editHintText: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize['sm+'],
-    color: C.inkSoft,
-  },
+  editHintText: { fontFamily: fonts.semibold, fontSize: fontSize['sm+'], color: C.inkSoft },
 
-  // ── Selos ──
   sectionLabel: {
-    fontFamily: fonts.display,
-    fontSize: fontSize['lg'],
-    color: C.ink,
-    marginHorizontal: spacing[5],
-    marginTop: spacing[5],
-    marginBottom: spacing[3],
-    letterSpacing: -0.1,
+    fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink,
+    marginHorizontal: spacing[5], marginTop: spacing[5], marginBottom: spacing[3], letterSpacing: -0.1,
   },
   selosCard: {
-    marginHorizontal: spacing[4],
-    backgroundColor: C.card,
-    borderRadius: radii.cardLg,
-    padding: spacing[5],
+    marginHorizontal: spacing[4], backgroundColor: C.card,
+    borderRadius: radii.cardLg, padding: spacing[5],
   },
   selosSubtitle: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize['sm+'],
-    color: C.inkFaint,
-    marginBottom: spacing[4],
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    fontFamily: fonts.semibold, fontSize: fontSize['sm+'], color: C.inkFaint,
+    marginBottom: spacing[4], textTransform: 'uppercase', letterSpacing: 0.4,
   },
-  selosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+  selosGrid:          { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  seloItem:           { width: 80, alignItems: 'center', gap: 8 },
+  seloItemBloqueado:  { opacity: 0.5 },
+  seloIconWrap:         { width: 56, height: 56, borderRadius: radii.xl, backgroundColor: C.chipUrgent, alignItems: 'center', justifyContent: 'center' },
+  seloIconWrapBloqueado:{ backgroundColor: C.chipMuted },
+  seloEmoji:            { fontSize: 26 },
+  seloLabel:            { fontFamily: fonts.medium, fontSize: fontSize.xs, color: C.ink, textAlign: 'center', lineHeight: 15 },
+  seloLabelBloqueado:   { color: C.inkFaint },
+  divider:              { height: 1, backgroundColor: C.line, marginVertical: spacing[4] },
+
+  logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 10, marginHorizontal: spacing[4], marginTop: spacing[5],
+    paddingVertical: 16, borderRadius: radii.cardLg,
+    backgroundColor: C.redBg,
   },
-  seloItem: {
-    width: 80,
-    alignItems: 'center',
-    gap: 8,
-  },
-  seloItemBloqueado: {
-    opacity: 0.5,
-  },
-  seloIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.xl,
-    backgroundColor: C.chipUrgent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  seloIconWrapBloqueado: {
-    backgroundColor: C.chipMuted,
-  },
-  seloEmoji: {
-    fontSize: 26,
-  },
-  seloLabel: {
-    fontFamily: fonts.medium,
-    fontSize: fontSize.xs,
-    color: C.ink,
-    textAlign: 'center',
-    lineHeight: 15,
-  },
-  seloLabelBloqueado: {
-    color: C.inkFaint,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: C.line,
-    marginVertical: spacing[4],
-  },
+  logoutText: { fontFamily: fonts.bold, fontSize: fontSize['base+'], color: C.red },
 });

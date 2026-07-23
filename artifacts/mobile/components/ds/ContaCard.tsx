@@ -40,7 +40,7 @@ export function ContaCard({ variant, valor, onPress, style }: ContaCardProps) {
   });
 
   return (
-    <LightCard style={[s.card, style]}>
+    <LightCard style={[s.card, style ?? {}]}>
       <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.7}>
         <View style={s.left}>
           <Text style={s.value}>
