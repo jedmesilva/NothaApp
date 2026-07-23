@@ -6,14 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { EMPRESTIMOS, CICLO_META, STATUS_META, formatBRL, addDays, formatData, formatDataHora } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid, InstallmentBadge, AlertBanner } from '@/components/ds';
+import { BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid, InstallmentBadge, AlertBanner, ModalSheet } from '@/components/ds';
 import type { LoanStatus } from '@/components/ds';
 
 export default function EmprestimoDetalheScreen() {
@@ -204,31 +203,32 @@ export default function EmprestimoDetalheScreen() {
       </ScrollView>
 
       {/* Timeline Modal */}
-      <Modal visible={showTimeline} transparent animationType="slide" onRequestClose={() => setShowTimeline(false)}>
-        <TouchableOpacity style={s.modalOverlay} activeOpacity={1} onPress={() => setShowTimeline(false)}>
-          <View style={[s.modalSheet, { paddingBottom: Math.max(insets.bottom, 20) + 8 }]}>
-            <View style={s.modalHeader}>
-              <Text style={s.modalTitle}>Histórico do empréstimo</Text>
-              <TouchableOpacity style={s.modalClose} onPress={() => setShowTimeline(false)} activeOpacity={0.8}>
-                <Feather name="x" size={16} color={C.ink} />
-              </TouchableOpacity>
-            </View>
+      <ModalSheet
+        visible={showTimeline}
+        onClose={() => setShowTimeline(false)}
+        grabber={false}
+        style={{ padding: spacing[5], paddingTop: spacing[4] }}
+      >
+        <View style={s.modalHeader}>
+          <Text style={s.modalTitle}>Histórico do empréstimo</Text>
+          <TouchableOpacity style={s.modalClose} onPress={() => setShowTimeline(false)} activeOpacity={0.8}>
+            <Feather name="x" size={16} color={C.ink} />
+          </TouchableOpacity>
+        </View>
 
-            {timelineEvents.map((event, i) => (
-              <View key={event.label} style={s.timelineRow}>
-                {i < timelineEvents.length - 1 && <View style={s.timelineLine} />}
-                <View style={[s.timelineDot, !event.done && s.timelineDotPending]} />
-                <View>
-                  <Text style={[s.timelineLabel, !event.done && s.timelineLabelPending]}>{event.label}</Text>
-                  <Text style={s.timelineDate}>
-                    {event.done ? formatDataHora(event.date) : formatData(event.date)}
-                  </Text>
-                </View>
-              </View>
-            ))}
+        {timelineEvents.map((event, i) => (
+          <View key={event.label} style={s.timelineRow}>
+            {i < timelineEvents.length - 1 && <View style={s.timelineLine} />}
+            <View style={[s.timelineDot, !event.done && s.timelineDotPending]} />
+            <View style={{ flex: 1 }}>
+              <Text style={[s.timelineLabel, !event.done && s.timelineLabelPending]}>{event.label}</Text>
+              <Text style={s.timelineDate}>
+                {event.done ? formatDataHora(event.date) : formatData(event.date)}
+              </Text>
+            </View>
           </View>
-        </TouchableOpacity>
-      </Modal>
+        ))}
+      </ModalSheet>
     </View>
   );
 }
@@ -265,9 +265,7 @@ const s = StyleSheet.create({
   helpBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: spacing[4], marginTop: 18, paddingVertical: 15, borderRadius: spacing[4], borderWidth: 1, borderColor: C.line },
   helpText:   { fontSize: fontSize['base+'], fontFamily: fonts.semibold, color: C.inkSoft },
   // Timeline modal
-  modalOverlay: { flex: 1, backgroundColor: C.scrimHeavy, justifyContent: 'flex-end', alignItems: 'center' },
-  modalSheet:   { width: '100%', maxWidth: 420, backgroundColor: C.card, borderTopLeftRadius: radii.cardLg, borderTopRightRadius: radii.cardLg, padding: spacing[5] },
-  modalHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 },
+  modalHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
   modalTitle:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink },
   modalClose:   { width: 32, height: 32, borderRadius: 10, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
   timelineRow:  { flexDirection: 'row', gap: 14, paddingBottom: 18, position: 'relative' },
