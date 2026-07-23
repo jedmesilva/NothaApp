@@ -12,6 +12,8 @@ import {
 import { useFocusEffect, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useArea } from '@/contexts/AreaContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/hooks/useWallet';
 import { EMPRESTIMOS, formatBRL, addDays, formatRelativeDueDate } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
@@ -31,6 +33,8 @@ const CICLO_DIAS: Record<string, number> = { diario: 1, semanal: 7, mensal: 30 }
 
 export default function HomeScreen() {
   const { area, setArea, registerScrollTo } = useArea();
+  const { user } = useAuth();
+  const { data: walletData } = useWallet();
   const [activeTab, setActiveTab]   = useState<'credito' | 'investir'>('credito');
   const scrollRef                   = useRef<ScrollView>(null);
   const scrollTimeoutRef            = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,8 +63,8 @@ export default function HomeScreen() {
   const limiteDisponivel = 1500;
   const limiteUsado      = limiteTotal - limiteDisponivel;
   const percentUsado     = Math.round((limiteUsado / limiteTotal) * 100);
-  const saldoConta       = 8500;
-  const depositoRecente  = 8500;
+  const saldoConta       = walletData ? walletData.wallet.balanceCents / 100 : 0;
+  const depositoRecente  = 0;
 
   // Empréstimos com parcelas em aberto (ativo + atrasado)
   const activeLoans = EMPRESTIMOS.filter(
@@ -122,7 +126,7 @@ export default function HomeScreen() {
         {/* ── Page 1: Crédito ───────────────────────────────────────── */}
         <ScrollView style={{ width: W }} contentContainerStyle={{ paddingBottom: bottomPad }} showsVerticalScrollIndicator={false}>
           <Text style={s.greeting}>
-            {saudacao}, <Text style={s.greetingName}>Rafael</Text>
+            {saudacao}, <Text style={s.greetingName}>{user?.name ?? ''}</Text>
           </Text>
 
           {/* Limite disponível */}
