@@ -259,7 +259,7 @@ export default function AtivoDetalheScreen() {
               activeOpacity={0.8}
             >
               <View style={{ flex: 1 }}>
-                <Text style={s.sectionToggleTitle}>Previsão de vencimentos</Text>
+                <Text style={s.sectionToggleTitle}>Vencimentos</Text>
                 <Text style={s.sectionToggleSummary}>
                   R$ {formatBRL(Math.round(valorRecebimento))}/{CICLO_UNIT[ciclo]} · {parcelasPrevistas} {parcelasPrevistas === 1 ? CICLO_UNIT[ciclo] : CICLO_UNIT_PLURAL[ciclo]}
                 </Text>
