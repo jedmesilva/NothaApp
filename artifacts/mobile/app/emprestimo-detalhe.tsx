@@ -65,25 +65,15 @@ export default function EmprestimoDetalheScreen() {
       }))
     : null;
 
-  // Usa parcelas reais do banco quando disponíveis; caso contrário, calcula.
+  // Quando concedido, os vencimentos vêm sempre do banco de dados.
   const parcelas = jaConcedido
-    ? data.installments.length > 0
-      ? data.installments.map((inst) => ({
-          numero:  inst.installmentNumber,
-          data:    new Date(inst.dueDate),
-          status:  inst.status === 'paid' ? 'paga' : inst.status === 'overdue' ? 'atrasada' : 'pendente',
-          paidAt:  inst.paidAt ? new Date(inst.paidAt) : null,
-          amountCents: inst.amountCents,
-        }))
-      : Array.from({ length: parcelasTotal }, (_, i) => {
-          const numero = i + 1;
-          const data_  = addDays(dataBase, numero * cicloMeta.dias);
-          const pagas  = emprestimo.parcelasPagas;
-          let pStatus  = 'pendente';
-          if (numero <= pagas)  pStatus = 'paga';
-          else if (data_ < hoje) pStatus = 'atrasada';
-          return { numero, data: data_, status: pStatus, paidAt: null, amountCents: Math.round(valorParcela * 100) };
-        })
+    ? data.installments.map((inst) => ({
+        numero:      inst.installmentNumber,
+        data:        new Date(inst.dueDate),
+        status:      inst.status === 'paid' ? 'paga' : inst.status === 'overdue' ? 'atrasada' : 'pendente',
+        paidAt:      inst.paidAt ? new Date(inst.paidAt) : null,
+        amountCents: inst.amountCents,
+      }))
     : [];
 
   const pagas             = parcelas.filter((p) => p.status === 'paga').length;
