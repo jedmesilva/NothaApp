@@ -13,7 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import { POSICOES } from '@/data/ativos';
 import type { Posicao } from '@/data/ativos';
 import { MOCK_OFERTAS } from '@/data/ofertas';
-import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno, formatDataHora } from '@/data/loans';
+import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno } from '@/data/loans';
 
 const OFERTA_CICLO_MAP: Record<string, 'diario' | 'semanal' | 'mensal'> = {
   Diário: 'diario', Semanal: 'semanal', Mensal: 'mensal',
@@ -21,9 +21,9 @@ const OFERTA_CICLO_MAP: Record<string, 'diario' | 'semanal' | 'mensal'> = {
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid,
-  InstallmentBadge, AlertBanner, GhostButton, ModalSheet,
+  InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
 } from '@/components/ds';
-import type { LoanStatus } from '@/components/ds';
+import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 const PAGAMENTOS_LABEL: Record<string, string> = {
   diario: 'diários', semanal: 'semanais', mensal: 'mensais',
@@ -442,24 +442,7 @@ export default function AtivoDetalheScreen() {
           </TouchableOpacity>
         </View>
 
-        {timelineEvents.map((event, i) => (
-          <View key={event.label} style={s.timelineRow}>
-            {i < timelineEvents.length - 1 && <View style={s.timelineLine} />}
-            <View style={[s.timelineDot, !event.done && s.timelineDotPending]} />
-            <View style={{ flex: 1 }}>
-              <Text style={[s.timelineLabel, !event.done && s.timelineLabelPending]}>
-                {event.label}
-              </Text>
-              <Text style={s.timelineDate}>
-                {event.done
-                  ? formatDataHora(event.date)
-                  : event.estimado
-                  ? `~${formatData(event.date)}`
-                  : formatData(event.date)}
-              </Text>
-            </View>
-          </View>
-        ))}
+        <Timeline events={timelineEvents} />
       </ModalSheet>
     </View>
   );
@@ -524,11 +507,4 @@ const s = StyleSheet.create({
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
   modalTitle:  { fontFamily: fonts.display, fontSize: fontSize.xl, color: C.ink },
   modalClose:  { width: 32, height: 32, borderRadius: radii.md, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
-  timelineRow:          { flexDirection: 'row', gap: 14, paddingBottom: spacing[4] + 2, position: 'relative' },
-  timelineLine:         { position: 'absolute', left: 4, top: 14, bottom: -4, width: 2, backgroundColor: C.line },
-  timelineDot:          { width: 10, height: 10, borderRadius: 5, backgroundColor: C.ink, flexShrink: 0, marginTop: 4, zIndex: 1 },
-  timelineDotPending:   { backgroundColor: C.line },
-  timelineLabel:        { fontSize: fontSize.base, fontFamily: fonts.bold, color: C.ink, marginBottom: 2 },
-  timelineLabelPending: { color: C.inkFaint, fontFamily: fonts.semibold },
-  timelineDate:         { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular },
 });
