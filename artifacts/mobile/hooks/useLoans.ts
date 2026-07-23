@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/apiClient';
 import type { Emprestimo } from '@/data/loans';
 
@@ -88,5 +88,28 @@ export function useLoan(id: string) {
         `/api/loans/${id}`,
       ),
     enabled: !!id,
+  });
+}
+
+export type CreateLoanInput = {
+  amountCents: number;
+  cicloKey: 'diario' | 'semanal' | 'mensal';
+  numPeriodos: number;
+  prazoDias: number;
+  taxaTotal: number;
+};
+
+export function useCreateLoan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateLoanInput) =>
+      apiFetch<{ loan: LoanAPI }>('/api/loans', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      // Invalida a lista para refletir o novo empréstimo
+      queryClient.invalidateQueries({ queryKey: ['loans'] });
+    },
   });
 }

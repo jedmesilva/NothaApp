@@ -9,8 +9,65 @@ import {
   loanInstallmentsTable,
 } from "@workspace/db";
 import { requireAuth, type AuthRequest } from "../middlewares/auth.js";
+import { z } from "zod";
+
+const createLoanSchema = z.object({
+  amountCents:  z.number().int().min(1000).max(150_000),
+  cicloKey:     z.enum(["diario", "semanal", "mensal"]),
+  numPeriodos:  z.number().int().min(1),
+  prazoDias:    z.number().int().min(1),
+  taxaTotal:    z.number().min(0),
+});
 
 const router = Router();
+
+// POST /api/loans — cria uma solicitação de empréstimo
+router.post("/", requireAuth, async (req, res) => {
+  const { userId } = (req as AuthRequest).user;
+
+  const parsed = createLoanSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Dados inválidos", details: parsed.error.flatten() });
+    return;
+  }
+
+  const { amountCents, cicloKey, numPeriodos, prazoDias, taxaTotal } = parsed.data;
+
+  // Garante que o tomador tem perfil (cria se necessário)
+  let [borrower] = await db
+    .select({ id: borrowerProfilesTable.id })
+    .from(borrowerProfilesTable)
+    .where(eq(borrowerProfilesTable.userId, userId))
+    .limit(1);
+
+  if (!borrower) {
+    [borrower] = await db
+      .insert(borrowerProfilesTable)
+      .values({ userId })
+      .returning({ id: borrowerProfilesTable.id });
+  }
+
+  // Gera contractId único: EMP-{ano}-{5 dígitos aleatórios}
+  const year       = new Date().getFullYear();
+  const suffix     = String(Math.floor(10000 + Math.random() * 90000));
+  const contractId = `EMP-${year}-${suffix}`;
+
+  const [loan] = await db
+    .insert(loansTable)
+    .values({
+      borrowerId:        borrower.id,
+      amountCents,
+      interestRatePct:   Math.round(taxaTotal * 100),
+      termDays:          prazoDias,
+      cycle:             cicloKey,
+      installmentsTotal: numPeriodos,
+      status:            "pending_review",
+      contractId,
+    })
+    .returning();
+
+  res.status(201).json({ loan });
+});
 
 // GET /api/loans — lista todos os empréstimos do tomador autenticado
 router.get("/", requireAuth, async (req, res) => {

@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
   StyleSheet,
   Platform,
 } from 'react-native';
@@ -12,7 +14,8 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, DetailGrid } from '@/components/ds';
-import { formatData, createEmprestimo } from '@/data/loans';
+import { formatData } from '@/data/loans';
+import { useCreateLoan } from '@/hooks/useLoans';
 
 const fmtBRL = (n: number) =>
   n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
