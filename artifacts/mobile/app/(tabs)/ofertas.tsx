@@ -278,7 +278,7 @@ export default function OfertasScreen() {
           const pctOfertaClamped = Math.min(pctOferta, 100 - pctCaptado);
 
           return (
-            <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => router.push(`/ativo-detalhe?id=${o.id}` as any)}>
+            <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => setSelectedOferta(o)}>
               {/* Eyebrow + badge */}
               <View style={s.cardTopRow}>
                 <Text style={s.eyebrow}>Retorno oferecido</Text>
@@ -331,7 +331,7 @@ export default function OfertasScreen() {
               <View style={s.btnRow}>
                 <TouchableOpacity
                   style={s.detalhesBtn}
-                  onPress={() => router.push(`/ativo-detalhe?id=${o.id}` as any)}
+                  onPress={(e) => { e.stopPropagation?.(); setSelectedOferta(o); }}
                   activeOpacity={0.8}
                 >
                   <Text style={s.detalhesBtnText}>Ver detalhes</Text>
