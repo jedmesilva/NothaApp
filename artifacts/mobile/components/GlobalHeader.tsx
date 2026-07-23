@@ -27,7 +27,7 @@ export default function GlobalHeader() {
   return (
     <View style={[s.header, { paddingTop: topPad }]}>
         {/* Avatar */}
-        <TouchableOpacity style={s.avatar} onPress={() => router.push('/perfil' as any)} activeOpacity={0.8}>
+        <TouchableOpacity style={s.avatar} onPress={() => router.push('/conta' as any)} activeOpacity={0.8}>
           <Text style={s.avatarText}>R</Text>
         </TouchableOpacity>
 
