@@ -16,8 +16,6 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import { BackButton } from '@/components/ds';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
-import { useBorrowerProfile, useActivateBorrowerProfile } from '@/hooks/useBorrowerProfile';
-import { useInvestorProfile, useActivateInvestorProfile } from '@/hooks/useInvestorProfile';
 
 const SELOS_CONQUISTADOS = [
   { id: 'primeiro-emprestimo', label: 'Primeiro Empréstimo', icone: '🏅' },
@@ -29,17 +27,6 @@ const SELOS_BLOQUEADOS = [
   { id: 'indicacao',         label: 'Trouxe Amigos',         icone: '🔒' },
 ];
 
-const STATUS_LABEL: Record<string, string> = {
-  pending_review: 'Em análise',
-  active:         'Ativo',
-  suspended:      'Suspenso',
-};
-const STATUS_COLOR: Record<string, string> = {
-  pending_review: C.inkSoft,
-  active:         '#2D7A4F',
-  suspended:      C.red,
-};
-
 export default function PerfilScreen() {
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
@@ -47,18 +34,11 @@ export default function PerfilScreen() {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const { data: profileData } = useProfile();
-  const { data: borrowerData } = useBorrowerProfile();
-  const { data: investorData } = useInvestorProfile();
-  const activateBorrower = useActivateBorrowerProfile();
-  const activateInvestor = useActivateInvestorProfile();
 
   const displayName  = profileData?.user.name ?? user?.name ?? '—';
   const displayEmail = profileData?.user.email ?? user?.email ?? '—';
   const iniciais     = displayName
     .split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase() || '?';
-
-  const borrower = borrowerData?.profile ?? null;
-  const investor = investorData?.profile ?? null;
 
   const handleLogout = async () => {
     const confirmed =
@@ -106,69 +86,6 @@ export default function PerfilScreen() {
             <Feather name="chevron-right" size={14} color={C.inkSoft} />
           </View>
         </TouchableOpacity>
-
-        {/* ── Perfis ── */}
-        <Text style={s.sectionLabel}>Perfis</Text>
-        <View style={s.profilesCard}>
-
-          {/* Tomador */}
-          <View style={[s.profileRow, { borderBottomWidth: 1, borderBottomColor: C.line, marginBottom: spacing[4], paddingBottom: spacing[4] }]}>
-            <View style={s.profileIconWrap}>
-              <Feather name="credit-card" size={18} color={C.ink} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.profileName}>Tomador de crédito</Text>
-              {borrower
-                ? <Text style={[s.profileStatus, { color: STATUS_COLOR[borrower.status] }]}>
-                    {STATUS_LABEL[borrower.status]}
-                  </Text>
-                : <Text style={s.profileStatusInactive}>Não ativado</Text>
-              }
-            </View>
-            {!borrower && (
-              <TouchableOpacity
-                style={s.activateBtn}
-                activeOpacity={0.8}
-                disabled={activateBorrower.isPending}
-                onPress={() => activateBorrower.mutate()}
-              >
-                {activateBorrower.isPending
-                  ? <ActivityIndicator size="small" color={C.ink} />
-                  : <Text style={s.activateBtnText}>Ativar</Text>
-                }
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Investidor */}
-          <View style={s.profileRow}>
-            <View style={s.profileIconWrap}>
-              <Feather name="trending-up" size={18} color={C.ink} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.profileName}>Investidor / Credor</Text>
-              {investor
-                ? <Text style={[s.profileStatus, { color: STATUS_COLOR[investor.status] }]}>
-                    {STATUS_LABEL[investor.status]}
-                  </Text>
-                : <Text style={s.profileStatusInactive}>Não ativado</Text>
-              }
-            </View>
-            {!investor && (
-              <TouchableOpacity
-                style={s.activateBtn}
-                activeOpacity={0.8}
-                disabled={activateInvestor.isPending}
-                onPress={() => activateInvestor.mutate()}
-              >
-                {activateInvestor.isPending
-                  ? <ActivityIndicator size="small" color={C.ink} />
-                  : <Text style={s.activateBtnText}>Ativar</Text>
-                }
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
 
         {/* ── Selos ── */}
         <Text style={s.sectionLabel}>Selos</Text>
