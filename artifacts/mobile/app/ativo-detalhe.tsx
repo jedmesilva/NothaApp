@@ -90,8 +90,11 @@ export default function AtivoDetalheScreen() {
   const jaConcedido    = status !== 'captacao';
   const hoje           = new Date();
   const dataConcessao  = jaConcedido ? addDays(hoje, -(posicao.diasDesdeConcessao ?? 0)) : hoje;
-  const dataInvestimento   = addDays(dataConcessao, -2);
+  // dataInvestimento só é relevante quando o usuário já investiu (não para ofertas em captação)
+  const dataInvestimento    = addDays(dataConcessao, -2);
   const dataVencimentoFinal = addDays(dataConcessao, prazoDias);
+  // Durante captação as datas futuras são estimativas — concessão ainda não ocorreu
+  const vencimentoEhEstimado = !jaConcedido;
 
   // Pool bar data
   // Calcula o total combinado primeiro, depois deriva os segmentos — nunca soma arredondamentos individuais
@@ -136,14 +139,30 @@ export default function AtivoDetalheScreen() {
   const parcelasRestantes = parcelasTotal - parcelasRecebidas;
   const saldoRestante     = valorRecebimento * parcelasRestantes;
 
-  // Timeline
-  const timelineEvents = [
-    { label: 'Investido',          date: dataInvestimento,    done: true },
-    { label: 'Captação concluída', date: dataConcessao,       done: jaConcedido },
-    status === 'quitado'
-      ? { label: 'Quitado',           date: dataVencimentoFinal, done: true }
-      : { label: 'Vencimento final',   date: dataVencimentoFinal, done: false },
-  ];
+  // Timeline — conteúdo varia conforme o contexto:
+  // isOferta: usuário ainda não investiu → linha do tempo futura/prevista
+  // captação (carteira): usuário investiu mas empréstimo ainda não concedido
+  // jaConcedido: empréstimo ativo, atrasado ou quitado
+  const timelineEvents = isOferta
+    ? [
+        { label: 'Em captação',             date: hoje,                done: true,  estimado: false },
+        { label: 'Concessão do empréstimo', date: dataConcessao,       done: false, estimado: true  },
+        { label: 'Vencimento estimado',     date: dataVencimentoFinal, done: false, estimado: true  },
+      ]
+    : jaConcedido
+    ? [
+        { label: 'Investido',          date: dataInvestimento,    done: true,  estimado: false },
+        { label: 'Captação concluída', date: dataConcessao,       done: true,  estimado: false },
+        status === 'quitado'
+          ? { label: 'Quitado',         date: dataVencimentoFinal, done: true,  estimado: false }
+          : { label: 'Vencimento final', date: dataVencimentoFinal, done: false, estimado: false },
+      ]
+    : [
+        // Carteira em captação: já investiu, aguardando concessão
+        { label: 'Investido',               date: dataInvestimento,    done: true,  estimado: false },
+        { label: 'Captação concluída',      date: dataConcessao,       done: false, estimado: true  },
+        { label: 'Vencimento estimado',     date: dataVencimentoFinal, done: false, estimado: true  },
+      ];
 
   const numeroDoContrato = emprestimosAnteriores === 0 ? 'Primeiro' : `${emprestimosAnteriores + 1}º empréstimo`;
 
@@ -373,12 +392,23 @@ export default function AtivoDetalheScreen() {
         {/* ── Datas (toca → modal de timeline) ── */}
         <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
           <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>Investido em</Text>
-            <Text style={s.dateValue}>{formatDataComAno(dataInvestimento)}</Text>
+            {isOferta ? (
+              <>
+                <Text style={s.dateLabel}>Em captação desde</Text>
+                <Text style={s.dateValue}>{formatDataComAno(hoje)}</Text>
+              </>
+            ) : (
+              <>
+                <Text style={s.dateLabel}>Investido em</Text>
+                <Text style={s.dateValue}>{formatDataComAno(dataInvestimento)}</Text>
+              </>
+            )}
           </View>
           <View style={s.datesDivider} />
           <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>Vencimento</Text>
+            <Text style={s.dateLabel}>
+              {vencimentoEhEstimado ? 'Vencimento estimado' : 'Vencimento'}
+            </Text>
             <Text style={s.dateValue}>{formatDataComAno(dataVencimentoFinal)}</Text>
           </View>
           <Feather name="chevron-right" size={18} color={C.inkFaint} />
@@ -403,7 +433,9 @@ export default function AtivoDetalheScreen() {
         style={{ padding: spacing[5], paddingTop: spacing[4] }}
       >
         <View style={s.modalHeader}>
-          <Text style={s.modalTitle}>Histórico do ativo</Text>
+          <Text style={s.modalTitle}>
+            {isOferta ? 'Cronograma previsto' : 'Histórico do ativo'}
+          </Text>
           <TouchableOpacity style={s.modalClose} onPress={() => setShowTimeline(false)}>
             <Feather name="x" size={16} color={C.ink} />
           </TouchableOpacity>
@@ -420,6 +452,8 @@ export default function AtivoDetalheScreen() {
               <Text style={s.timelineDate}>
                 {event.done
                   ? formatDataHora(event.date)
+                  : event.estimado
+                  ? `~${formatData(event.date)}`
                   : formatData(event.date)}
               </Text>
             </View>
