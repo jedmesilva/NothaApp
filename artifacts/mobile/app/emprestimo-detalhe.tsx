@@ -189,7 +189,7 @@ export default function EmprestimoDetalheScreen() {
           </View>
           <View style={s.datesDivider} />
           <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>{jaConcedido ? 'Vencimento' : 'Previsão de vencimento'}</Text>
+            <Text style={s.dateLabel}>Vencimento</Text>
             <Text style={s.dateValue}>{formatData(dataVencimentoFinal)}</Text>
           </View>
           <Feather name="chevron-right" size={18} color={C.inkFaint} />
@@ -221,7 +221,7 @@ export default function EmprestimoDetalheScreen() {
                 <View>
                   <Text style={[s.timelineLabel, !event.done && s.timelineLabelPending]}>{event.label}</Text>
                   <Text style={s.timelineDate}>
-                    {event.done ? formatDataHora(event.date) : `Previsto para ${formatData(event.date)}`}
+                    {event.done ? formatDataHora(event.date) : formatData(event.date)}
                   </Text>
                 </View>
               </View>

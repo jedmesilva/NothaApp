@@ -278,7 +278,7 @@ export default function AtivoDetalheScreen() {
           </View>
           <View style={s.datesDivider} />
           <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>{jaConcedido ? 'Vencimento' : 'Previsão de vencimento'}</Text>
+            <Text style={s.dateLabel}>Vencimento</Text>
             <Text style={s.dateValue}>{formatDataComAno(dataVencimentoFinal)}</Text>
           </View>
           <Feather name="chevron-right" size={18} color={C.inkFaint} />
@@ -320,7 +320,7 @@ export default function AtivoDetalheScreen() {
               <Text style={s.timelineDate}>
                 {event.done
                   ? formatDataHora(event.date)
-                  : `Previsto para ${formatData(event.date)}`}
+                  : formatData(event.date)}
               </Text>
             </View>
           </View>
