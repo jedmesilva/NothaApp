@@ -14,7 +14,8 @@ import { Feather } from '@expo/vector-icons';
 import { useArea } from '@/contexts/AreaContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
-import { EMPRESTIMOS, formatBRL, addDays, formatRelativeDueDate } from '@/data/loans';
+import { useLoans } from '@/hooks/useLoans';
+import { formatBRL, addDays, formatRelativeDueDate } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   DarkCard, LightCard,
@@ -64,10 +65,11 @@ export default function HomeScreen() {
   const limiteUsado      = limiteTotal - limiteDisponivel;
   const percentUsado     = Math.round((limiteUsado / limiteTotal) * 100);
   const saldoConta       = walletData ? walletData.wallet.balanceCents / 100 : 0;
-  const depositoRecente  = 0;
+
+  const { data: allLoans } = useLoans();
 
   // Empréstimos com parcelas em aberto (ativo + atrasado)
-  const activeLoans = EMPRESTIMOS.filter(
+  const activeLoans = (allLoans ?? []).filter(
     (e) => e.status === 'ativo' || e.status === 'atrasado'
   );
 

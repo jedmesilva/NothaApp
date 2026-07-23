@@ -4,69 +4,83 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
   StyleSheet,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { EMPRESTIMOS, CICLO_META, STATUS_META, formatBRL, addDays, formatData } from '@/data/loans';
+import { CICLO_META, formatBRL, addDays, formatData } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, StatusBadge, PoolBar, DetailGrid, InstallmentBadge, AlertBanner, ModalSheet, Timeline } from '@/components/ds';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
+import { useLoan, mapLoan } from '@/hooks/useLoans';
 
 export default function EmprestimoDetalheScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
-
-  const baseEmprestimo = EMPRESTIMOS.find((e) => String(e.id) === id) ?? EMPRESTIMOS[1];
-  const [pagas, setPagas] = useState(baseEmprestimo.parcelasPagas);
   const [showTimeline, setShowTimeline] = useState(false);
 
-  const { valor, taxaJurosTotal, prazoDias, ciclo, parcelasTotal, status, contratoId, diasDesdeConcessao, valorCaptado, numCredores } = baseEmprestimo;
-  const cicloMeta       = CICLO_META[ciclo];
-  const totalAPagar     = valor * (1 + taxaJurosTotal / 100);
-  const valorParcela    = totalAPagar / parcelasTotal;
-  const percentPago     = Math.round((pagas / parcelasTotal) * 100);
+  const { data, isLoading } = useLoan(id ?? '');
 
-  const hoje              = new Date();
-  // Use diasDesdeConcessao when available (needed for atrasado loans with parcelasPagas=0)
-  const dataBase          = diasDesdeConcessao != null
+  if (isLoading || !data) {
+    return (
+      <View style={[s.screen, { paddingTop: topPad, alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={C.ink} />
+      </View>
+    );
+  }
+
+  const emprestimo = mapLoan(data.loan);
+  const { valor, taxaJurosTotal, prazoDias, ciclo, parcelasTotal, status, contratoId, diasDesdeConcessao, valorCaptado } = emprestimo;
+  const cicloMeta    = CICLO_META[ciclo];
+  const totalAPagar  = valor * (1 + taxaJurosTotal / 100);
+  const valorParcela = totalAPagar / parcelasTotal;
+
+  const hoje = new Date();
+
+  // Datas derivadas
+  const dataBase = diasDesdeConcessao != null
     ? addDays(hoje, -diasDesdeConcessao)
-    : addDays(hoje, -pagas * cicloMeta.dias);
+    : hoje;
+  const dataConcessao         = dataBase;
+  const dataSolicitacao       = addDays(dataConcessao, -3);
+  const dataCaptacaoIniciada  = addDays(dataSolicitacao, 1);
+  const dataCaptacaoConcluida = addDays(dataConcessao, -1);
+  const dataVencimentoFinal   = addDays(dataConcessao, prazoDias);
+
+  const jaConcedido        = status !== 'analise' && status !== 'captacao';
+  const jaCaptacaoIniciada = status !== 'analise';
+
+  // ── Parcelas ──────────────────────────────────────────────────────────────
+  // Usa parcelas reais do banco quando disponíveis; caso contrário, calcula.
+  const parcelas = data.installments.length > 0
+    ? data.installments.map((inst) => ({
+        numero:  inst.installmentNumber,
+        data:    new Date(inst.dueDate),
+        status:  inst.status === 'paid' ? 'paga' : inst.status === 'overdue' ? 'atrasada' : 'pendente',
+        paidAt:  inst.paidAt ? new Date(inst.paidAt) : null,
+        amountCents: inst.amountCents,
+      }))
+    : Array.from({ length: parcelasTotal }, (_, i) => {
+        const numero = i + 1;
+        const data_  = addDays(dataBase, numero * cicloMeta.dias);
+        const pagas  = emprestimo.parcelasPagas;
+        let pStatus  = 'pendente';
+        if (numero <= pagas)  pStatus = 'paga';
+        else if (data_ < hoje) pStatus = 'atrasada';
+        return { numero, data: data_, status: pStatus, paidAt: null, amountCents: Math.round(valorParcela * 100) };
+      });
+
+  const pagas             = parcelas.filter((p) => p.status === 'paga').length;
+  const parcelasAtrasadas = parcelas.filter((p) => p.status === 'atrasada');
+  const parcelasRestantes = parcelasTotal - pagas;
+  const percentPago       = parcelasTotal > 0 ? Math.round((pagas / parcelasTotal) * 100) : 0;
   const valorPago         = pagas * valorParcela;
-  const dataConcessao          = dataBase;
-  const dataSolicitacao        = addDays(dataConcessao, -3);
-  const dataCaptacaoIniciada   = addDays(dataSolicitacao, 1);
-  const dataCaptacaoConcluida  = addDays(dataConcessao, -1);
-  const dataVencimentoFinal    = addDays(dataConcessao, prazoDias);
-  const proximaData            = formatData(addDays(dataBase, (pagas + 1) * cicloMeta.dias));
-  const jaConcedido            = status !== 'analise' && status !== 'captacao';
-  const jaCaptacaoIniciada     = status !== 'analise';
-  const todosPagesPagos        = pagas >= parcelasTotal;
+  const todosPagesPagos   = pagas >= parcelasTotal;
 
-  const timelineEvents: TimelineEvent[] = [
-    { label: 'Solicitado',          date: dataSolicitacao,       done: true              },
-    { label: 'Captação iniciada',   date: dataCaptacaoIniciada,  done: jaCaptacaoIniciada },
-    { label: 'Captação concluída',  date: dataCaptacaoConcluida, done: jaConcedido        },
-    { label: 'Concedido',           date: dataConcessao,         done: jaConcedido        },
-    { label: 'Pagamentos',          date: undefined,             done: todosPagesPagos,   progress: { value: pagas, total: parcelasTotal } },
-    { label: 'Quitado',
-      date: dataVencimentoFinal,
-      done: status === 'quitado' || todosPagesPagos },
-  ];
-
-  const parcelas = Array.from({ length: parcelasTotal }, (_, i) => {
-    const numero = i + 1;
-    const data   = addDays(dataBase, numero * cicloMeta.dias);
-    let pStatus  = 'pendente';
-    if (numero <= pagas)     pStatus = 'paga';
-    else if (data < hoje)    pStatus = 'atrasada';
-    return { numero, data, status: pStatus };
-  });
-
-  const parcelasAtrasadas = parcelas.filter(p => p.status === 'atrasada');
   const maisAntiga = parcelasAtrasadas.length > 0
     ? parcelasAtrasadas.reduce((ant, p) => p.data < ant.data ? p : ant)
     : null;
@@ -74,11 +88,18 @@ export default function EmprestimoDetalheScreen() {
     ? Math.round((hoje.getTime() - maisAntiga.data.getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
-  const handlePagar = (numero: number) => {
-    if (numero === pagas + 1) setPagas(pagas + 1);
-  };
+  const percentCaptado = valorCaptado && valor > 0
+    ? Math.round((valorCaptado / valor) * 100)
+    : 0;
 
-  const parcelasRestantes = parcelasTotal - pagas;
+  const timelineEvents: TimelineEvent[] = [
+    { label: 'Solicitado',         date: dataSolicitacao,       done: true                },
+    { label: 'Captação iniciada',  date: dataCaptacaoIniciada,  done: jaCaptacaoIniciada  },
+    { label: 'Captação concluída', date: dataCaptacaoConcluida, done: jaConcedido         },
+    { label: 'Concedido',          date: dataConcessao,         done: jaConcedido         },
+    { label: 'Pagamentos',         date: undefined,             done: todosPagesPagos,    progress: { value: pagas, total: parcelasTotal } },
+    { label: 'Quitado',            date: dataVencimentoFinal,   done: status === 'quitado' || todosPagesPagos },
+  ];
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
@@ -114,9 +135,9 @@ export default function EmprestimoDetalheScreen() {
           {status === 'captacao' && (
             <PoolBar
               label="Captação"
-              headLeft={`${Math.round(((valorCaptado ?? 0) / valor) * 100)}% captado`}
+              headLeft={`${percentCaptado}% captado`}
               headRight={`R$ ${formatBRL(Math.round(valorCaptado ?? 0))} de R$ ${formatBRL(valor)}`}
-              segments={[{ pct: ((valorCaptado ?? 0) / valor) * 100, variant: 'primary' }]}
+              segments={[{ pct: percentCaptado, variant: 'primary' }]}
               context="dark"
               style={{ marginBottom: 22 }}
             />
@@ -136,8 +157,8 @@ export default function EmprestimoDetalheScreen() {
           <DetailGrid
             context="dark"
             items={[
-              { label: 'Prazo',      value: `${prazoDias} dias`,            sub: `vence ${formatData(dataVencimentoFinal)}` },
-              { label: 'Ciclo',      value: cicloMeta.label,                sub: `R$ ${formatBRL(Math.round(valorParcela))}/${cicloMeta.unidade}` },
+              { label: 'Prazo',      value: `${prazoDias} dias`,               sub: `vence ${formatData(dataVencimentoFinal)}` },
+              { label: 'Ciclo',      value: cicloMeta.label,                   sub: `R$ ${formatBRL(Math.round(valorParcela))}/${cicloMeta.unidade}` },
               { label: 'Taxa total', value: `${taxaJurosTotal}%` },
               { label: status === 'quitado' ? 'Total pago' : 'Total a pagar', value: `R$ ${formatBRL(Math.round(totalAPagar))}` },
             ]}
@@ -154,6 +175,9 @@ export default function EmprestimoDetalheScreen() {
           {parcelas.map((p) => {
             const isPaga     = p.status === 'paga';
             const isAtrasada = p.status === 'atrasada';
+            const valorParcelaDisplay = p.amountCents
+              ? p.amountCents / 100
+              : Math.round(valorParcela);
             return (
               <View
                 key={p.numero}
@@ -165,10 +189,13 @@ export default function EmprestimoDetalheScreen() {
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={[s.parcelaLabel, isAtrasada && { color: C.red, fontFamily: fonts.bold }]}>
-                    {isPaga ? 'Pago em ' : isAtrasada ? 'Venceu em ' : 'Vence em '}
-                    {formatData(p.data)}
+                    {isPaga
+                      ? `Pago em ${formatData(p.paidAt ?? p.data)}`
+                      : isAtrasada
+                        ? `Venceu em ${formatData(p.data)}`
+                        : `Vence em ${formatData(p.data)}`}
                   </Text>
-                  <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorParcela))}</Text>
+                  <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorParcelaDisplay))}</Text>
                 </View>
                 {isPaga ? (
                   <View style={s.pagoLabel}>
@@ -176,7 +203,7 @@ export default function EmprestimoDetalheScreen() {
                     <Text style={s.pagoText}>Pago</Text>
                   </View>
                 ) : (
-                  <TouchableOpacity style={[s.payBtn, isAtrasada && s.payBtnAtrasado]} onPress={() => handlePagar(p.numero)} activeOpacity={0.85}>
+                  <TouchableOpacity style={[s.payBtn, isAtrasada && s.payBtnAtrasado]} activeOpacity={0.85}>
                     <Text style={s.payBtnText}>Pagar</Text>
                   </TouchableOpacity>
                 )}
@@ -220,7 +247,6 @@ export default function EmprestimoDetalheScreen() {
             <Feather name="x" size={16} color={C.ink} />
           </TouchableOpacity>
         </View>
-
         <Timeline events={timelineEvents} />
       </ModalSheet>
     </View>
@@ -236,12 +262,10 @@ const s = StyleSheet.create({
   heroEyebrow: { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.onDarkSoft, marginBottom: 10 },
   heroValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: '#fff', letterSpacing: -1, lineHeight: 44, marginBottom: 6 },
   heroSub:   { fontSize: fontSize.base, color: C.onDarkSoft, fontFamily: fonts.regular, marginBottom: 20 },
-  // Dates
   datesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginHorizontal: spacing[4], marginBottom: 14, padding: 14, borderRadius: radii['2xl'], backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
   dateLabel: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
   dateValue: { fontFamily: fonts.display, fontSize: fontSize['md+'], color: C.ink },
-  // Parcelas
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: spacing[5], paddingBottom: 12 },
   sectionTitle:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
   sectionCount:  { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.regular },
@@ -258,7 +282,6 @@ const s = StyleSheet.create({
   contratoId: { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', marginTop: 20, marginHorizontal: spacing[5] },
   helpBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: spacing[4], marginTop: 18, paddingVertical: 15, borderRadius: spacing[4], borderWidth: 1, borderColor: C.line },
   helpText:   { fontSize: fontSize['base+'], fontFamily: fonts.semibold, color: C.inkSoft },
-  // Timeline modal
   modalHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
   modalTitle:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink },
   modalClose:   { width: 32, height: 32, borderRadius: 10, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
