@@ -25,7 +25,7 @@ function ContadorCaptacao({ color }: { color: string }) {
   return <Text style={[s.timer, { color }]}>{texto}</Text>;
 }
 
-export type LoanStatus = 'analise' | 'captacao' | 'ativo' | 'atrasado' | 'quitado';
+export type LoanStatus = 'analise' | 'captacao' | 'ativo' | 'atrasado' | 'quitado' | 'cancelado';
 
 type Props = {
   status: LoanStatus;
@@ -37,35 +37,39 @@ type Props = {
 type BadgeStyle = { bg: string; color: string; border?: string };
 
 const LIGHT_STYLES: Record<LoanStatus, BadgeStyle> = {
-  analise:  { bg: C.chipMuted,     color: C.inkSoft },
-  captacao: { bg: C.chipMuted,     color: C.inkSoft },
-  ativo:    { bg: C.dark,          color: '#fff' },
-  atrasado: { bg: C.redBg,         color: C.red },
-  quitado:  { bg: 'transparent',   color: C.inkFaint, border: C.line },
+  analise:   { bg: C.chipMuted,     color: C.inkSoft },
+  captacao:  { bg: C.chipMuted,     color: C.inkSoft },
+  ativo:     { bg: C.dark,          color: '#fff' },
+  atrasado:  { bg: C.redBg,         color: C.red },
+  quitado:   { bg: 'transparent',   color: C.inkFaint, border: C.line },
+  cancelado: { bg: 'transparent',   color: C.inkFaint, border: C.line },
 };
 
 const DARK_STYLES: Record<LoanStatus, BadgeStyle> = {
-  analise:  { bg: C.onDarkSubtle,  color: '#fff' },
-  captacao: { bg: C.onDarkSubtle,  color: '#fff' },
-  ativo:    { bg: '#fff',          color: C.dark },
-  atrasado: { bg: '#fff',          color: C.dark },
-  quitado:  { bg: 'transparent',   color: C.onDarkMid, border: 'rgba(255,255,255,0.3)' },
+  analise:   { bg: C.onDarkSubtle,  color: '#fff' },
+  captacao:  { bg: C.onDarkSubtle,  color: '#fff' },
+  ativo:     { bg: '#fff',          color: C.dark },
+  atrasado:  { bg: '#fff',          color: C.dark },
+  quitado:   { bg: 'transparent',   color: C.onDarkMid, border: 'rgba(255,255,255,0.3)' },
+  cancelado: { bg: 'transparent',   color: C.onDarkMid, border: 'rgba(255,255,255,0.3)' },
 };
 
 const ICON_NAME: Record<LoanStatus, string> = {
-  analise:  'clock',
-  captacao: 'users',
-  ativo:    'zap',
-  atrasado: 'alert-triangle',
-  quitado:  'check-circle',
+  analise:   'clock',
+  captacao:  'users',
+  ativo:     'zap',
+  atrasado:  'alert-triangle',
+  quitado:   'check-circle',
+  cancelado: 'x-circle',
 };
 
 const STATUS_LABEL: Record<LoanStatus, string> = {
-  analise:  'Em análise',
-  captacao: 'Em captação',
-  ativo:    'Ativo',
-  atrasado: 'Atrasado',
-  quitado:  'Quitado',
+  analise:   'Em análise',
+  captacao:  'Em captação',
+  ativo:     'Ativo',
+  atrasado:  'Atrasado',
+  quitado:   'Quitado',
+  cancelado: 'Cancelado',
 };
 
 export function StatusBadge({ status, context = 'light', label }: Props) {

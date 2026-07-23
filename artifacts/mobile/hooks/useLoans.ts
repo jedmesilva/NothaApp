@@ -13,7 +13,7 @@ export type LoanAPI = {
   cycle: 'diario' | 'semanal' | 'mensal';
   installmentsTotal: number;
   installmentsPaid: number;
-  status: 'pending_review' | 'funding' | 'active' | 'overdue' | 'settled';
+  status: 'pending_review' | 'funding' | 'active' | 'overdue' | 'settled' | 'cancelled';
   contractId: string;
   grantedAt: string | null;
   createdAt: string;
@@ -41,6 +41,7 @@ const STATUS_MAP: Record<LoanAPI['status'], string> = {
   active:         'ativo',
   overdue:        'atrasado',
   settled:        'quitado',
+  cancelled:      'cancelado',
 };
 
 // ─── Converte LoanAPI → Emprestimo (compatível com LoanCard e telas) ──────────
@@ -108,8 +109,21 @@ export function useCreateLoan() {
         body: JSON.stringify(input),
       }),
     onSuccess: () => {
-      // Invalida a lista para refletir o novo empréstimo
       queryClient.invalidateQueries({ queryKey: ['loans'] });
+    },
+  });
+}
+
+export function useCancelLoan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (loanId: string) =>
+      apiFetch<{ loan: LoanAPI }>(`/api/loans/${loanId}/cancel`, {
+        method: 'PATCH',
+      }),
+    onSuccess: (_data, loanId) => {
+      queryClient.invalidateQueries({ queryKey: ['loans'] });
+      queryClient.invalidateQueries({ queryKey: ['loans', loanId] });
     },
   });
 }

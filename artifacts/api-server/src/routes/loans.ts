@@ -216,4 +216,45 @@ router.get("/:id", requireAuth, async (req, res) => {
   });
 });
 
+// PATCH /api/loans/:id/cancel — cancela uma solicitação em análise ou captação
+router.patch("/:id/cancel", requireAuth, async (req, res) => {
+  const { userId } = (req as AuthRequest).user;
+  const { id } = req.params;
+
+  const [borrower] = await db
+    .select({ id: borrowerProfilesTable.id })
+    .from(borrowerProfilesTable)
+    .where(eq(borrowerProfilesTable.userId, userId))
+    .limit(1);
+
+  if (!borrower) {
+    res.status(404).json({ error: "Empréstimo não encontrado" });
+    return;
+  }
+
+  const [loan] = await db
+    .select()
+    .from(loansTable)
+    .where(and(eq(loansTable.id, id), eq(loansTable.borrowerId, borrower.id)))
+    .limit(1);
+
+  if (!loan) {
+    res.status(404).json({ error: "Empréstimo não encontrado" });
+    return;
+  }
+
+  if (loan.status !== "pending_review" && loan.status !== "funding") {
+    res.status(422).json({ error: "Apenas solicitações em análise ou captação podem ser canceladas" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(loansTable)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(loansTable.id, id))
+    .returning();
+
+  res.json({ loan: updated });
+});
+
 export default router;

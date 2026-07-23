@@ -7,6 +7,7 @@ export const loanStatusEnum = [
   "active",
   "overdue",
   "settled",
+  "cancelled",
 ] as const;
 export type LoanStatus = typeof loanStatusEnum[number];
 

@@ -255,7 +255,19 @@ export default function EmprestimoDetalheScreen() {
 
         <Text style={s.contratoId}>Contrato Nº {contratoId ?? `EMP-${id}`}</Text>
 
-        <TouchableOpacity style={s.helpBtn} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={s.helpBtn}
+          activeOpacity={0.7}
+          onPress={() => router.push({
+            pathname: '/emprestimo-ajuda',
+            params: {
+              id: id ?? '',
+              status,
+              contratoId: contratoId ?? '',
+              valor: String(Math.round(valor)),
+            },
+          })}
+        >
           <Feather name="help-circle" size={16} color={C.inkSoft} />
           <Text style={s.helpText}>Precisa de ajuda com esse empréstimo?</Text>
         </TouchableOpacity>
