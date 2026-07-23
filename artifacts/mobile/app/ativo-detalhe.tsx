@@ -276,7 +276,7 @@ export default function AtivoDetalheScreen() {
                 <View style={s.previsaoAviso}>
                   <Feather name="info" size={13} color={C.inkFaint} style={{ marginTop: 1 }} />
                   <Text style={s.previsaoAvisoText}>
-                    As datas exatas serão definidas na concessão do empréstimo.
+                    As datas dos vencimentos serão confirmadas após a conclusão da captação.
                   </Text>
                 </View>
                 {parcelasPrevisao.map((p) => (
