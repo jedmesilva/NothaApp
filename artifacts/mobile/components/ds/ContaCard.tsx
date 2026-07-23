@@ -31,8 +31,6 @@ const CONFIG: Record<ContaCardVariant, { sub: string; showPlus?: boolean; cta: s
 };
 
 export function ContaCard({ variant, valor, onPress, style }: ContaCardProps) {
-  if (valor <= 0) return null;
-
   const { sub, showPlus, cta } = CONFIG[variant];
   const formatted = valor.toLocaleString('pt-BR', {
     minimumFractionDigits: 2,
