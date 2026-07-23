@@ -52,6 +52,8 @@ function RootLayoutNav() {
             <Stack.Screen name="saque-confirmacao" options={{ headerShown: false }} />
             <Stack.Screen name="saque-comprovante" options={{ headerShown: false }} />
             <Stack.Screen name="depositar" options={{ headerShown: false }} />
+            <Stack.Screen name="perfil" options={{ headerShown: false }} />
+            <Stack.Screen name="dados-pessoais" options={{ headerShown: false }} />
           </Stack>
 
           {/* Toast global — renderizado por cima de todas as telas */}
