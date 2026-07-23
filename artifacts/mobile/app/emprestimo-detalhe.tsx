@@ -93,12 +93,12 @@ export default function EmprestimoDetalheScreen() {
     : 0;
 
   const timelineEvents: TimelineEvent[] = [
-    { label: 'Solicitado',         date: dataSolicitacao,       done: true                },
-    { label: 'Captação iniciada',  date: dataCaptacaoIniciada,  done: jaCaptacaoIniciada  },
-    { label: 'Captação concluída', date: dataCaptacaoConcluida, done: jaConcedido         },
-    { label: 'Concedido',          date: dataConcessao,         done: jaConcedido         },
-    { label: 'Pagamentos',         date: undefined,             done: todosPagesPagos,    progress: { value: pagas, total: parcelasTotal } },
-    { label: 'Quitado',            date: dataVencimentoFinal,   done: status === 'quitado' || todosPagesPagos },
+    { label: 'Solicitado',         date: dataSolicitacao,                              done: true                },
+    { label: 'Captação iniciada',  date: jaCaptacaoIniciada ? dataCaptacaoIniciada : undefined,  done: jaCaptacaoIniciada  },
+    { label: 'Captação concluída', date: jaConcedido        ? dataCaptacaoConcluida : undefined, done: jaConcedido         },
+    { label: 'Concedido',          date: jaConcedido        ? dataConcessao : undefined,         done: jaConcedido         },
+    { label: 'Pagamentos',         date: undefined,                                    done: todosPagesPagos,    progress: { value: pagas, total: parcelasTotal } },
+    { label: 'Quitado',            date: (status === 'quitado' || todosPagesPagos) ? dataVencimentoFinal : undefined, done: status === 'quitado' || todosPagesPagos },
   ];
 
   return (
