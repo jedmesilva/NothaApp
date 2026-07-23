@@ -65,8 +65,9 @@ export default function AtivoDetalheScreen() {
     return POSICOES.find((p) => p.id === Number(id));
   })();
 
-  const [showTimeline,   setShowTimeline]   = useState(false);
+  const [showTimeline,    setShowTimeline]    = useState(false);
   const [showVencimentos, setShowVencimentos] = useState(false);
+  const [showPrevisao,    setShowPrevisao]    = useState(false);
 
   if (!posicao) {
     return (
@@ -100,13 +101,27 @@ export default function AtivoDetalheScreen() {
     ? Math.round(((posicao.jaCaptado + valorInvestido) / posicao.valorTotalPedido) * 100) : 0;
   const pctPosClamped = Math.max(0, pctTotal - pctCaptado);
 
+  // Previsão de vencimentos (captação) — datas relativas à concessão
+  const parcelasPrevistas = !jaConcedido
+    ? Math.round(prazoDias / cicloMeta.dias)
+    : 0;
+  const parcelasPrevisao = !jaConcedido && parcelasPrevistas > 0
+    ? Array.from({ length: parcelasPrevistas }, (_, i) => {
+        const numero            = i + 1;
+        const diasAposConcessao = numero * cicloMeta.dias;
+        return { numero, diasAposConcessao };
+      })
+    : [];
+
   // Calcula direto da proporção — evita dividir e multiplicar de volta acumulando erro de ponto flutuante
-  const valorRecebimento = parcelasTotal > 0 ? totalComRetorno / parcelasTotal : 0;
+  // Durante captação usa parcelasPrevistas (derivadas do prazo/ciclo) pois parcelasTotal ainda é 0
+  const parcelasRef      = jaConcedido ? parcelasTotal : parcelasPrevistas;
+  const valorRecebimento = parcelasRef > 0 ? totalComRetorno / parcelasRef : 0;
   const pctPago          = jaConcedido && parcelasTotal > 0
     ? Math.round((parcelasRecebidas / parcelasTotal) * 100) : 0;
   const recebidoValor    = parcelasTotal > 0 ? totalComRetorno * parcelasRecebidas / parcelasTotal : 0;
 
-  // Vencimentos
+  // Vencimentos (ativo/atrasado/quitado) — datas reais
   const parcelas = jaConcedido && parcelasTotal > 0
     ? Array.from({ length: parcelasTotal }, (_, i) => {
         const numero = i + 1;
@@ -219,6 +234,54 @@ export default function AtivoDetalheScreen() {
             ]}
           />
         </View>
+
+        {/* ── Previsão de vencimentos (captação) ── */}
+        {!jaConcedido && parcelasPrevisao.length > 0 && (
+          <View style={s.vencimentosCard}>
+            <TouchableOpacity
+              style={s.sectionToggle}
+              onPress={() => setShowPrevisao((v) => !v)}
+              activeOpacity={0.8}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={s.sectionToggleTitle}>Previsão de vencimentos</Text>
+                <Text style={s.sectionToggleSummary}>
+                  {parcelasPrevistas} parcelas · R$ {formatBRL(Math.round(valorRecebimento))} cada · A partir da concessão
+                </Text>
+              </View>
+              <Feather
+                name={showPrevisao ? 'chevron-up' : 'chevron-down'}
+                size={18}
+                color={C.inkFaint}
+              />
+            </TouchableOpacity>
+
+            {showPrevisao && (
+              <View>
+                <View style={s.previsaoAviso}>
+                  <Feather name="info" size={13} color={C.inkFaint} style={{ marginTop: 1 }} />
+                  <Text style={s.previsaoAvisoText}>
+                    As datas exatas serão definidas na concessão do empréstimo.
+                  </Text>
+                </View>
+                {parcelasPrevisao.map((p) => (
+                  <View key={p.numero} style={s.parcelaCard}>
+                    <InstallmentBadge variant="default" label={String(p.numero)} />
+                    <View style={s.parcelaInfo}>
+                      <Text style={s.parcelaLabel}>
+                        ~{p.diasAposConcessao} dias após a concessão
+                      </Text>
+                      <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorRecebimento))}</Text>
+                    </View>
+                    <View style={s.statusTag}>
+                      <Text style={[s.statusTagText, s.statusTagPrevisto]}>Previsto</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
 
         {/* ── Vencimentos (colapsável) ── */}
         {jaConcedido && parcelasTotal > 0 && (
@@ -406,6 +469,11 @@ const s = StyleSheet.create({
   statusTag:            { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 0 },
   statusTagAtrasada:    {},
   statusTagText:        { fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.inkSoft },
+  statusTagPrevisto:    { color: C.inkFaint },
+
+  // Previsão de vencimentos
+  previsaoAviso:        { flexDirection: 'row', alignItems: 'flex-start', gap: 7, marginHorizontal: spacing[4], marginBottom: spacing[2], marginTop: -2 },
+  previsaoAvisoText:    { flex: 1, fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, lineHeight: 16 },
 
   // Tomador card
   tomadorCard:     { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5] },
