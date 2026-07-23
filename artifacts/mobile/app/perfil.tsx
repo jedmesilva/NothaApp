@@ -36,27 +36,32 @@ export default function PerfilScreen() {
     ? user.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
     : '?';
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Sair da conta',
-      'Tem certeza que deseja sair?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            setLoggingOut(true);
-            try {
-              await logout();
-              // AuthContext atualiza user → _layout redireciona para (auth)/login
-            } finally {
-              setLoggingOut(false);
-            }
-          },
-        },
-      ],
-    );
+  const handleLogout = async () => {
+    // Alert.alert é no-op na web; usa window.confirm como fallback
+    const confirmed =
+      Platform.OS === 'web'
+        ? window.confirm('Tem certeza que deseja sair da conta?')
+        : await new Promise<boolean>((resolve) =>
+            Alert.alert(
+              'Sair da conta',
+              'Tem certeza que deseja sair?',
+              [
+                { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+                { text: 'Sair', style: 'destructive', onPress: () => resolve(true) },
+              ],
+              { onDismiss: () => resolve(false) },
+            ),
+          );
+
+    if (!confirmed) return;
+
+    setLoggingOut(true);
+    try {
+      await logout();
+      // AuthContext atualiza user → _layout redireciona para (auth)/login
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   return (
