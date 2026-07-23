@@ -289,7 +289,7 @@ export default function AtivoDetalheScreen() {
                       <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorRecebimento))}</Text>
                     </View>
                     <View style={s.statusTag}>
-                      <Text style={[s.statusTagText, s.statusTagPrevisto]}>Previsto</Text>
+                      <Text style={[s.statusTagText, s.statusTagPrevisto]}>À receber</Text>
                     </View>
                   </View>
                 ))}
