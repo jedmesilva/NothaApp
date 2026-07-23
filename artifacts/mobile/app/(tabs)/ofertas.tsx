@@ -8,34 +8,11 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { formatBRL } from '@/data/loans';
+import { MOCK_OFERTAS } from '@/data/ofertas';
+import type { Oferta } from '@/data/ofertas';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend, SplitRow, DetailGrid, Chip, ModalSheet } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
-
-// ─── Dados mock ───────────────────────────────────────────────────────────────
-
-type Oferta = {
-  id: number;
-  ofertaId: string;
-  valor: number;
-  taxaRetorno: number;
-  prazoDias: number;
-  ciclo: 'Diário' | 'Semanal' | 'Mensal';
-  risco: string;
-  tomadorScore: string;
-  valorTotalPedido: number;
-  jaCaptado: number;
-  emprestimosAnteriores: number;
-  valorTotalTomado: number;
-};
-
-const MOCK_OFERTAS: Oferta[] = [
-  { id: 1, ofertaId: 'OFR-2026-40218', valor: 1200, taxaRetorno: 4.8, prazoDias: 45,  ciclo: 'Semanal', risco: 'Baixo', tomadorScore: 'A', valorTotalPedido: 5000, jaCaptado: 3100, emprestimosAnteriores: 3, valorTotalTomado: 12400 },
-  { id: 2, ofertaId: 'OFR-2026-40219', valor:  800, taxaRetorno: 7.2, prazoDias: 90,  ciclo: 'Mensal',  risco: 'Alto',  tomadorScore: 'C', valorTotalPedido: 3000, jaCaptado:  900, emprestimosAnteriores: 1, valorTotalTomado:  3000 },
-  { id: 3, ofertaId: 'OFR-2026-40220', valor:  500, taxaRetorno: 2.1, prazoDias: 15,  ciclo: 'Diário',  risco: 'Baixo', tomadorScore: 'A', valorTotalPedido: 1800, jaCaptado: 1500, emprestimosAnteriores: 6, valorTotalTomado: 28500 },
-  { id: 4, ofertaId: 'OFR-2026-40221', valor: 2000, taxaRetorno: 5.5, prazoDias: 60,  ciclo: 'Semanal', risco: 'Médio', tomadorScore: 'B', valorTotalPedido: 8000, jaCaptado: 2200, emprestimosAnteriores: 2, valorTotalTomado:  4100 },
-  { id: 5, ofertaId: 'OFR-2026-40222', valor:  350, taxaRetorno: 3.4, prazoDias: 30,  ciclo: 'Mensal',  risco: 'Médio', tomadorScore: 'B', valorTotalPedido: 2500, jaCaptado: 2100, emprestimosAnteriores: 0, valorTotalTomado:     0 },
-];
 
 const CLASSIFICACOES = [
   { key: 'todos', label: 'Todas' },
@@ -278,7 +255,7 @@ export default function OfertasScreen() {
           const pctOfertaClamped = Math.min(pctOferta, 100 - pctCaptado);
 
           return (
-            <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => setSelectedOferta(o)}>
+            <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => router.push(`/ativo-detalhe?id=${o.id}&source=oferta` as any)}>
               {/* Eyebrow + badge */}
               <View style={s.cardTopRow}>
                 <Text style={s.eyebrow}>Retorno oferecido</Text>
@@ -331,14 +308,14 @@ export default function OfertasScreen() {
               <View style={s.btnRow}>
                 <TouchableOpacity
                   style={s.detalhesBtn}
-                  onPress={(e) => { e.stopPropagation?.(); setSelectedOferta(o); }}
+                  onPress={(e) => { e.stopPropagation?.(); router.push(`/ativo-detalhe?id=${o.id}&source=oferta` as any); }}
                   activeOpacity={0.8}
                 >
                   <Text style={s.detalhesBtnText}>Ver detalhes</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={s.aceitarBtn}
-                  onPress={(e) => { e.stopPropagation?.(); handleAceitar(o); }}
+                  onPress={(e) => { e.stopPropagation?.(); setSelectedOferta(o); }}
                   activeOpacity={0.85}
                 >
                   <Text style={s.aceitarBtnText}>Aceitar oferta</Text>

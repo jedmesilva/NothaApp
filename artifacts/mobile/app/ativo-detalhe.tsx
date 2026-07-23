@@ -11,7 +11,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { POSICOES } from '@/data/ativos';
+import type { Posicao } from '@/data/ativos';
+import { MOCK_OFERTAS } from '@/data/ofertas';
 import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno, formatDataHora } from '@/data/loans';
+
+const OFERTA_CICLO_MAP: Record<string, 'diario' | 'semanal' | 'mensal'> = {
+  Diário: 'diario', Semanal: 'semanal', Mensal: 'mensal',
+};
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid,
@@ -27,8 +33,37 @@ export default function AtivoDetalheScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const posicao = POSICOES.find((p) => p.id === Number(id));
+  const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
+  const isOferta = source === 'oferta';
+
+  // Se vier da tela de ofertas, converte Oferta → Posicao em captação
+  const posicao: Posicao | undefined = (() => {
+    if (isOferta) {
+      const o = MOCK_OFERTAS.find((x) => x.id === Number(id));
+      if (!o) return undefined;
+      return {
+        id:                    o.id,
+        contratoId:            o.ofertaId,
+        valorInvestido:        o.valor,
+        taxaJurosTotal:        o.taxaRetorno,
+        prazoDias:             o.prazoDias,
+        ciclo:                 OFERTA_CICLO_MAP[o.ciclo],
+        status:                'captacao' as const,
+        parcelasTotal:         0,
+        parcelasRecebidas:     0,
+        jaCaptado:             o.jaCaptado,
+        valorTotalPedido:      o.valorTotalPedido,
+        numCredores:           0,
+        risco:                 o.risco,
+        tomadorScore:          o.tomadorScore,
+        emprestimosAnteriores: o.emprestimosAnteriores,
+        valorTotalTomado:      o.valorTotalTomado,
+        cidade:                o.cidade,
+        proposito:             o.proposito,
+      };
+    }
+    return POSICOES.find((p) => p.id === Number(id));
+  })();
 
   const [showTimeline,   setShowTimeline]   = useState(false);
   const [showVencimentos, setShowVencimentos] = useState(false);
