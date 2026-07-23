@@ -216,9 +216,9 @@ export default function HomeScreen() {
             </LightCard>
           </TouchableOpacity>
 
-          {/* Lista de empréstimos ativos */}
+          {/* Lista de todos os empréstimos (ativos, em análise e captação) */}
           <View style={s.loanList}>
-            {activeLoans.map((loan) => (
+            {(allLoans ?? []).map((loan) => (
               <LoanCard key={loan.id} loan={loan} />
             ))}
           </View>
