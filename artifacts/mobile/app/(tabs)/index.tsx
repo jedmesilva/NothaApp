@@ -127,7 +127,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ width: W * 2 }}
       >
         {/* ── Page 1: Crédito ───────────────────────────────────────── */}
-        <ScrollView style={{ width: W }} contentContainerStyle={{ paddingBottom: bottomPad }} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ width: W }} contentContainerStyle={{ paddingBottom: bottomPad, paddingTop: spacing[4] }} showsVerticalScrollIndicator={false}>
 
           {/* Limite disponível */}
           <DarkCard>
