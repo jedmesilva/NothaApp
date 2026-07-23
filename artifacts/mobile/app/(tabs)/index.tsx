@@ -73,6 +73,15 @@ export default function HomeScreen() {
     (e) => e.status === 'ativo' || e.status === 'atrasado'
   );
 
+  // Empréstimos ainda em processo (análise ou captação)
+  const pendingLoans = (allLoans ?? []).filter(
+    (e) => e.status === 'analise' || e.status === 'captacao'
+  );
+
+  const totalLoans   = (allLoans ?? []).length;
+  const hasAnyLoan   = totalLoans > 0;
+  const hasActive    = activeLoans.length > 0;
+
   // Próxima parcela de cada empréstimo ativo
   const proximasParcelas = activeLoans.map((loan) => {
     const cicloDias     = CICLO_DIAS[loan.ciclo];
@@ -165,7 +174,11 @@ export default function HomeScreen() {
                     R$ {formatBRL(Math.round(totalEmAberto))}
                   </BigValue>
                   <BodyText color={C.inkSoft} style={{ marginTop: 4 }}>
-                    {activeLoans.length} {activeLoans.length === 1 ? 'empréstimo' : 'empréstimos'} em aberto
+                    {!hasAnyLoan
+                      ? 'Nenhum empréstimo ativo'
+                      : !hasActive
+                        ? `${pendingLoans.length} ${pendingLoans.length === 1 ? 'empréstimo' : 'empréstimos'} em análise`
+                        : `${activeLoans.length} ${activeLoans.length === 1 ? 'empréstimo' : 'empréstimos'} em aberto`}
                   </BodyText>
                 </View>
                 <Feather name="chevron-right" size={20} color={C.inkFaint} style={{ marginTop: 4 }} />
@@ -184,17 +197,19 @@ export default function HomeScreen() {
                 </View>
               )}
 
-              {totalVencimentosAtrasados > 0 ? (
-                <AlertBanner
-                  variant="error"
-                  message={`${totalVencimentosAtrasados} ${totalVencimentosAtrasados === 1 ? 'vencimento em atraso' : 'vencimentos em atraso'}`}
-                  style={{ marginTop: 12 }}
-                />
-              ) : (
-                <View style={s.statusEmDia}>
-                  <Feather name="check" size={14} color={C.ink} />
-                  <Text style={s.statusEmDiaText}>Em dia</Text>
-                </View>
+              {hasAnyLoan && (
+                totalVencimentosAtrasados > 0 ? (
+                  <AlertBanner
+                    variant="error"
+                    message={`${totalVencimentosAtrasados} ${totalVencimentosAtrasados === 1 ? 'vencimento em atraso' : 'vencimentos em atraso'}`}
+                    style={{ marginTop: 12 }}
+                  />
+                ) : hasActive ? (
+                  <View style={s.statusEmDia}>
+                    <Feather name="check" size={14} color={C.ink} />
+                    <Text style={s.statusEmDiaText}>Em dia</Text>
+                  </View>
+                ) : null
               )}
             </LightCard>
           </TouchableOpacity>
