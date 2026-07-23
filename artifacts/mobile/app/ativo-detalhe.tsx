@@ -93,16 +93,18 @@ export default function AtivoDetalheScreen() {
   const dataVencimentoFinal = addDays(dataConcessao, prazoDias);
 
   // Pool bar data
+  // Calcula o total combinado primeiro, depois deriva os segmentos — nunca soma arredondamentos individuais
   const pctCaptado    = !jaConcedido && posicao.valorTotalPedido > 0
     ? Math.round((posicao.jaCaptado / posicao.valorTotalPedido) * 100) : 0;
-  const pctPos        = !jaConcedido && posicao.valorTotalPedido > 0
-    ? Math.round((valorInvestido / posicao.valorTotalPedido) * 100) : 0;
-  const pctPosClamped = Math.min(pctPos, 100 - pctCaptado);
+  const pctTotal      = !jaConcedido && posicao.valorTotalPedido > 0
+    ? Math.round(((posicao.jaCaptado + valorInvestido) / posicao.valorTotalPedido) * 100) : 0;
+  const pctPosClamped = Math.max(0, pctTotal - pctCaptado);
 
+  // Calcula direto da proporção — evita dividir e multiplicar de volta acumulando erro de ponto flutuante
   const valorRecebimento = parcelasTotal > 0 ? totalComRetorno / parcelasTotal : 0;
-  const recebidoValor    = valorRecebimento * parcelasRecebidas;
   const pctPago          = jaConcedido && parcelasTotal > 0
-    ? Math.round((recebidoValor / totalComRetorno) * 100) : 0;
+    ? Math.round((parcelasRecebidas / parcelasTotal) * 100) : 0;
+  const recebidoValor    = parcelasTotal > 0 ? totalComRetorno * parcelasRecebidas / parcelasTotal : 0;
 
   // Vencimentos
   const parcelas = jaConcedido && parcelasTotal > 0
@@ -180,7 +182,7 @@ export default function AtivoDetalheScreen() {
           {!jaConcedido ? (
             <PoolBar
               label="Captação"
-              headLeft={`${pctCaptado + pctPosClamped}% captado`}
+              headLeft={`${pctTotal}% captado`}
               headRight={`R$ ${formatBRL(posicao.jaCaptado + valorInvestido)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
               segments={[
                 { pct: pctCaptado,    variant: 'primary' },

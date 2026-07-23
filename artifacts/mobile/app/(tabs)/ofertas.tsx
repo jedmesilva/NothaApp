@@ -59,9 +59,9 @@ function OfertaSheet({ oferta, onClose, onAceitar }: {
 
   const isUrgent        = secondsLeft <= 10;
   const pctTempo        = (secondsLeft / TOTAL_SECONDS) * 100;
-  const pctCaptado      = Math.round((oferta.jaCaptado / oferta.valorTotalPedido) * 100);
-  const pctOferta       = Math.round((oferta.valor / oferta.valorTotalPedido) * 100);
-  const pctOfertaClamped = Math.min(pctOferta, 100 - pctCaptado);
+  const pctCaptado       = Math.round((oferta.jaCaptado / oferta.valorTotalPedido) * 100);
+  const pctTotal         = Math.round(((oferta.jaCaptado + oferta.valor) / oferta.valorTotalPedido) * 100);
+  const pctOfertaClamped = Math.max(0, pctTotal - pctCaptado);
   const retornoValor    = Math.round(oferta.valor * (oferta.taxaRetorno / 100));
 
   const handleAccept = () => {
@@ -251,8 +251,8 @@ export default function OfertasScreen() {
         {filtered.map((o) => {
           const retornoValor     = Math.round(o.valor * (o.taxaRetorno / 100));
           const pctCaptado       = Math.round((o.jaCaptado / o.valorTotalPedido) * 100);
-          const pctOferta        = Math.round((o.valor / o.valorTotalPedido) * 100);
-          const pctOfertaClamped = Math.min(pctOferta, 100 - pctCaptado);
+          const pctTotal         = Math.round(((o.jaCaptado + o.valor) / o.valorTotalPedido) * 100);
+          const pctOfertaClamped = Math.max(0, pctTotal - pctCaptado);
 
           return (
             <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => router.push(`/ativo-detalhe?id=${o.id}&source=oferta` as any)}>
