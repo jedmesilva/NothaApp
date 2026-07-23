@@ -122,7 +122,7 @@ export default function AceiteContratoScreen() {
                 { label: 'Ciclo',      value: ciclo.label,                      sub: `R$ ${fmtBRL(valorParcela)}/${ciclo.unidade}` },
                 { label: 'Taxa total', value: `${taxaTotal.toFixed(1)}%` },
                 {
-                  label: numPeriodos === 1 ? 'Vencimento' : '1ª parcela',
+                  label: numPeriodos === 1 ? 'Vencimento' : '1º vencimento',
                   value: formatData(numPeriodos === 1 ? vencimentoFinal : primeiraParcela),
                 },
               ]}

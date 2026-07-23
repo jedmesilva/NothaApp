@@ -390,7 +390,7 @@ export default function NovoEmprestimoScreen() {
                 },
                 { label: 'Taxa total', value: `${taxaTotal.toFixed(1)}%` },
                 {
-                  label: calc.numParcelas === 1 ? 'Vencimento' : '1ª parcela',
+                  label: calc.numParcelas === 1 ? 'Vencimento' : '1º vencimento',
                   value: formatData(
                     calc.numParcelas === 1 ? calc.vencimentoFinal : calc.primeiraParcela,
                   ),

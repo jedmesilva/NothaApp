@@ -17,10 +17,10 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import { BackButton, StatusBadge, PoolBar, DetailGrid, SplitRow, Chip, ModalSheet } from '@/components/ds';
 import type { LoanStatus } from '@/components/ds';
 
-const CICLO_META: Record<string, { parcelasLabel: string }> = {
-  diario:  { parcelasLabel: 'diárias' },
-  semanal: { parcelasLabel: 'semanais' },
-  mensal:  { parcelasLabel: 'mensais' },
+const CICLO_META: Record<string, { pagamentosLabel: string }> = {
+  diario:  { pagamentosLabel: 'diários' },
+  semanal: { pagamentosLabel: 'semanais' },
+  mensal:  { pagamentosLabel: 'mensais' },
 };
 
 const FILTERS = [
@@ -166,7 +166,7 @@ export default function AtivosScreen() {
 
               <DetailGrid
                 items={[
-                  { label: 'Prazo',    value: `${p.prazoDias} dias`, sub: `parcelas ${ciclo.parcelasLabel}` },
+                  { label: 'Prazo',    value: `${p.prazoDias} dias`, sub: `pagamentos ${ciclo.pagamentosLabel}` },
                   { label: 'Classificação', value: p.tomadorScore },
                   { label: 'Histórico', value: p.emprestimosAnteriores === 0 ? 'Primeiro' : `${p.emprestimosAnteriores + 1}º empréstimo` },
                   { label: 'Já tomado', value: p.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(p.valorTotalTomado)}` },

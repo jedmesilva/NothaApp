@@ -246,7 +246,7 @@ export default function AtivoDetalheScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={s.sectionToggleTitle}>Previsão de vencimentos</Text>
                 <Text style={s.sectionToggleSummary}>
-                  {parcelasPrevistas} parcelas · R$ {formatBRL(Math.round(valorRecebimento))} cada · A partir da concessão
+                  {parcelasPrevistas} pagamentos · R$ {formatBRL(Math.round(valorRecebimento))} cada · A partir da concessão
                 </Text>
               </View>
               <Feather

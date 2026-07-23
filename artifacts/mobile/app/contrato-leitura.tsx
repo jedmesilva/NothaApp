@@ -27,12 +27,12 @@ const CLAUSULAS = [
   {
     titulo: '2. Desembolso e pagamento',
     texto:
-      'O valor líquido será depositado na conta cadastrada em até 1 dia útil após a confirmação. As parcelas serão descontadas automaticamente na frequência escolhida, na data de vencimento de cada uma, da conta indicada pelo tomador no momento da contratação.',
+      'O valor líquido será depositado na conta cadastrada em até 1 dia útil após a confirmação. Os pagamentos serão debitados automaticamente na frequência escolhida, na data de vencimento de cada um, da conta indicada pelo tomador no momento da contratação.',
   },
   {
     titulo: '3. Atraso e inadimplência',
     texto:
-      'Em caso de atraso, incidem multa de 2% sobre a parcela em aberto e juros de mora de 1% ao mês, calculados a partir do 1º dia após o vencimento. A permanência do atraso por período superior a 30 dias poderá resultar em inclusão do nome do tomador em cadastros de proteção ao crédito, conforme legislação vigente.',
+      'Em caso de atraso, incidem multa de 2% sobre o pagamento em aberto e juros de mora de 1% ao mês, calculados a partir do 1º dia após o vencimento. A permanência do atraso por período superior a 30 dias poderá resultar em inclusão do nome do tomador em cadastros de proteção ao crédito, conforme legislação vigente.',
   },
   {
     titulo: '4. Quitação antecipada',
