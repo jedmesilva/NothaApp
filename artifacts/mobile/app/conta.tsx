@@ -5,30 +5,37 @@ import {
   ScrollView,
   StyleSheet,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, ActionRow, SectionTitle, Eyebrow } from '@/components/ds';
-import { formatBRL } from '@/data/loans';
+import { useWallet, TRANSACTION_LABELS, type WalletTransaction } from '@/hooks/useWallet';
 
-const saldoConta = 8500;
+function formatBRL(cents: number): string {
+  return (cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
-const extrato = [
-  { id: 1, desc: 'Depósito via Pix',    data: '10 de julho', valor: 500,  tipo: 'entrada' },
-  { id: 2, desc: 'Pagamento de vencimento', data: '05 de julho', valor: -331, tipo: 'saida'  },
-  { id: 3, desc: 'Saque',               data: '28 de junho',  valor: -300, tipo: 'saida'  },
-  { id: 4, desc: 'Empréstimo liberado',  data: '20 de junho',  valor: 3200, tipo: 'entrada'},
-];
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+}
+
+function txLabel(tx: WalletTransaction): string {
+  return tx.description ?? TRANSACTION_LABELS[tx.type] ?? tx.type;
+}
 
 export default function ContaScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
+  const { data, isLoading, isError } = useWallet();
+
+  const balanceCents   = data?.wallet.balanceCents ?? 0;
+  const transactions   = data?.transactions ?? [];
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
-      {/* Header */}
       <View style={s.header}>
         <BackButton onPress={() => router.back()} />
         <Text style={s.title}>Minha Conta</Text>
@@ -38,10 +45,13 @@ export default function ContaScreen() {
         {/* Saldo hero */}
         <View style={s.heroCard}>
           <Eyebrow context="dark">Saldo em conta</Eyebrow>
-          <Text style={s.bigValue}>R$ {formatBRL(saldoConta)}</Text>
+          {isLoading
+            ? <ActivityIndicator color="#fff" style={{ marginVertical: 12 }} />
+            : <Text style={s.bigValue}>R$ {formatBRL(balanceCents)}</Text>
+          }
           <ActionRow
-            left={{ icon: 'arrow-down', label: 'Sacar',     context: 'dark', onPress: () => router.push('/saque-valor' as any) }}
-            right={{ icon: 'plus',      label: 'Depositar',  context: 'dark', onPress: () => router.push('/depositar' as any) }}
+            left={{  icon: 'arrow-down', label: 'Sacar',     context: 'dark', onPress: () => router.push('/saque-valor' as any) }}
+            right={{ icon: 'plus',       label: 'Depositar', context: 'dark', onPress: () => router.push('/depositar' as any) }}
             style={{ marginTop: 20 }}
           />
         </View>
@@ -49,27 +59,40 @@ export default function ContaScreen() {
         {/* Extrato */}
         <View style={s.extratoCard}>
           <SectionTitle style={{ marginBottom: spacing[4] }}>Extrato</SectionTitle>
-          {extrato.map((item, idx) => (
+
+          {isLoading && (
+            <ActivityIndicator color={C.inkFaint} style={{ paddingVertical: 24 }} />
+          )}
+
+          {isError && (
+            <Text style={s.emptyText}>Não foi possível carregar o extrato.</Text>
+          )}
+
+          {!isLoading && !isError && transactions.length === 0 && (
+            <Text style={s.emptyText}>Nenhuma movimentação ainda.</Text>
+          )}
+
+          {transactions.map((tx, idx) => (
             <View
-              key={item.id}
+              key={tx.id}
               style={[
                 s.extratoRow,
-                idx === extrato.length - 1 && { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 },
+                idx === transactions.length - 1 && { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 },
               ]}
             >
               <View style={s.extratoIcon}>
                 <Feather
-                  name={item.tipo === 'entrada' ? 'arrow-down' : 'arrow-up'}
+                  name={tx.direction === 'credit' ? 'arrow-down' : 'arrow-up'}
                   size={15}
                   color={C.ink}
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.extratoDesc}>{item.desc}</Text>
-                <Text style={s.extratoData}>{item.data}</Text>
+                <Text style={s.extratoDesc}>{txLabel(tx)}</Text>
+                <Text style={s.extratoData}>{formatDate(tx.createdAt)}</Text>
               </View>
-              <Text style={[s.extratoValor, { color: item.tipo === 'entrada' ? C.ink : C.inkSoft }]}>
-                {item.tipo === 'entrada' ? '+' : '−'} R$ {formatBRL(Math.abs(item.valor))}
+              <Text style={[s.extratoValor, { color: tx.direction === 'credit' ? C.ink : C.inkSoft }]}>
+                {tx.direction === 'credit' ? '+' : '−'} R$ {formatBRL(tx.amountCents)}
               </Text>
             </View>
           ))}
@@ -82,50 +105,36 @@ export default function ContaScreen() {
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    paddingHorizontal: spacing[5],
-    paddingBottom: spacing[3],
+    flexDirection: 'row', alignItems: 'center', gap: spacing[3],
+    paddingHorizontal: spacing[5], paddingBottom: spacing[3],
   },
   title: { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
+
   heroCard: {
-    borderRadius: radii.hero,
-    marginHorizontal: spacing[4],
-    marginBottom: 14,
-    padding: spacing[6],
-    backgroundColor: C.dark,
+    borderRadius: radii.hero, marginHorizontal: spacing[4], marginBottom: 14,
+    padding: spacing[6], backgroundColor: C.dark,
   },
   bigValue: {
-    fontFamily: fonts.display,
-    fontSize: fontSize.hero,
-    color: '#fff',
-    letterSpacing: -1,
-    lineHeight: 48,
+    fontFamily: fonts.display, fontSize: fontSize.hero,
+    color: '#fff', letterSpacing: -1, lineHeight: 48,
   },
+
   extratoCard: {
-    borderRadius: radii.cardLg,
-    margin: spacing[4],
-    padding: 22,
-    backgroundColor: C.card,
+    borderRadius: radii.cardLg, margin: spacing[4],
+    padding: 22, backgroundColor: C.card,
   },
   extratoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    paddingBottom: 14,
-    marginBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: C.line,
+    flexDirection: 'row', alignItems: 'center', gap: spacing[3],
+    paddingBottom: 14, marginBottom: 14,
+    borderBottomWidth: 1, borderBottomColor: C.line,
   },
   extratoIcon: {
-    width: 36, height: 36,
-    borderRadius: radii.sm,
+    width: 36, height: 36, borderRadius: radii.sm,
     backgroundColor: C.chipUrgent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   extratoDesc:  { fontSize: fontSize['base+'], fontFamily: fonts.semibold, color: C.ink, marginBottom: 2 },
   extratoData:  { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular },
   extratoValor: { fontFamily: fonts.display, fontSize: fontSize['md+'] },
+  emptyText:    { fontFamily: fonts.regular, fontSize: fontSize['sm+'], color: C.inkFaint, textAlign: 'center', paddingVertical: 24 },
 });

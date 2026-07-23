@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db, usersTable, revokedTokensTable } from "@workspace/db";
 import { signToken, setAuthCookie, extractRawToken, verifyToken, COOKIE_NAME } from "../lib/auth.js";
 import { requireAuth, type AuthRequest } from "../middlewares/auth.js";
+import { ensureWallet } from "../lib/wallet.js";
 
 const router = Router();
 
@@ -47,6 +48,9 @@ router.post("/register", async (req, res) => {
     .insert(usersTable)
     .values({ name, email, passwordHash })
     .returning({ id: usersTable.id, name: usersTable.name, email: usersTable.email });
+
+  // Garante que o novo usuário já tem uma carteira
+  await ensureWallet(user.id);
 
   const token = signToken({ userId: user.id, email: user.email });
   setAuthCookie(res, token);

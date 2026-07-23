@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,68 +8,123 @@ import {
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton } from '@/components/ds';
+import { useProfile, useUpdateProfile, type UpdateProfileInput } from '@/hooks/useProfile';
 
-// Mock — trocar por dados reais do contexto/API
-const INITIAL = {
-  nome:        'Rafael Mendes',
-  email:       'rafael@email.com',
-  telefone:    '(11) 99999-0000',
-  cep:         '01310-100',
-  logradouro:  'Av. Paulista',
-  numero:      '1000',
-  complemento: 'Apto 42',
-  bairro:      'Bela Vista',
-  cidade:      'São Paulo',
-  estado:      'SP',
+type FormData = {
+  nome: string;
+  email: string;
+  telefone: string;
+  cpf: string;
+  dataNascimento: string;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
 };
 
-type FormData = typeof INITIAL;
+const EMPTY: FormData = {
+  nome: '', email: '', telefone: '', cpf: '', dataNascimento: '',
+  cep: '', logradouro: '', numero: '', complemento: '',
+  bairro: '', cidade: '', estado: '',
+};
+
 type Field = keyof FormData;
 
-const FIELDS: { key: Field; label: string; placeholder: string; keyboard?: any; autoCapitalize?: any }[] = [
-  { key: 'nome',        label: 'Nome completo',  placeholder: 'Seu nome completo',  autoCapitalize: 'words' },
-  { key: 'email',       label: 'E-mail',         placeholder: 'seu@email.com',      keyboard: 'email-address', autoCapitalize: 'none' },
-  { key: 'telefone',    label: 'Telefone',        placeholder: '(11) 99999-0000',   keyboard: 'phone-pad' },
+const PERSONAL_FIELDS: { key: Field; label: string; placeholder: string; keyboard?: any; autoCapitalize?: any; editable?: boolean }[] = [
+  { key: 'nome',           label: 'Nome completo',    placeholder: 'Seu nome completo',  autoCapitalize: 'words' },
+  { key: 'email',          label: 'E-mail',           placeholder: 'seu@email.com',      keyboard: 'email-address', autoCapitalize: 'none', editable: false },
+  { key: 'telefone',       label: 'Telefone',         placeholder: '(11) 99999-0000',    keyboard: 'phone-pad' },
+  { key: 'cpf',            label: 'CPF',              placeholder: '000.000.000-00',     keyboard: 'numeric' },
+  { key: 'dataNascimento', label: 'Data de nascimento', placeholder: 'DD/MM/AAAA',       keyboard: 'numeric' },
 ];
 
 const ADDRESS_FIELDS: { key: Field; label: string; placeholder: string; keyboard?: any; flex?: number }[] = [
-  { key: 'cep',         label: 'CEP',            placeholder: '00000-000',          keyboard: 'numeric', flex: 1 },
-  { key: 'logradouro',  label: 'Logradouro',     placeholder: 'Rua, Av...' },
-  { key: 'numero',      label: 'Número',         placeholder: '0',                  keyboard: 'numeric', flex: 1 },
-  { key: 'complemento', label: 'Complemento',    placeholder: 'Apto, Bloco...',     flex: 2 },
-  { key: 'bairro',      label: 'Bairro',         placeholder: 'Bairro' },
-  { key: 'cidade',      label: 'Cidade',         placeholder: 'Cidade',             flex: 2 },
-  { key: 'estado',      label: 'Estado (UF)',     placeholder: 'SP',                 flex: 1 },
+  { key: 'cep',        label: 'CEP',          placeholder: '00000-000', keyboard: 'numeric', flex: 1 },
+  { key: 'logradouro', label: 'Logradouro',   placeholder: 'Rua, Av...' },
+  { key: 'numero',     label: 'Número',       placeholder: '0',         keyboard: 'numeric', flex: 1 },
+  { key: 'complemento',label: 'Complemento',  placeholder: 'Apto, Bloco...',               flex: 2 },
+  { key: 'bairro',     label: 'Bairro',       placeholder: 'Bairro' },
+  { key: 'cidade',     label: 'Cidade',       placeholder: 'Cidade',                        flex: 2 },
+  { key: 'estado',     label: 'Estado (UF)',  placeholder: 'SP',                            flex: 1 },
 ];
 
 export default function DadosPessoaisScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
-  const [form, setForm] = useState<FormData>(INITIAL);
+
+  const { data, isLoading } = useProfile();
+  const updateProfile = useUpdateProfile();
+
+  const [form, setForm] = useState<FormData>(EMPTY);
   const [saved, setSaved] = useState(false);
+
+  // Popula o formulário quando os dados chegam da API
+  useEffect(() => {
+    if (!data) return;
+    const p = data.profile;
+    setForm({
+      nome:           data.user.name ?? '',
+      email:          data.user.email ?? '',
+      telefone:       p?.phone ?? '',
+      cpf:            p?.cpf ?? '',
+      dataNascimento: p?.birthDate ?? '',
+      cep:            p?.zipCode ?? '',
+      logradouro:     p?.street ?? '',
+      numero:         p?.streetNumber ?? '',
+      complemento:    p?.complement ?? '',
+      bairro:         p?.neighborhood ?? '',
+      cidade:         p?.city ?? '',
+      estado:         p?.state ?? '',
+    });
+  }, [data]);
 
   const update = (key: Field) => (value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
   };
 
-  const handleSave = () => {
-    // TODO: chamar API para persistir
-    setSaved(true);
+  const handleSave = async () => {
+    const payload: UpdateProfileInput = {
+      name:         form.nome        || undefined,
+      phone:        form.telefone    || undefined,
+      cpf:          form.cpf         || undefined,
+      birthDate:    form.dataNascimento || undefined,
+      zipCode:      form.cep         || undefined,
+      street:       form.logradouro  || undefined,
+      streetNumber: form.numero      || undefined,
+      complement:   form.complemento || undefined,
+      neighborhood: form.bairro      || undefined,
+      city:         form.cidade      || undefined,
+      state:        form.estado      || undefined,
+    };
+    try {
+      await updateProfile.mutateAsync(payload);
+      setSaved(true);
+    } catch {
+      // erro exibido via estado de erro da mutation
+    }
   };
 
+  if (isLoading) {
+    return (
+      <View style={[s.screen, { paddingTop: topPad, alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={C.ink} />
+      </View>
+    );
+  }
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[s.screen, { paddingTop: topPad }]}>
-        {/* Header */}
         <View style={s.header}>
           <BackButton onPress={() => router.back()} />
           <Text style={s.title}>Dados Pessoais</Text>
@@ -84,24 +139,21 @@ export default function DadosPessoaisScreen() {
           <View style={s.section}>
             <Text style={s.sectionLabel}>Informações pessoais</Text>
             <View style={s.fieldCard}>
-              {FIELDS.map((f, idx) => (
+              {PERSONAL_FIELDS.map((f, idx) => (
                 <View
                   key={f.key}
-                  style={[
-                    s.fieldRow,
-                    idx < FIELDS.length - 1 && s.fieldRowBorder,
-                  ]}
+                  style={[s.fieldRow, idx < PERSONAL_FIELDS.length - 1 && s.fieldRowBorder]}
                 >
                   <Text style={s.fieldLabel}>{f.label}</Text>
                   <TextInput
-                    style={s.fieldInput}
+                    style={[s.fieldInput, f.editable === false && s.fieldInputReadOnly]}
                     value={form[f.key]}
-                    onChangeText={update(f.key)}
+                    onChangeText={f.editable === false ? undefined : update(f.key)}
                     placeholder={f.placeholder}
                     placeholderTextColor={C.inkFaint}
                     keyboardType={f.keyboard ?? 'default'}
                     autoCapitalize={f.autoCapitalize ?? 'sentences'}
-                    returnKeyType="next"
+                    editable={f.editable !== false}
                   />
                 </View>
               ))}
@@ -112,119 +164,87 @@ export default function DadosPessoaisScreen() {
           <View style={s.section}>
             <Text style={s.sectionLabel}>Endereço</Text>
             <View style={s.fieldCard}>
-              {/* CEP sozinho */}
-              <View style={[s.fieldRow, s.fieldRowBorder]}>
-                <Text style={s.fieldLabel}>CEP</Text>
-                <TextInput
-                  style={s.fieldInput}
-                  value={form.cep}
-                  onChangeText={update('cep')}
-                  placeholder="00000-000"
-                  placeholderTextColor={C.inkFaint}
-                  keyboardType="numeric"
-                  returnKeyType="next"
-                />
-              </View>
+              {ADDRESS_FIELDS.map((f, idx) => {
+                const isInline = f.key === 'numero' || f.key === 'complemento'
+                  || f.key === 'cidade' || f.key === 'estado';
+                const prevKey = ADDRESS_FIELDS[idx - 1]?.key;
+                const isSecondOfPair =
+                  (f.key === 'complemento' && prevKey === 'numero') ||
+                  (f.key === 'estado' && prevKey === 'cidade');
 
-              {/* Logradouro */}
-              <View style={[s.fieldRow, s.fieldRowBorder]}>
-                <Text style={s.fieldLabel}>Logradouro</Text>
-                <TextInput
-                  style={s.fieldInput}
-                  value={form.logradouro}
-                  onChangeText={update('logradouro')}
-                  placeholder="Rua, Av..."
-                  placeholderTextColor={C.inkFaint}
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                />
-              </View>
+                if (isSecondOfPair) return null; // renderizado junto com o anterior
+                if (!isInline) {
+                  return (
+                    <View key={f.key} style={[s.fieldRow, idx < ADDRESS_FIELDS.length - 1 && s.fieldRowBorder]}>
+                      <Text style={s.fieldLabel}>{f.label}</Text>
+                      <TextInput
+                        style={s.fieldInput}
+                        value={form[f.key]}
+                        onChangeText={update(f.key)}
+                        placeholder={f.placeholder}
+                        placeholderTextColor={C.inkFaint}
+                        keyboardType={f.keyboard ?? 'default'}
+                      />
+                    </View>
+                  );
+                }
 
-              {/* Número + Complemento na mesma linha */}
-              <View style={[s.inlineRow, s.fieldRowBorder]}>
-                <View style={[s.inlineField, { flex: 1 }]}>
-                  <Text style={s.fieldLabel}>Número</Text>
-                  <TextInput
-                    style={s.fieldInput}
-                    value={form.numero}
-                    onChangeText={update('numero')}
-                    placeholder="0"
-                    placeholderTextColor={C.inkFaint}
-                    keyboardType="numeric"
-                    returnKeyType="next"
-                  />
-                </View>
-                <View style={s.inlineDivider} />
-                <View style={[s.inlineField, { flex: 2 }]}>
-                  <Text style={s.fieldLabel}>Complemento</Text>
-                  <TextInput
-                    style={s.fieldInput}
-                    value={form.complemento}
-                    onChangeText={update('complemento')}
-                    placeholder="Apto, Bloco..."
-                    placeholderTextColor={C.inkFaint}
-                    autoCapitalize="sentences"
-                    returnKeyType="next"
-                  />
-                </View>
-              </View>
-
-              {/* Bairro */}
-              <View style={[s.fieldRow, s.fieldRowBorder]}>
-                <Text style={s.fieldLabel}>Bairro</Text>
-                <TextInput
-                  style={s.fieldInput}
-                  value={form.bairro}
-                  onChangeText={update('bairro')}
-                  placeholder="Bairro"
-                  placeholderTextColor={C.inkFaint}
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                />
-              </View>
-
-              {/* Cidade + Estado na mesma linha */}
-              <View style={s.inlineRow}>
-                <View style={[s.inlineField, { flex: 3 }]}>
-                  <Text style={s.fieldLabel}>Cidade</Text>
-                  <TextInput
-                    style={s.fieldInput}
-                    value={form.cidade}
-                    onChangeText={update('cidade')}
-                    placeholder="Cidade"
-                    placeholderTextColor={C.inkFaint}
-                    autoCapitalize="words"
-                    returnKeyType="next"
-                  />
-                </View>
-                <View style={s.inlineDivider} />
-                <View style={[s.inlineField, { flex: 1 }]}>
-                  <Text style={s.fieldLabel}>UF</Text>
-                  <TextInput
-                    style={s.fieldInput}
-                    value={form.estado}
-                    onChangeText={update('estado')}
-                    placeholder="SP"
-                    placeholderTextColor={C.inkFaint}
-                    autoCapitalize="characters"
-                    maxLength={2}
-                    returnKeyType="done"
-                  />
-                </View>
-              </View>
+                // Par inline
+                const next = ADDRESS_FIELDS[idx + 1];
+                return (
+                  <View key={f.key} style={[s.inlineRow, idx < ADDRESS_FIELDS.length - 1 && s.fieldRowBorder]}>
+                    <View style={[s.inlineField, { flex: f.flex ?? 1 }]}>
+                      <Text style={s.fieldLabel}>{f.label}</Text>
+                      <TextInput
+                        style={s.fieldInput}
+                        value={form[f.key]}
+                        onChangeText={update(f.key)}
+                        placeholder={f.placeholder}
+                        placeholderTextColor={C.inkFaint}
+                        keyboardType={f.keyboard ?? 'default'}
+                      />
+                    </View>
+                    {next && (
+                      <>
+                        <View style={s.inlineDivider} />
+                        <View style={[s.inlineField, { flex: next.flex ?? 1 }]}>
+                          <Text style={s.fieldLabel}>{next.label}</Text>
+                          <TextInput
+                            style={s.fieldInput}
+                            value={form[next.key]}
+                            onChangeText={update(next.key)}
+                            placeholder={next.placeholder}
+                            placeholderTextColor={C.inkFaint}
+                            keyboardType={next.keyboard ?? 'default'}
+                          />
+                        </View>
+                      </>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           </View>
 
-          {/* ── Botão salvar ── */}
+          {/* ── Erro ── */}
+          {updateProfile.isError && (
+            <Text style={s.errorText}>
+              {(updateProfile.error as Error)?.message ?? 'Erro ao salvar. Tente novamente.'}
+            </Text>
+          )}
+
+          {/* ── Salvar ── */}
           <View style={s.saveWrap}>
             <TouchableOpacity
               style={[s.saveBtn, saved && s.saveBtnSuccess]}
-              activeOpacity={0.82}
               onPress={handleSave}
+              activeOpacity={0.85}
+              disabled={updateProfile.isPending}
             >
-              <Text style={s.saveBtnText}>
-                {saved ? 'Salvo ✓' : 'Salvar alterações'}
-              </Text>
+              {updateProfile.isPending
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={s.saveBtnText}>{saved ? 'Salvo ✓' : 'Salvar alterações'}</Text>
+              }
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -235,92 +255,35 @@ export default function DadosPessoaisScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    paddingHorizontal: spacing[5],
-    paddingBottom: spacing[3],
+    flexDirection: 'row', alignItems: 'center', gap: spacing[3],
+    paddingHorizontal: spacing[5], paddingBottom: spacing[3],
   },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: fontSize['3xl'],
-    color: C.ink,
-    letterSpacing: -0.2,
-  },
+  title: { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
 
-  section: {
-    marginTop: spacing[5],
-    marginHorizontal: spacing[4],
-  },
+  section:      { marginHorizontal: spacing[4], marginBottom: spacing[4] },
   sectionLabel: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize['sm+'],
-    color: C.inkFaint,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: spacing[3],
-    marginLeft: 4,
+    fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink,
+    marginBottom: spacing[3], letterSpacing: -0.1,
+  },
+  fieldCard:    { backgroundColor: C.card, borderRadius: radii.cardLg, overflow: 'hidden' },
+  fieldRow:     { paddingHorizontal: spacing[5], paddingVertical: 14 },
+  fieldRowBorder: { borderBottomWidth: 1, borderBottomColor: C.line },
+  fieldLabel:   { fontFamily: fonts.medium, fontSize: fontSize.sm, color: C.inkFaint, marginBottom: 4 },
+  fieldInput:   { fontFamily: fonts.semibold, fontSize: fontSize['base+'], color: C.ink, padding: 0 },
+  fieldInputReadOnly: { color: C.inkSoft },
+
+  inlineRow:    { flexDirection: 'row' },
+  inlineField:  { paddingHorizontal: spacing[5], paddingVertical: 14 },
+  inlineDivider:{ width: 1, backgroundColor: C.line },
+
+  errorText: {
+    marginHorizontal: spacing[5], marginBottom: spacing[3],
+    fontFamily: fonts.regular, fontSize: fontSize['sm+'], color: C.red,
   },
 
-  fieldCard: {
-    backgroundColor: C.card,
-    borderRadius: radii.cardLg,
-    overflow: 'hidden',
-  },
-  fieldRow: {
-    paddingHorizontal: spacing[5],
-    paddingVertical: 14,
-  },
-  fieldRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: C.line,
-  },
-  fieldLabel: {
-    fontFamily: fonts.medium,
-    fontSize: fontSize.sm,
-    color: C.inkFaint,
-    marginBottom: 4,
-  },
-  fieldInput: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize['base+'],
-    color: C.ink,
-    padding: 0,
-  },
-
-  // Linha com dois campos lado a lado
-  inlineRow: {
-    flexDirection: 'row',
-  },
-  inlineField: {
-    paddingHorizontal: spacing[5],
-    paddingVertical: 14,
-  },
-  inlineDivider: {
-    width: 1,
-    backgroundColor: C.line,
-  },
-
-  // Botão salvar
-  saveWrap: {
-    marginHorizontal: spacing[4],
-    marginTop: spacing[6],
-  },
-  saveBtn: {
-    backgroundColor: C.dark,
-    borderRadius: radii.lg,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  saveBtnSuccess: {
-    backgroundColor: '#2D7A4F',
-  },
-  saveBtnText: {
-    fontFamily: fonts.semibold,
-    fontSize: fontSize['base+'],
-    color: '#fff',
-    letterSpacing: 0.1,
-  },
+  saveWrap: { marginHorizontal: spacing[4], marginTop: spacing[2] },
+  saveBtn:  { backgroundColor: C.dark, borderRadius: radii.lg, paddingVertical: 16, alignItems: 'center' },
+  saveBtnSuccess: { backgroundColor: '#2D7A4F' },
+  saveBtnText: { fontFamily: fonts.semibold, fontSize: fontSize['base+'], color: '#fff', letterSpacing: 0.1 },
 });
