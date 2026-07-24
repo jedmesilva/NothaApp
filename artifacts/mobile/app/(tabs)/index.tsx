@@ -78,7 +78,12 @@ export default function HomeScreen() {
     (e) => e.status === 'analise' || e.status === 'captacao'
   );
 
-  const totalLoans   = (allLoans ?? []).length;
+  // Apenas empréstimos "em aberto" — exclui cancelados e quitados da home
+  const openLoans = (allLoans ?? []).filter(
+    (e) => e.status === 'ativo' || e.status === 'atrasado' || e.status === 'analise' || e.status === 'captacao'
+  );
+
+  const totalLoans   = openLoans.length;
   const hasAnyLoan   = totalLoans > 0;
   const hasActive    = activeLoans.length > 0;
 
@@ -216,9 +221,9 @@ export default function HomeScreen() {
             </LightCard>
           </TouchableOpacity>
 
-          {/* Lista de todos os empréstimos (ativos, em análise e captação) */}
+          {/* Lista de empréstimos em aberto (exclui cancelados e quitados) */}
           <View style={s.loanList}>
-            {(allLoans ?? []).map((loan) => (
+            {openLoans.map((loan) => (
               <LoanCard key={loan.id} loan={loan} />
             ))}
           </View>
