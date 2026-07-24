@@ -30,12 +30,12 @@ type Group = { label: string; key: string; loans: Emprestimo[] };
 
 function groupByDay(loans: Emprestimo[]): Group[] {
   const sorted = [...loans].sort(
-    (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   const map = new Map<string, Emprestimo[]>();
   for (const loan of sorted) {
-    const key = dayKey(loan.createdAt ?? new Date().toISOString());
+    const key = dayKey(loan.createdAt);
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(loan);
   }
