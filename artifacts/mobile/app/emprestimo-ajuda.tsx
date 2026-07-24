@@ -45,8 +45,9 @@ export default function EmprestimoAjudaScreen() {
     try {
       await cancelLoan.mutateAsync(id);
       setShowConfirm(false);
-      router.dismissAll();
-      router.replace('/emprestimos' as any);
+      // dismiss(2): ajuda → detalhe → emprestimos
+      // preserva (tabs) no stack para o botão de voltar funcionar
+      router.dismiss(2);
     } catch (err: unknown) {
       setShowConfirm(false);
       const message = err instanceof Error ? err.message : 'Erro ao cancelar. Tente novamente.';
