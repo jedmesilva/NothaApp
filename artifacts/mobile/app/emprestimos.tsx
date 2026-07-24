@@ -11,39 +11,40 @@ import type { LoanAPI } from '@/hooks/useLoans';
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const MESES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
 ];
 
-function groupLabel(isoDate: string): string {
-  const d     = new Date(isoDate);
-  const now   = new Date();
-  const dY    = d.getFullYear();
-  const dM    = d.getMonth();
-  const nowY  = now.getFullYear();
-  const nowM  = now.getMonth();
-
-  if (dY === nowY && dM === nowM) return 'Este mês';
-  if (dY === nowY && dM === nowM - 1) return 'Mês passado';
-  if (dY === nowY - 1 && dM === 11 && nowM === 0) return 'Mês passado';
-  return `${MESES[dM]} de ${dY}`;
+/** "YYYY-MM-DD" usado como chave de agrupamento */
+function dayKey(isoDate: string): string {
+  return isoDate.slice(0, 10); // "2025-09-10"
 }
 
-type Group = { label: string; loans: LoanAPI[] };
+/** Rótulo legível: "10 de setembro de 2025" */
+function dayLabel(key: string): string {
+  const [y, m, d] = key.split('-').map(Number);
+  return `${d} de ${MESES[m - 1]} de ${y}`;
+}
 
-function groupByMonth(loans: LoanAPI[]): Group[] {
+type Group = { label: string; key: string; loans: LoanAPI[] };
+
+function groupByDay(loans: LoanAPI[]): Group[] {
   const sorted = [...loans].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   const map = new Map<string, LoanAPI[]>();
   for (const loan of sorted) {
-    const key = groupLabel(loan.createdAt);
+    const key = dayKey(loan.createdAt);
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(loan);
   }
 
-  return Array.from(map.entries()).map(([label, loans]) => ({ label, loans }));
+  return Array.from(map.entries()).map(([key, loans]) => ({
+    key,
+    label: dayLabel(key),
+    loans,
+  }));
 }
 
 // ─── tela ────────────────────────────────────────────────────────────────────
@@ -53,7 +54,7 @@ export default function EmprestimosScreen() {
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   const { data: rawLoans, isLoading } = useLoans();
-  const groups = useMemo(() => groupByMonth(rawLoans ?? []), [rawLoans]);
+  const groups = useMemo(() => groupByDay(rawLoans ?? []), [rawLoans]);
   const total  = rawLoans?.length ?? 0;
 
   return (
