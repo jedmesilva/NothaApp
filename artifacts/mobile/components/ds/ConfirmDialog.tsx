@@ -25,6 +25,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -99,9 +100,11 @@ export function ConfirmDialog({
         <Animated.View style={[s.card, cardStyle]}>
           {/* Ícone decorativo */}
           <View style={[s.iconWrap, isDanger && s.iconWrapDanger]}>
-            <Text style={[s.iconText, isDanger && s.iconTextDanger]}>
-              {isDanger ? '!' : '?'}
-            </Text>
+            <Feather
+              name={isDanger ? 'alert-triangle' : 'help-circle'}
+              size={24}
+              color={isDanger ? C.red : C.inkSoft}
+            />
           </View>
 
           <Text style={s.title}>{title}</Text>
@@ -175,17 +178,6 @@ const s = StyleSheet.create({
   iconWrapDanger: {
     backgroundColor: C.redBg,
   },
-  iconText: {
-    fontSize: fontSize['4xl'],
-    fontFamily: fonts.bold,
-    color: C.inkSoft,
-    lineHeight: 28,
-    marginTop: 2,
-  },
-  iconTextDanger: {
-    color: C.red,
-  },
-
   title: {
     fontFamily: fonts.display,
     fontSize: fontSize['3xl'],

@@ -148,13 +148,14 @@ export default function EmprestimoAjudaScreen() {
 
       <ConfirmDialog
         visible={showConfirm}
-        title="Cancelar solicitação"
+        variant="danger"
+        title="Tem certeza que deseja cancelar?"
         description={
           status === 'captacao'
-            ? 'Isso encerra a captação e cancela o empréstimo. Essa ação não pode ser desfeita.'
+            ? 'Isso encerrará a captação e cancelará o empréstimo. Essa ação não pode ser desfeita.'
             : 'A solicitação será removida antes de ser analisada. Essa ação não pode ser desfeita.'
         }
-        confirmLabel="Sim, cancelar"
+        confirmLabel="Sim, cancelar solicitação"
         onConfirm={handleConfirmCancel}
         onCancel={() => setShowConfirm(false)}
         loading={cancelLoan.isPending}
