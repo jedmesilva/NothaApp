@@ -68,6 +68,7 @@ export function mapLoan(loan: LoanAPI): Emprestimo {
     valorCaptado: loan.fundedAmountCents / 100,
     numCredores: loan.lendersCount,
     contratoId: loan.contractId,
+    createdAt: loan.createdAt,
   };
 }
 

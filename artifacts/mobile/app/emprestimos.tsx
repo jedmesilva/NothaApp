@@ -6,7 +6,7 @@ import { palette as C, fonts, fontSize, spacing } from '@/constants/theme';
 import { BackButton } from '@/components/ds';
 import { LoanCard } from '@/components/LoanCard';
 import { useLoans } from '@/hooks/useLoans';
-import type { LoanAPI } from '@/hooks/useLoans';
+import type { Emprestimo } from '@/data/loans';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -26,16 +26,16 @@ function dayLabel(key: string): string {
   return `${d} de ${MESES[m - 1]} de ${y}`;
 }
 
-type Group = { label: string; key: string; loans: LoanAPI[] };
+type Group = { label: string; key: string; loans: Emprestimo[] };
 
-function groupByDay(loans: LoanAPI[]): Group[] {
+function groupByDay(loans: Emprestimo[]): Group[] {
   const sorted = [...loans].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
   );
 
-  const map = new Map<string, LoanAPI[]>();
+  const map = new Map<string, Emprestimo[]>();
   for (const loan of sorted) {
-    const key = dayKey(loan.createdAt);
+    const key = dayKey(loan.createdAt ?? new Date().toISOString());
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(loan);
   }

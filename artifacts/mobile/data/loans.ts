@@ -29,6 +29,7 @@ export interface Emprestimo {
   valorCaptado?: number;
   numCredores?: number;
   contratoId?: string;
+  createdAt?: string;
 }
 
 export const EMPRESTIMOS: Emprestimo[] = [
