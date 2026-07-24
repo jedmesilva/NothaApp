@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
   StyleSheet,
   Platform,
@@ -13,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton } from '@/components/ds';
+import { BackButton, ConfirmDialog } from '@/components/ds';
 import { useCancelLoan } from '@/hooks/useLoans';
 
 type HelpOption = {
@@ -40,29 +39,19 @@ export default function EmprestimoAjudaScreen() {
   const podeCancelar = status === 'analise' || status === 'captacao';
 
   const cancelLoan = useCancelLoan();
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleCancelar = () => {
-    Alert.alert(
-      'Cancelar solicitação',
-      'Tem certeza que deseja cancelar esta solicitação de empréstimo? Essa ação não pode ser desfeita.',
-      [
-        { text: 'Voltar', style: 'cancel' },
-        {
-          text: 'Sim, cancelar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await cancelLoan.mutateAsync(id);
-              router.dismissAll();
-              router.replace('/emprestimos' as any);
-            } catch (err: unknown) {
-              const message = err instanceof Error ? err.message : 'Erro ao cancelar. Tente novamente.';
-              Alert.alert('Erro', message);
-            }
-          },
-        },
-      ],
-    );
+  const handleConfirmCancel = async () => {
+    try {
+      await cancelLoan.mutateAsync(id);
+      setShowConfirm(false);
+      router.dismissAll();
+      router.replace('/emprestimos' as any);
+    } catch (err: unknown) {
+      setShowConfirm(false);
+      const message = err instanceof Error ? err.message : 'Erro ao cancelar. Tente novamente.';
+      Alert.alert('Erro', message);
+    }
   };
 
   const mainOptions: HelpOption[] = [
@@ -131,15 +120,12 @@ export default function EmprestimoAjudaScreen() {
             <View style={s.optionsCard}>
               <TouchableOpacity
                 style={s.optionRow}
-                onPress={handleCancelar}
+                onPress={() => setShowConfirm(true)}
                 activeOpacity={0.75}
                 disabled={cancelLoan.isPending}
               >
                 <View style={[s.optionIconWrap, s.optionIconDanger]}>
-                  {cancelLoan.isPending
-                    ? <ActivityIndicator size="small" color={C.red} />
-                    : <Feather name="x-circle" size={18} color={C.red} />
-                  }
+                  <Feather name="x-circle" size={18} color={C.red} />
                 </View>
                 <View style={s.optionText}>
                   <Text style={[s.optionLabel, s.optionLabelDanger]}>
@@ -159,6 +145,20 @@ export default function EmprestimoAjudaScreen() {
           </View>
         )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={showConfirm}
+        title="Cancelar solicitação"
+        description={
+          status === 'captacao'
+            ? 'Isso encerra a captação e cancela o empréstimo. Essa ação não pode ser desfeita.'
+            : 'A solicitação será removida antes de ser analisada. Essa ação não pode ser desfeita.'
+        }
+        confirmLabel="Sim, cancelar"
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setShowConfirm(false)}
+        loading={cancelLoan.isPending}
+      />
     </View>
   );
 }

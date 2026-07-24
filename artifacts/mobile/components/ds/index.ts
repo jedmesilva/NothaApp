@@ -33,3 +33,4 @@ export { AlertBanner } from './AlertBanner';
 export type { AlertBannerVariant } from './AlertBanner';
 export { Timeline } from './Timeline';
 export type { TimelineEvent } from './Timeline';
+export { ConfirmDialog } from './ConfirmDialog';
