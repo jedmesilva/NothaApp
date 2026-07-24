@@ -10,7 +10,10 @@ import { useLoans } from '@/hooks/useLoans';
 export default function EmprestimosScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
-  const { data: loans, isLoading } = useLoans();
+  const { data: rawLoans, isLoading } = useLoans();
+  const loans = [...(rawLoans ?? [])].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   return (
     <View style={[st.screen, { paddingTop: topPad }]}>
