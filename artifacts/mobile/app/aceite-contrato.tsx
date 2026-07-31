@@ -14,7 +14,6 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, InfoRows } from '@/components/ds';
-import { formatData } from '@/data/loans';
 import { useCreateLoan } from '@/hooks/useLoans';
 import type { CreateLoanInput } from '@/hooks/useLoans';
 
@@ -131,12 +130,17 @@ export default function AceiteContratoScreen() {
 
             <InfoRows
               items={[
-                { label: 'Prazo', value: `${prazoDias} dias`, sub: `vence ${formatData(vencimentoFinal)}` },
-                { label: 'Ciclo', value: ciclo.label, sub: `R$ ${fmtBRL(valorParcela)}/${ciclo.unidade}` },
-                { label: 'Taxa total', value: `${taxaTotal.toFixed(1)}%` },
                 {
-                  label: numPeriodos === 1 ? 'Vencimento' : '1º vencimento',
-                  value: formatData(numPeriodos === 1 ? vencimentoFinal : primeiraParcela),
+                  label: 'Frequência',
+                  value: `R$ ${fmtBRL(valorParcela)}/${ciclo.unidade}`,
+                },
+                {
+                  label: ({ diario: 'Vencimentos diários', semanal: 'Vencimentos semanais', mensal: 'Vencimentos mensais' } as const)[cicloKey],
+                  value: `${numPeriodos}`,
+                },
+                {
+                  label: 'Taxa total',
+                  value: `${taxaTotal.toFixed(1)}%`,
                 },
               ]}
             />
