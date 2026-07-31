@@ -6,6 +6,7 @@ import walletRouter from "./wallet.js";
 import borrowerProfileRouter from "./borrower-profile.js";
 import investorProfileRouter from "./investor-profile.js";
 import loansRouter from "./loans.js";
+import marketRateRouter from "./market-rate.js";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use("/wallet", walletRouter);
 router.use("/borrower-profile", borrowerProfileRouter);
 router.use("/investor-profile", investorProfileRouter);
 router.use("/loans", loansRouter);
+router.use("/market-rate", marketRateRouter);
 
 export default router;

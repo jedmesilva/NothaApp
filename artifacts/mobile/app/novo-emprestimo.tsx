@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, DetailGrid } from '@/components/ds';
 import { addDays, formatData } from '@/data/loans';
+import { useMarketRate } from '@/hooks/useMarketRate';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -49,6 +50,44 @@ const taxaPorPrazo = (dias: number): number => {
 const fmtBRL = (n: number) =>
   n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+// ---------------------------------------------------------------------------
+// MarketConditionBadge — exibe o sinal de oferta/demanda na tela de empréstimo
+// ---------------------------------------------------------------------------
+type MarketConditionBadgeProps = { desequilibrio: number; ajustePct: number };
+
+function MarketConditionBadge({ desequilibrio, ajustePct }: MarketConditionBadgeProps) {
+  const aquecido = desequilibrio > 0;
+  const sinal = ajustePct > 0 ? `+${ajustePct.toFixed(1)}pp` : `${ajustePct.toFixed(1)}pp`;
+  const label = aquecido ? 'Demanda alta' : 'Capital disponível';
+  const icon: 'trending-up' | 'trending-down' = aquecido ? 'trending-up' : 'trending-down';
+  // Demanda alta → vermelho (taxa sobe) | Oferta alta → âmbar (taxa cai)
+  const cor = aquecido ? C.red : C.amber;
+
+  return (
+    <View style={[mbadge.wrap, { borderColor: cor + '33' }]}>
+      <Feather name={icon} size={13} color={cor} />
+      <Text style={[mbadge.label, { color: cor }]}>
+        {label} · taxa ajustada {sinal}
+      </Text>
+    </View>
+  );
+}
+
+const mbadge = StyleSheet.create({
+  wrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  label: { fontSize: 12, fontFamily: 'System', flexShrink: 1 },
+});
+
 const unidadeLabel = (ciclo: (typeof CICLOS)[number], n: number) =>
   n === 1 ? ciclo.unidade : ciclo.unidadePlural;
 
@@ -64,9 +103,14 @@ export default function NovoEmprestimoScreen() {
   const [numPeriodos, setNumPeriodos] = useState(8);
   const [prazoDraft, setPrazoDraft] = useState('8');
 
+  // Ajuste de taxa por oferta/demanda de capital — calculado ao entrar na tela
+  const { data: marketRate } = useMarketRate();
+  const ajusteMercado = marketRate?.ajustePct ?? 0;
+
   const ciclo = CICLOS.find((c) => c.key === cicloKey)!;
   const prazoDias = numPeriodos * ciclo.dias;
-  const taxaTotal = taxaPorPrazo(prazoDias);
+  // Taxa base por prazo + ajuste de mercado (mínimo 1% para qualquer condição)
+  const taxaTotal = Math.max(1, taxaPorPrazo(prazoDias) + ajusteMercado);
   const valorReais = valorCentavos / 100;
 
   // Slider state
@@ -397,6 +441,14 @@ export default function NovoEmprestimoScreen() {
                 },
               ]}
             />
+
+            {/* Indicador de condição de mercado — aparece apenas quando o ajuste é relevante */}
+            {marketRate && Math.abs(ajusteMercado) >= 0.1 && (
+              <MarketConditionBadge
+                desequilibrio={marketRate.desequilibrio}
+                ajustePct={ajusteMercado}
+              />
+            )}
           </View>
         </View>
       </ScrollView>

@@ -1,0 +1,28 @@
+Taxa de Mercado — Fórmula de Precificação por Desequilíbrio
+Complementa a seção 10 do documento de precificação (taxa_final = taxa_mercado(segmento) + taxa_risco(perfil_tomador)), detalhando a função não linear que ali ficava em aberto.
+1. O que o sistema de fato mede
+oferta_atual e demanda_atual (seções 4.1/4.2 do documento principal) guardam quantidades — quanto capital está disponível, quanto está sendo solicitado. Não guardam elasticidade: nenhum credor declara "só empresto se a taxa for ≥ X%", nenhum tomador declara "só pego emprestado se a taxa for ≤ Y%". O sistema não é um leilão bilateral, é um pool de capital agregado, com dois totais conhecidos a qualquer momento — o mesmo padrão estrutural de mercados de crédito pooled (ex: protocolos de lending tipo Aave/Compound), que resolvem o mesmo problema sem leilão.
+Isso importa porque define o que a fórmula pode e não pode prometer: ela não deriva de uma curva de demanda individual real (isso exigiria leilão com taxa declarada por lado), mas pode refletir com precisão a proporção entre os dois lados do pool — que é exatamente o que está disponível no schema.
+2. Por que a diferença absoluta não serve
+demanda - oferta não carrega informação de escala. R$ 10 mil de excesso de demanda é um desequilíbrio grave num segmento com R$ 20 mil de oferta total (50%), e irrelevante num segmento com R$ 2 milhões de oferta (0,5%). Sem normalizar pelo tamanho do mercado, a mesma diferença absoluta significaria coisas opostas dependendo do segmento.
+3. Por que a razão simples (demanda/oferta) também não é suficiente
+A razão U = demanda/oferta já é uma comparação relativa — U = 1 é equilíbrio, U = 1.5 é demanda 50% maior que oferta, U = 0.5 é oferta o dobro da demanda. O problema é a assimetria da escala: U varia de 0 a 1 quando oferta domina, mas de 1 a infinito quando demanda domina. Dois desequilíbrios de mesma magnitude proporcional em direções opostas ("oferta 2x maior" vs. "demanda 2x maior") não ficam em posições espelhadas ao redor do ponto de equilíbrio — a escala distorce a comparação.
+4. Fórmula: excesso normalizado pelo total
+desequilibrio = (demanda - oferta) / (demanda + oferta)
+Duas propriedades que resolvem os dois problemas acima:
+Simétrica: varia de -1 (oferta domina completamente, demanda = 0) a +1 (demanda domina completamente, oferta = 0), passando por 0 no equilíbrio exato. "Demanda 2x oferta" e "oferta 2x demanda" ficam em posições espelhadas ao redor do zero.
+Escala-invariante: depende só da proporção entre os dois lados, não do volume absoluto. R$ 10 mil de excesso de demanda sobre R$ 10 mil de oferta produz o mesmo desequilibrio que R$ 1 milhão de excesso sobre R$ 1 milhão de oferta — em ambos os casos a demanda é o dobro da oferta.
+5. De desequilíbrio para taxa
+taxa = ponto_medio + desequilibrio * amplitude
+ponto_medio — a taxa de equilíbrio, aplicada quando oferta = demanda (desequilibrio = 0).
+amplitude — o quanto a taxa se desloca do piso ao teto conforme o desequilíbrio vai de -1 a +1.
+Por construção, essa relação já é linear — não é preciso escolher entre sigmoide ou piecewise (candidatos citados na seção 10 do documento principal), porque a não linearidade problemática (a razão simples explodindo para infinito quando oferta → 0) já foi resolvida na etapa de normalização, não na forma da curva de taxa.
+6. O que essa fórmula resolve e o que ela não resolve
+Resolve: captura, com uma régua simétrica e escala-invariante, qual lado do pool (oferta ou demanda) está maior e em que proporção — que é exatamente a pergunta "quanto um lado é maior que o outro" que motivou essa fórmula, e é exatamente o dado que o schema (seção 4) disponibiliza.
+Não resolve: não é uma curva de elasticidade real de credores e tomadores brasileiros — isso exigiria captar quanto cada lado está disposto a aceitar em taxa, o que só um mecanismo de leilão (taxa declarada por participante) forneceria. Essa fórmula assume que o pool reage de forma proporcional e simétrica ao desequilíbrio; se no futuro houver dados reais suficientes para medir como oferta/demanda respondem a mudanças de taxa ao longo do tempo, uma curva calibrada empiricamente (regressão sobre esse histórico) poderia substituir a suposição de linearidade — mas isso só é possível depois de existir histórico suficiente, não como ponto de partida.
+7. Parâmetros a definir
+ponto_medio — provavelmente não é uma taxa fixa global; pode variar por segmento ou ser um valor único de partida, a calibrar.
+amplitude — define o quão sensível a taxa é ao desequilíbrio; amplitude maior gera taxas mais voláteis entre segmentos, amplitude menor suaviza a resposta.
+Piso e teto: mesmo com a fórmula sendo linear em desequilibrio, ainda vale aplicar um piso e teto absolutos sobre o resultado final (ex: taxa nunca abaixo de 1% nem acima de 8% ao mês), para evitar taxas fora de faixas regulatórias ou comerciais aceitáveis, independentemente de quão extremo fique o desequilíbrio.
+8. Como se encaixa no cálculo existente
+oferta e demanda do segmento são obtidos exatamente como descrito na seção 7.1 do documento principal (soma de oferta_atual/demanda_atual via join com o perfil, filtrado pelo segmento). A única mudança é a etapa seguinte: em vez de aplicar sigmoide ou piecewise sobre a razão demanda/oferta, aplica-se a fórmula linear acima sobre o desequilibrio normalizado.
