@@ -108,7 +108,6 @@ export default function AceiteContratoScreen() {
           <Text style={s.title}>Revisar e confirmar</Text>
         </View>
       </View>
-      <Text style={s.subtitle}>Confira os termos do seu empréstimo antes de confirmar.</Text>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -215,14 +214,6 @@ const s = StyleSheet.create({
     paddingBottom: 4,
   },
   title:    { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
-  subtitle: {
-    paddingHorizontal: spacing[5],
-    paddingBottom: spacing[2],
-    paddingTop: 4,
-    fontSize: fontSize['base+'],
-    fontFamily: fonts.regular,
-    color: C.inkSoft,
-  },
 
   section:      { marginHorizontal: spacing[4], marginBottom: 14 },
   sectionLabel: {
