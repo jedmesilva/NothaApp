@@ -14,6 +14,7 @@ import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } fr
 import { formatBRL } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { DarkCard, LightCard, ThinBar, SplitRow, Chip, SectionTitle, Eyebrow, BigValue, AlertBanner } from '@/components/ds';
+import { useAuth } from '@/contexts/AuthContext';
 
 const W = Dimensions.get('window').width;
 
@@ -63,6 +64,11 @@ export default function CarteiraScreen() {
   const [periodo, setPeriodo]       = useState('7d');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim]       = useState('');
+  const { user } = useAuth();
+
+  const hoje2 = new Date();
+  const hour = hoje2.getHours();
+  const saudacao = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
   // Mock data
   const investido         = 10000;
@@ -136,6 +142,10 @@ export default function CarteiraScreen() {
   return (
     <View style={s.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+
+        <Text style={s.greeting}>
+          {saudacao}, <Text style={s.greetingName}>{user?.name ?? ''}</Text>
+        </Text>
 
         {/* Hero card */}
         <DarkCard style={{ marginTop: spacing[4] }}>
@@ -268,6 +278,8 @@ export default function CarteiraScreen() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
+  greeting:     { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[2], fontSize: fontSize.lg, color: C.inkSoft, fontFamily: fonts.regular },
+  greetingName: { color: C.ink, fontFamily: fonts.bold },
   sectionTitle: { marginHorizontal: spacing[4], marginTop: 4, marginBottom: 10 },
   retornoValue:   { fontFamily: fonts.display, fontSize: fontSize.display, color: '#fff', letterSpacing: -0.8, lineHeight: 38 },
   retornoSign:    { fontSize: fontSize['4xl'], fontFamily: fonts.display },

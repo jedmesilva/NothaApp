@@ -130,9 +130,6 @@ export default function HomeScreen() {
 
   return (
     <View style={s.screen}>
-      <Text style={s.greeting}>
-        {saudacao}, <Text style={s.greetingName}>{user?.name ?? ''}</Text>
-      </Text>
       <ScrollView
         ref={scrollRef}
         horizontal pagingEnabled
@@ -143,7 +140,10 @@ export default function HomeScreen() {
         contentContainerStyle={{ width: W * 2 }}
       >
         {/* ── Page 1: Crédito ───────────────────────────────────────── */}
-        <ScrollView style={{ width: W }} contentContainerStyle={{ paddingBottom: bottomPad, paddingTop: spacing[4] }} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ width: W }} contentContainerStyle={{ paddingBottom: bottomPad }} showsVerticalScrollIndicator={false}>
+          <Text style={s.greeting}>
+            {saudacao}, <Text style={s.greetingName}>{user?.name ?? ''}</Text>
+          </Text>
 
           {/* Limite disponível */}
           <DarkCard>
