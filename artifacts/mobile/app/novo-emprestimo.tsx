@@ -410,9 +410,8 @@ export default function NovoEmprestimoScreen() {
               <View style={s.summaryDivider} />
 
               <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Taxa total</Text>
-                <View style={s.taxaValueGroup}>
-                  <Text style={s.summaryRowValue}>{taxaTotal.toFixed(1)}%</Text>
+                <View style={s.taxaLabelGroup}>
+                  <Text style={s.summaryRowLabel}>Taxa total</Text>
                   <TouchableOpacity
                     onPress={() => setTaxaInfoVisible(true)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -421,6 +420,7 @@ export default function NovoEmprestimoScreen() {
                     <Feather name="info" size={14} color={C.inkFaint} />
                   </TouchableOpacity>
                 </View>
+                <Text style={s.summaryRowValue}>{taxaTotal.toFixed(1)}%</Text>
               </View>
             </View>
           </View>
@@ -691,6 +691,7 @@ const s = StyleSheet.create({
   summaryRowValue: { fontFamily: fonts.semibold, fontSize: fontSize.base, color: C.ink },
   summaryRowSub: { fontSize: fontSize.xs, fontFamily: fonts.regular, color: C.inkFaint, marginTop: 2 },
   taxaValueGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  taxaLabelGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 
   // Modal
   modalScrim: {
