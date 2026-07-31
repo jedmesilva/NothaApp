@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, and, count, desc } from "drizzle-orm";
+import { eq, and, count, desc, sql } from "drizzle-orm";
 import {
   db,
   borrowerProfilesTable,
@@ -12,12 +12,16 @@ import { requireAuth, type AuthRequest } from "../middlewares/auth.js";
 import { z } from "zod";
 
 const createLoanSchema = z.object({
-  amountCents:  z.number().int().min(1000).max(150_000),
+  amountCents:  z.number().int().min(1000),
   cicloKey:     z.enum(["diario", "semanal", "mensal"]),
   numPeriodos:  z.number().int().min(1),
   prazoDias:    z.number().int().min(1),
   taxaTotal:    z.number().min(0),
 });
+
+class CreditLimitExceededError extends Error {
+  constructor() { super("CREDIT_LIMIT_EXCEEDED"); }
+}
 
 const router = Router();
 
@@ -33,40 +37,68 @@ router.post("/", requireAuth, async (req, res) => {
 
   const { amountCents, cicloKey, numPeriodos, prazoDias, taxaTotal } = parsed.data;
 
-  // Garante que o tomador tem perfil (cria se necessário)
-  let [borrower] = await db
-    .select({ id: borrowerProfilesTable.id })
-    .from(borrowerProfilesTable)
-    .where(eq(borrowerProfilesTable.userId, userId))
-    .limit(1);
+  try {
+    const loan = await db.transaction(async (tx) => {
+      // Busca (ou cria) perfil e trava a linha para leitura consistente
+      let [borrower] = await tx
+        .select()
+        .from(borrowerProfilesTable)
+        .where(eq(borrowerProfilesTable.userId, userId))
+        .for("update")
+        .limit(1);
 
-  if (!borrower) {
-    [borrower] = await db
-      .insert(borrowerProfilesTable)
-      .values({ userId })
-      .returning({ id: borrowerProfilesTable.id });
+      if (!borrower) {
+        [borrower] = await tx
+          .insert(borrowerProfilesTable)
+          .values({ userId })
+          .returning();
+      }
+
+      // Verifica limite disponível antes de qualquer insert
+      const available = borrower.creditLimitCents - borrower.usedCreditCents;
+      if (available < amountCents) {
+        throw new CreditLimitExceededError();
+      }
+
+      // Gera contractId único: EMP-{ano}-{5 dígitos aleatórios}
+      const year       = new Date().getFullYear();
+      const suffix     = String(Math.floor(10000 + Math.random() * 90000));
+      const contractId = `EMP-${year}-${suffix}`;
+
+      const [loan] = await tx
+        .insert(loansTable)
+        .values({
+          borrowerId:        borrower.id,
+          amountCents,
+          interestRatePct:   Math.round(taxaTotal * 100),
+          termDays:          prazoDias,
+          cycle:             cicloKey,
+          installmentsTotal: numPeriodos,
+          status:            "pending_review",
+          contractId,
+        })
+        .returning();
+
+      // Incrementa crédito em uso atomicamente
+      await tx
+        .update(borrowerProfilesTable)
+        .set({
+          usedCreditCents: sql`${borrowerProfilesTable.usedCreditCents} + ${amountCents}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(borrowerProfilesTable.id, borrower.id));
+
+      return loan;
+    });
+
+    res.status(201).json({ loan });
+  } catch (err) {
+    if (err instanceof CreditLimitExceededError) {
+      res.status(422).json({ error: "Limite de crédito insuficiente" });
+      return;
+    }
+    throw err;
   }
-
-  // Gera contractId único: EMP-{ano}-{5 dígitos aleatórios}
-  const year       = new Date().getFullYear();
-  const suffix     = String(Math.floor(10000 + Math.random() * 90000));
-  const contractId = `EMP-${year}-${suffix}`;
-
-  const [loan] = await db
-    .insert(loansTable)
-    .values({
-      borrowerId:        borrower.id,
-      amountCents,
-      interestRatePct:   Math.round(taxaTotal * 100),
-      termDays:          prazoDias,
-      cycle:             cicloKey,
-      installmentsTotal: numPeriodos,
-      status:            "pending_review",
-      contractId,
-    })
-    .returning();
-
-  res.status(201).json({ loan });
 });
 
 // GET /api/loans — lista todos os empréstimos do tomador autenticado
@@ -248,11 +280,24 @@ router.patch("/:id/cancel", requireAuth, async (req, res) => {
     return;
   }
 
-  const [updated] = await db
-    .update(loansTable)
-    .set({ status: "cancelled", updatedAt: new Date() })
-    .where(eq(loansTable.id, id))
-    .returning();
+  const updated = await db.transaction(async (tx) => {
+    const [updatedLoan] = await tx
+      .update(loansTable)
+      .set({ status: "cancelled", updatedAt: new Date() })
+      .where(eq(loansTable.id, id))
+      .returning();
+
+    // Devolve o crédito ao limite disponível do tomador
+    await tx
+      .update(borrowerProfilesTable)
+      .set({
+        usedCreditCents: sql`GREATEST(0, ${borrowerProfilesTable.usedCreditCents} - ${loan.amountCents})`,
+        updatedAt: new Date(),
+      })
+      .where(eq(borrowerProfilesTable.id, borrower.id));
+
+    return updatedLoan;
+  });
 
   res.json({ loan: updated });
 });
