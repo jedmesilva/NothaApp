@@ -60,7 +60,7 @@ export default function EmprestimoAjudaScreen() {
       icon: 'file-text',
       label: 'Ver contrato',
       description: 'Acesse os termos e condições do seu empréstimo.',
-      onPress: () => router.back(),
+      onPress: () => router.push('/contrato-leitura'),
     },
     {
       icon: 'message-circle',
