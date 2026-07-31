@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton } from '@/components/ds';
-import { createEmprestimo } from '@/data/loans';
 
 // ---------------------------------------------------------------------------
 // Contract content
@@ -69,19 +68,6 @@ export default function ContratoLeituraScreen() {
   const [chegouAoFim, setChegouAoFim] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Params (passed from aceite-contrato, not used in contract text but kept for confirmation)
-  const params = useLocalSearchParams<{
-    valorCentavos: string;
-    cicloKey: string;
-    numPeriodos: string;
-    prazoDias: string;
-    taxaTotal: string;
-    valorParcela: string;
-    totalAPagar: string;
-    primeiraParcela: string;
-    vencimentoFinal: string;
-  }>();
-
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
     const scrollable = contentSize.height - layoutMeasurement.height;
@@ -97,17 +83,7 @@ export default function ContratoLeituraScreen() {
     }
   };
 
-  const handleAceitar = () => {
-    const newId = createEmprestimo({
-      valorCentavos: parseInt(params.valorCentavos ?? '50000', 10),
-      cicloKey: params.cicloKey ?? 'semanal',
-      numPeriodos: parseInt(params.numPeriodos ?? '8', 10),
-      prazoDias: parseInt(params.prazoDias ?? '56', 10),
-      taxaTotal: parseFloat(params.taxaTotal ?? '14.3'),
-    });
-    router.dismissAll();
-    router.push({ pathname: '/emprestimo-detalhe', params: { id: String(newId) } });
-  };
+  const handleFechar = () => router.back();
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
@@ -118,12 +94,6 @@ export default function ContratoLeituraScreen() {
           <Text style={s.title}>Contrato de empréstimo</Text>
         </View>
       </View>
-      <Text style={s.subtitle}>
-        {chegouAoFim
-          ? 'Você chegou ao final do contrato.'
-          : 'Role até o final para liberar o aceite.'}
-      </Text>
-
       {/* Progress bar — sits above the ScrollView, fixed */}
       <View style={s.progressTrack}>
         <View style={[s.progressFill, { width: `${progresso}%` as any }]} />
@@ -152,16 +122,16 @@ export default function ContratoLeituraScreen() {
       <View style={[s.ctaBar, { paddingBottom: Math.max(insets.bottom, 18) }]}>
         <TouchableOpacity
           style={[s.ctaButton, !chegouAoFim && s.ctaButtonDisabled]}
-          onPress={handleAceitar}
+          onPress={handleFechar}
           disabled={!chegouAoFim}
           activeOpacity={0.85}
         >
           <Text style={[s.ctaText, !chegouAoFim && s.ctaTextDisabled]}>
-            Aceitar e confirmar empréstimo
+            Li e fechar
           </Text>
         </TouchableOpacity>
         {!chegouAoFim && (
-          <Text style={s.ctaHint}>Role até o final do contrato para continuar</Text>
+          <Text style={s.ctaHint}>Role até o final do contrato para fechar</Text>
         )}
       </View>
     </View>
