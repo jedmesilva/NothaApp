@@ -159,8 +159,8 @@ export default function EmprestimoDetalheScreen() {
           <DetailGrid
             context="dark"
             items={[
-              { label: 'Prazo',      value: `${prazoDias} dias`,               sub: jaConcedido ? `vence ${formatDataShort(dataVencimentoFinal)}` : undefined },
-              { label: 'Ciclo',      value: cicloMeta.label,                   sub: `R$ ${formatBRL(Math.round(valorParcela))}/${cicloMeta.unidade}` },
+              { label: 'Parcelas',   value: `${parcelasTotal} ${parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}`, sub: jaConcedido ? `vence ${formatDataShort(dataVencimentoFinal)}` : undefined },
+              { label: 'Ciclo',      value: cicloMeta.label },
               { label: 'Taxa total', value: `${taxaJurosTotal}%` },
               { label: status === 'quitado' ? 'Total pago' : 'Total a pagar', value: `R$ ${formatBRL(Math.round(totalAPagar))}` },
             ]}
