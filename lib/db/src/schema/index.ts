@@ -11,3 +11,4 @@ export * from "./funding-order-offers";
 export * from "./loan-installments";
 export * from "./installment-payments";
 export * from "./installment-payment-distributions";
+export * from "./loan-events";
