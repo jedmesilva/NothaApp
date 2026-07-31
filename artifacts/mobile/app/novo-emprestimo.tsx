@@ -17,6 +17,7 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import { BackButton, InfoRows } from '@/components/ds';
 import { addDays, formatData } from '@/data/loans';
 import { useMarketRate } from '@/hooks/useMarketRate';
+import { useBorrowerProfile } from '@/hooks/useBorrowerProfile';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -68,6 +69,12 @@ export default function NovoEmprestimoScreen() {
   const [numPeriodos, setNumPeriodos] = useState(8);
   const [prazoDraft, setPrazoDraft] = useState('8');
 
+  // Limite real do tomador vindo do banco (disponível = total − já utilizado)
+  const { data: profileData } = useBorrowerProfile();
+  const limiteCentavos = profileData?.profile
+    ? Math.max(VALOR_MIN_CENTAVOS, profileData.profile.creditLimitCents - profileData.profile.usedCreditCents)
+    : LIMITE_CENTAVOS;
+
   // Ajuste de taxa por oferta/demanda de capital — calculado ao entrar na tela
   const { data: marketRate } = useMarketRate();
   const ajusteMercado = marketRate?.ajustePct ?? 0;
@@ -90,9 +97,9 @@ export default function NovoEmprestimoScreen() {
   const updateValorRef = useRef((_x: number) => {});
   updateValorRef.current = (offsetX: number) => {
     const ratio = Math.max(0, Math.min(1, offsetX / valorTrackWidthRef.current));
-    const raw = VALOR_MIN_CENTAVOS + ratio * (LIMITE_CENTAVOS - VALOR_MIN_CENTAVOS);
+    const raw = VALOR_MIN_CENTAVOS + ratio * (limiteCentavos - VALOR_MIN_CENTAVOS);
     const stepped = Math.round(raw / 100) * 100;
-    setValorCentavos(Math.max(VALOR_MIN_CENTAVOS, Math.min(LIMITE_CENTAVOS, stepped)));
+    setValorCentavos(Math.max(VALOR_MIN_CENTAVOS, Math.min(limiteCentavos, stepped)));
   };
 
   const updatePrazoRef = useRef((_x: number) => {});
@@ -142,14 +149,14 @@ export default function NovoEmprestimoScreen() {
   }, [valorReais, prazoDias, numPeriodos, taxaTotal]);
 
   const percentValor =
-    ((valorCentavos - VALOR_MIN_CENTAVOS) / (LIMITE_CENTAVOS - VALOR_MIN_CENTAVOS)) * 100;
+    ((valorCentavos - VALOR_MIN_CENTAVOS) / (limiteCentavos - VALOR_MIN_CENTAVOS)) * 100;
   const percentPrazo =
     ((numPeriodos - ciclo.min) / (ciclo.max - ciclo.min)) * 100;
 
   // Steppers
   const stepValor = (delta: number) =>
     setValorCentavos((p) =>
-      Math.min(LIMITE_CENTAVOS, Math.max(VALOR_MIN_CENTAVOS, p + delta)),
+      Math.min(limiteCentavos, Math.max(VALOR_MIN_CENTAVOS, p + delta)),
     );
 
   const setPrazo = (n: number) => {
@@ -208,7 +215,7 @@ export default function NovoEmprestimoScreen() {
                 value={fmtBRL(valorReais)}
                 onChangeText={(text) => {
                   const digits = text.replace(/\D/g, '');
-                  const c = digits === '' ? 0 : Math.min(LIMITE_CENTAVOS, parseInt(digits, 10));
+                  const c = digits === '' ? 0 : Math.min(limiteCentavos, parseInt(digits, 10));
                   setValorCentavos(c);
                 }}
                 onBlur={() => setValorCentavos((p) => Math.max(VALOR_MIN_CENTAVOS, p))}
@@ -227,9 +234,9 @@ export default function NovoEmprestimoScreen() {
                 <Feather name="minus" size={16} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={[s.stepperBtn, valorCentavos >= LIMITE_CENTAVOS && s.stepperBtnDisabled]}
+                style={[s.stepperBtn, valorCentavos >= limiteCentavos && s.stepperBtnDisabled]}
                 onPress={() => stepValor(500)}
-                disabled={valorCentavos >= LIMITE_CENTAVOS}
+                disabled={valorCentavos >= limiteCentavos}
                 activeOpacity={0.7}
               >
                 <Feather name="plus" size={16} color="#fff" />
@@ -256,7 +263,7 @@ export default function NovoEmprestimoScreen() {
           </View>
           <View style={s.sliderCaption}>
             <Text style={s.sliderCaptionText}>R$ {fmtBRL(VALOR_MIN_CENTAVOS / 100)}</Text>
-            <Text style={s.sliderCaptionText}>Limite: R$ {fmtBRL(LIMITE_CENTAVOS / 100)}</Text>
+            <Text style={s.sliderCaptionText}>Limite: R$ {fmtBRL(limiteCentavos / 100)}</Text>
           </View>
         </View>
 
