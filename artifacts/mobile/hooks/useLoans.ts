@@ -111,6 +111,7 @@ export function useCreateLoan() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['loans'] });
+      queryClient.invalidateQueries({ queryKey: ['borrower-profile'] });
     },
   });
 }
@@ -125,6 +126,7 @@ export function useCancelLoan() {
     onSuccess: (_data, loanId) => {
       queryClient.invalidateQueries({ queryKey: ['loans'] });
       queryClient.invalidateQueries({ queryKey: ['loans', loanId] });
+      queryClient.invalidateQueries({ queryKey: ['borrower-profile'] });
     },
   });
 }
