@@ -266,7 +266,7 @@ export default function NovoEmprestimoScreen() {
 
           <View style={s.prazoCard}>
             {/* Ciclo */}
-            <Text style={s.planBlockLabel}>Ciclo</Text>
+            <Text style={s.planBlockLabel}>Defina o ciclo de pagamento</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
