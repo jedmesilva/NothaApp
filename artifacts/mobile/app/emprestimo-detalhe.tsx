@@ -51,7 +51,7 @@ export default function EmprestimoDetalheScreen() {
   const dataCaptacaoConcluida = addDays(dataConcessao, -1);
   const dataVencimentoFinal   = addDays(dataConcessao, prazoDias);
 
-  const jaConcedido        = status !== 'analise' && status !== 'captacao';
+  const jaConcedido        = status !== 'analise' && status !== 'captacao' && status !== 'cancelado';
   const jaCaptacaoIniciada = status !== 'analise';
 
   // ── Parcelas ──────────────────────────────────────────────────────────────

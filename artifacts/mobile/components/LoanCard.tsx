@@ -24,7 +24,7 @@ export function LoanCard({ loan }: Props) {
     ? Math.round((loan.parcelasPagas / loan.parcelasTotal) * 100) : 0;
   const percentCaptado = loan.status === 'captacao' && loan.valorCaptado
     ? Math.round((loan.valorCaptado / loan.valor) * 100) : 0;
-  const jaConcedido   = loan.status !== 'analise' && loan.status !== 'captacao';
+  const jaConcedido   = loan.status !== 'analise' && loan.status !== 'captacao' && loan.status !== 'cancelado';
   const hoje          = new Date();
   const dataConcessao = jaConcedido ? addDays(hoje, -(loan.diasDesdeConcessao ?? 0)) : hoje;
   const dataVencimento = addDays(dataConcessao, loan.prazoDias);
