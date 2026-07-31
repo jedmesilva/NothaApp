@@ -245,11 +245,15 @@ export default function EmprestimoDetalheScreen() {
             <Text style={s.dateLabel}>{jaConcedido ? 'Concedido em' : 'Solicitado em'}</Text>
             <Text style={s.dateValue}>{formatData(jaConcedido ? dataConcessao : dataSolicitacao)}</Text>
           </View>
-          <View style={s.datesDivider} />
-          <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>Vencimento</Text>
-            <Text style={s.dateValue}>{formatData(dataVencimentoFinal)}</Text>
-          </View>
+          {jaConcedido && (
+            <>
+              <View style={s.datesDivider} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.dateLabel}>Vencimento</Text>
+                <Text style={s.dateValue}>{formatData(dataVencimentoFinal)}</Text>
+              </View>
+            </>
+          )}
           <Feather name="chevron-right" size={18} color={C.inkFaint} />
         </TouchableOpacity>
 
