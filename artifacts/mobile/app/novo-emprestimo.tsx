@@ -390,20 +390,11 @@ export default function NovoEmprestimoScreen() {
             {/* Linhas de resumo em formato inline */}
             <View style={s.summaryRows}>
               <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Prazo</Text>
+                <Text style={s.summaryRowLabel}>Frequência</Text>
                 <View style={s.summaryRowRight}>
-                  <Text style={s.summaryRowValue}>{prazoDias} dias</Text>
-                  <Text style={s.summaryRowSub}>vence {formatData(calc.vencimentoFinal)}</Text>
-                </View>
-              </View>
-
-              <View style={s.summaryDivider} />
-
-              <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Ciclo</Text>
-                <View style={s.summaryRowRight}>
-                  <Text style={s.summaryRowValue}>{ciclo.label}</Text>
-                  <Text style={s.summaryRowSub}>R$ {fmtBRL(calc.valorParcela)}/{ciclo.unidade}</Text>
+                  <Text style={s.summaryRowValue}>
+                    R$ {fmtBRL(calc.valorParcela)}/{ciclo.unidade}
+                  </Text>
                 </View>
               </View>
 
@@ -414,7 +405,7 @@ export default function NovoEmprestimoScreen() {
                 <View style={s.summaryRowRight}>
                   <Text style={s.summaryRowValue}>{calc.numParcelas}</Text>
                   <Text style={s.summaryRowSub}>
-                    1º em 1 {ciclo.unidade} após a emissão
+                    1 por {ciclo.unidade} · {prazoDias} dias no total
                   </Text>
                 </View>
               </View>
