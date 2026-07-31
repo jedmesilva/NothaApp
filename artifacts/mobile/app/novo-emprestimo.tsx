@@ -410,12 +410,15 @@ export default function NovoEmprestimoScreen() {
               <View style={s.summaryDivider} />
 
               <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>
-                  {calc.numParcelas === 1 ? 'Vencimento' : '1º vencimento'}
-                </Text>
-                <Text style={s.summaryRowValue}>
-                  {formatData(calc.numParcelas === 1 ? calc.vencimentoFinal : calc.primeiraParcela)}
-                </Text>
+                <Text style={s.summaryRowLabel}>Parcelas</Text>
+                <View style={s.summaryRowRight}>
+                  <Text style={s.summaryRowValue}>
+                    {calc.numParcelas} {unidadeLabel(ciclo, calc.numParcelas)}
+                  </Text>
+                  <Text style={s.summaryRowSub}>
+                    1ª parcela em 1 {ciclo.unidade} após a emissão
+                  </Text>
+                </View>
               </View>
 
               <View style={s.summaryDivider} />
