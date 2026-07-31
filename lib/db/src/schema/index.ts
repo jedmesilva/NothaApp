@@ -12,3 +12,4 @@ export * from "./loan-installments";
 export * from "./installment-payments";
 export * from "./installment-payment-distributions";
 export * from "./loan-events";
+export * from "./credit-limit-history";
