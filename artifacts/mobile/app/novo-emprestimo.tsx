@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -75,6 +75,11 @@ export default function NovoEmprestimoScreen() {
     ? Math.max(VALOR_MIN_CENTAVOS, profileData.profile.creditLimitCents - profileData.profile.usedCreditCents)
     : LIMITE_CENTAVOS;
 
+  // Quando o limite real carrega, clamp o valor selecionado para não excedê-lo
+  useEffect(() => {
+    setValorCentavos((prev) => Math.min(prev, limiteCentavos));
+  }, [limiteCentavos]);
+
   // Ajuste de taxa por oferta/demanda de capital — calculado ao entrar na tela
   const { data: marketRate } = useMarketRate();
   const ajusteMercado = marketRate?.ajustePct ?? 0;
@@ -148,8 +153,9 @@ export default function NovoEmprestimoScreen() {
     };
   }, [valorReais, prazoDias, numPeriodos, taxaTotal]);
 
-  const percentValor =
-    ((valorCentavos - VALOR_MIN_CENTAVOS) / (limiteCentavos - VALOR_MIN_CENTAVOS)) * 100;
+  const percentValor = Math.min(100, Math.max(0,
+    ((valorCentavos - VALOR_MIN_CENTAVOS) / (limiteCentavos - VALOR_MIN_CENTAVOS)) * 100,
+  ));
   const percentPrazo =
     ((numPeriodos - ciclo.min) / (ciclo.max - ciclo.min)) * 100;
 
