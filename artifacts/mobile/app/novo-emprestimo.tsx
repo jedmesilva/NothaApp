@@ -7,6 +7,8 @@ import {
   TextInput,
   StyleSheet,
   Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -50,43 +52,6 @@ const taxaPorPrazo = (dias: number): number => {
 const fmtBRL = (n: number) =>
   n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// ---------------------------------------------------------------------------
-// MarketConditionBadge — exibe o sinal de oferta/demanda na tela de empréstimo
-// ---------------------------------------------------------------------------
-type MarketConditionBadgeProps = { desequilibrio: number; ajustePct: number };
-
-function MarketConditionBadge({ desequilibrio, ajustePct }: MarketConditionBadgeProps) {
-  const aquecido = desequilibrio > 0;
-  const sinal = ajustePct > 0 ? `+${ajustePct.toFixed(1)}pp` : `${ajustePct.toFixed(1)}pp`;
-  const label = aquecido ? 'Demanda alta' : 'Capital disponível';
-  const icon: 'trending-up' | 'trending-down' = aquecido ? 'trending-up' : 'trending-down';
-  // Demanda alta → vermelho (taxa sobe) | Oferta alta → âmbar (taxa cai)
-  const cor = aquecido ? C.red : C.amber;
-
-  return (
-    <View style={[mbadge.wrap, { borderColor: cor + '33' }]}>
-      <Feather name={icon} size={13} color={cor} />
-      <Text style={[mbadge.label, { color: cor }]}>
-        {label} · taxa ajustada {sinal}
-      </Text>
-    </View>
-  );
-}
-
-const mbadge = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 8,
-    borderWidth: 1,
-    backgroundColor: 'transparent',
-  },
-  label: { fontSize: 12, fontFamily: 'System', flexShrink: 1 },
-});
 
 const unidadeLabel = (ciclo: (typeof CICLOS)[number], n: number) =>
   n === 1 ? ciclo.unidade : ciclo.unidadePlural;
@@ -106,6 +71,8 @@ export default function NovoEmprestimoScreen() {
   // Ajuste de taxa por oferta/demanda de capital — calculado ao entrar na tela
   const { data: marketRate } = useMarketRate();
   const ajusteMercado = marketRate?.ajustePct ?? 0;
+
+  const [taxaInfoVisible, setTaxaInfoVisible] = useState(false);
 
   const ciclo = CICLOS.find((c) => c.key === cicloKey)!;
   const prazoDias = numPeriodos * ciclo.dias;
@@ -432,7 +399,6 @@ export default function NovoEmprestimoScreen() {
                   value: ciclo.label,
                   sub: `R$ ${fmtBRL(calc.valorParcela)}/${ciclo.unidade}`,
                 },
-                { label: 'Taxa total', value: `${taxaTotal.toFixed(1)}%` },
                 {
                   label: calc.numParcelas === 1 ? 'Vencimento' : '1º vencimento',
                   value: formatData(
@@ -442,13 +408,20 @@ export default function NovoEmprestimoScreen() {
               ]}
             />
 
-            {/* Indicador de condição de mercado — aparece apenas quando o ajuste é relevante */}
-            {marketRate && Math.abs(ajusteMercado) >= 0.1 && (
-              <MarketConditionBadge
-                desequilibrio={marketRate.desequilibrio}
-                ajustePct={ajusteMercado}
-              />
-            )}
+            {/* Taxa total — linha separada com ícone de informação */}
+            <View style={s.taxaRow}>
+              <Text style={s.taxaLabel}>Taxa total</Text>
+              <View style={s.taxaValueGroup}>
+                <Text style={s.taxaValue}>{taxaTotal.toFixed(1)}%</Text>
+                <TouchableOpacity
+                  onPress={() => setTaxaInfoVisible(true)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  activeOpacity={0.6}
+                >
+                  <Feather name="info" size={14} color={C.inkFaint} />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -459,6 +432,33 @@ export default function NovoEmprestimoScreen() {
           <Text style={s.ctaText}>Solicitar R$ {fmtBRL(valorReais)}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Popover de informação sobre a taxa */}
+      <Modal
+        visible={taxaInfoVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTaxaInfoVisible(false)}
+      >
+        <Pressable style={s.modalScrim} onPress={() => setTaxaInfoVisible(false)}>
+          <Pressable style={s.modalCard} onPress={() => {}}>
+            <View style={s.modalHeader}>
+              <Feather name="info" size={16} color={C.ink} />
+              <Text style={s.modalTitle}>Como a taxa é definida</Text>
+            </View>
+            <Text style={s.modalBody}>
+              A taxa aplicada é calculada com base na oferta de capital disponível no mercado.
+            </Text>
+            <TouchableOpacity
+              style={s.modalClose}
+              onPress={() => setTaxaInfoVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={s.modalCloseText}>Entendi</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -671,6 +671,52 @@ const s = StyleSheet.create({
     color: C.ink,
     marginBottom: 18,
   },
+
+  // Taxa row with info icon
+  taxaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: C.line,
+    paddingTop: 18,
+    marginTop: 16,
+  },
+  taxaLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.semibold,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+    color: C.inkFaint,
+  },
+  taxaValueGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  taxaValue: { fontFamily: fonts.display, fontSize: fontSize.xl, color: C.ink, letterSpacing: -0.1 },
+
+  // Modal
+  modalScrim: {
+    flex: 1,
+    backgroundColor: C.scrim,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing[6],
+  },
+  modalCard: {
+    backgroundColor: C.card,
+    borderRadius: radii.cardLg,
+    padding: spacing[6],
+    width: '100%',
+  },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  modalTitle: { fontFamily: fonts.bold, fontSize: fontSize.base, color: C.ink },
+  modalBody: { fontFamily: fonts.regular, fontSize: fontSize['base+'], color: C.inkSoft, lineHeight: 22 },
+  modalClose: {
+    marginTop: 20,
+    backgroundColor: C.dark,
+    borderRadius: radii.xl,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  modalCloseText: { fontFamily: fonts.bold, fontSize: fontSize.base, color: '#fff' },
 
   // CTA
   ctaBar: {
