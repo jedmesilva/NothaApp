@@ -410,13 +410,11 @@ export default function NovoEmprestimoScreen() {
               <View style={s.summaryDivider} />
 
               <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Parcelas</Text>
+                <Text style={s.summaryRowLabel}>Vencimentos</Text>
                 <View style={s.summaryRowRight}>
-                  <Text style={s.summaryRowValue}>
-                    {calc.numParcelas} {unidadeLabel(ciclo, calc.numParcelas)}
-                  </Text>
+                  <Text style={s.summaryRowValue}>{calc.numParcelas}</Text>
                   <Text style={s.summaryRowSub}>
-                    1ª parcela em 1 {ciclo.unidade} após a emissão
+                    1º em 1 {ciclo.unidade} após a emissão
                   </Text>
                 </View>
               </View>
