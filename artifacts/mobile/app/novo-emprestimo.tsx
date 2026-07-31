@@ -404,10 +404,7 @@ export default function NovoEmprestimoScreen() {
                 <Text style={s.summaryRowLabel}>
                   {{ diario: 'Vencimentos diários', semanal: 'Vencimentos semanais', mensal: 'Vencimentos mensais' }[cicloKey]}
                 </Text>
-                <View style={s.summaryRowRight}>
-                  <Text style={s.summaryRowValue}>{calc.numParcelas}</Text>
-                  <Text style={s.summaryRowSub}>{prazoDias} dias no total</Text>
-                </View>
+                <Text style={s.summaryRowValue}>{calc.numParcelas}</Text>
               </View>
 
               <View style={s.summaryDivider} />
