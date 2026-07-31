@@ -387,39 +387,51 @@ export default function NovoEmprestimoScreen() {
               durante {calc.numParcelas} {unidadeLabel(ciclo, calc.numParcelas)}
             </Text>
 
-            <DetailGrid
-              items={[
-                {
-                  label: 'Prazo',
-                  value: `${prazoDias} dias`,
-                  sub: `vence ${formatData(calc.vencimentoFinal)}`,
-                },
-                {
-                  label: 'Ciclo',
-                  value: ciclo.label,
-                  sub: `R$ ${fmtBRL(calc.valorParcela)}/${ciclo.unidade}`,
-                },
-                {
-                  label: calc.numParcelas === 1 ? 'Vencimento' : '1º vencimento',
-                  value: formatData(
-                    calc.numParcelas === 1 ? calc.vencimentoFinal : calc.primeiraParcela,
-                  ),
-                },
-              ]}
-            />
+            {/* Linhas de resumo em formato inline */}
+            <View style={s.summaryRows}>
+              <View style={s.summaryRow}>
+                <Text style={s.summaryRowLabel}>Prazo</Text>
+                <View style={s.summaryRowRight}>
+                  <Text style={s.summaryRowValue}>{prazoDias} dias</Text>
+                  <Text style={s.summaryRowSub}>vence {formatData(calc.vencimentoFinal)}</Text>
+                </View>
+              </View>
 
-            {/* Taxa total — linha separada com ícone de informação */}
-            <View style={s.taxaRow}>
-              <Text style={s.taxaLabel}>Taxa total</Text>
-              <View style={s.taxaValueGroup}>
-                <Text style={s.taxaValue}>{taxaTotal.toFixed(1)}%</Text>
-                <TouchableOpacity
-                  onPress={() => setTaxaInfoVisible(true)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  activeOpacity={0.6}
-                >
-                  <Feather name="info" size={14} color={C.inkFaint} />
-                </TouchableOpacity>
+              <View style={s.summaryDivider} />
+
+              <View style={s.summaryRow}>
+                <Text style={s.summaryRowLabel}>Ciclo</Text>
+                <View style={s.summaryRowRight}>
+                  <Text style={s.summaryRowValue}>{ciclo.label}</Text>
+                  <Text style={s.summaryRowSub}>R$ {fmtBRL(calc.valorParcela)}/{ciclo.unidade}</Text>
+                </View>
+              </View>
+
+              <View style={s.summaryDivider} />
+
+              <View style={s.summaryRow}>
+                <Text style={s.summaryRowLabel}>
+                  {calc.numParcelas === 1 ? 'Vencimento' : '1º vencimento'}
+                </Text>
+                <Text style={s.summaryRowValue}>
+                  {formatData(calc.numParcelas === 1 ? calc.vencimentoFinal : calc.primeiraParcela)}
+                </Text>
+              </View>
+
+              <View style={s.summaryDivider} />
+
+              <View style={s.summaryRow}>
+                <Text style={s.summaryRowLabel}>Taxa total</Text>
+                <View style={s.taxaValueGroup}>
+                  <Text style={s.summaryRowValue}>{taxaTotal.toFixed(1)}%</Text>
+                  <TouchableOpacity
+                    onPress={() => setTaxaInfoVisible(true)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.6}
+                  >
+                    <Feather name="info" size={14} color={C.inkFaint} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -672,25 +684,24 @@ const s = StyleSheet.create({
     marginBottom: 18,
   },
 
-  // Taxa row with info icon
-  taxaRow: {
+  // Inline summary rows
+  summaryRows: { borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, marginTop: 4, gap: 0 },
+  summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: C.line,
-    paddingTop: 18,
-    marginTop: 16,
+    paddingVertical: 13,
   },
-  taxaLabel: {
-    fontSize: fontSize.xs,
+  summaryDivider: { height: 1, backgroundColor: C.line },
+  summaryRowLabel: {
+    fontSize: fontSize.sm,
     fontFamily: fonts.semibold,
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
     color: C.inkFaint,
   },
+  summaryRowRight: { alignItems: 'flex-end' },
+  summaryRowValue: { fontFamily: fonts.semibold, fontSize: fontSize.base, color: C.ink },
+  summaryRowSub: { fontSize: fontSize.xs, fontFamily: fonts.regular, color: C.inkFaint, marginTop: 2 },
   taxaValueGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  taxaValue: { fontFamily: fonts.display, fontSize: fontSize.xl, color: C.ink, letterSpacing: -0.1 },
 
   // Modal
   modalScrim: {
