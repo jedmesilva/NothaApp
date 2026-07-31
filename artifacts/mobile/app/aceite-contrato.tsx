@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton } from '@/components/ds';
+import { BackButton, InfoRows } from '@/components/ds';
 import { formatData } from '@/data/loans';
 import { useCreateLoan } from '@/hooks/useLoans';
 import type { CreateLoanInput } from '@/hooks/useLoans';
@@ -129,43 +129,17 @@ export default function AceiteContratoScreen() {
               durante {numPeriodos} {unidadeLabel(cicloKey, numPeriodos)}
             </Text>
 
-            <View style={s.summaryRows}>
-              <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Prazo</Text>
-                <View style={s.summaryRowRight}>
-                  <Text style={s.summaryRowValue}>{prazoDias} dias</Text>
-                  <Text style={s.summaryRowSub}>vence {formatData(vencimentoFinal)}</Text>
-                </View>
-              </View>
-
-              <View style={s.summaryDivider} />
-
-              <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Ciclo</Text>
-                <View style={s.summaryRowRight}>
-                  <Text style={s.summaryRowValue}>{ciclo.label}</Text>
-                  <Text style={s.summaryRowSub}>R$ {fmtBRL(valorParcela)}/{ciclo.unidade}</Text>
-                </View>
-              </View>
-
-              <View style={s.summaryDivider} />
-
-              <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Taxa total</Text>
-                <Text style={s.summaryRowValue}>{taxaTotal.toFixed(1)}%</Text>
-              </View>
-
-              <View style={s.summaryDivider} />
-
-              <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>
-                  {numPeriodos === 1 ? 'Vencimento' : '1º vencimento'}
-                </Text>
-                <Text style={s.summaryRowValue}>
-                  {formatData(numPeriodos === 1 ? vencimentoFinal : primeiraParcela)}
-                </Text>
-              </View>
-            </View>
+            <InfoRows
+              items={[
+                { label: 'Prazo', value: `${prazoDias} dias`, sub: `vence ${formatData(vencimentoFinal)}` },
+                { label: 'Ciclo', value: ciclo.label, sub: `R$ ${fmtBRL(valorParcela)}/${ciclo.unidade}` },
+                { label: 'Taxa total', value: `${taxaTotal.toFixed(1)}%` },
+                {
+                  label: numPeriodos === 1 ? 'Vencimento' : '1º vencimento',
+                  value: formatData(numPeriodos === 1 ? vencimentoFinal : primeiraParcela),
+                },
+              ]}
+            />
 
             <View style={s.totalRow}>
               <Text style={s.totalLabel}>Total a pagar</Text>
@@ -269,19 +243,6 @@ const s = StyleSheet.create({
   summaryValue:     { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.5 },
   summaryValueUnit: { fontSize: fontSize.lg, fontFamily: fonts.semibold, color: C.inkFaint },
   summaryCycles:    { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink, marginBottom: 18 },
-
-  summaryRows: { borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, marginTop: 4 },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 13,
-  },
-  summaryDivider: { height: 1, backgroundColor: C.line },
-  summaryRowLabel: { fontSize: fontSize.sm, fontFamily: fonts.semibold, color: C.inkFaint },
-  summaryRowRight: { alignItems: 'flex-end' },
-  summaryRowValue: { fontFamily: fonts.semibold, fontSize: fontSize.base, color: C.ink },
-  summaryRowSub: { fontSize: fontSize.xs, fontFamily: fonts.regular, color: C.inkFaint, marginTop: 2 },
 
   totalRow: {
     flexDirection: 'row',

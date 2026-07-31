@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, DetailGrid } from '@/components/ds';
+import { BackButton, InfoRows } from '@/components/ds';
 import { addDays, formatData } from '@/data/loans';
 import { useMarketRate } from '@/hooks/useMarketRate';
 
@@ -387,42 +387,23 @@ export default function NovoEmprestimoScreen() {
               durante {calc.numParcelas} {unidadeLabel(ciclo, calc.numParcelas)}
             </Text>
 
-            {/* Linhas de resumo em formato inline */}
-            <View style={s.summaryRows}>
-              <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Frequência</Text>
-                <View style={s.summaryRowRight}>
-                  <Text style={s.summaryRowValue}>
-                    R$ {fmtBRL(calc.valorParcela)}/{ciclo.unidade}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={s.summaryDivider} />
-
-              <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>
-                  {{ diario: 'Vencimentos diários', semanal: 'Vencimentos semanais', mensal: 'Vencimentos mensais' }[cicloKey]}
-                </Text>
-                <Text style={s.summaryRowValue}>{calc.numParcelas}</Text>
-              </View>
-
-              <View style={s.summaryDivider} />
-
-              <View style={s.summaryRow}>
-                <View style={s.taxaLabelGroup}>
-                  <Text style={s.summaryRowLabel}>Taxa total</Text>
-                  <TouchableOpacity
-                    onPress={() => setTaxaInfoVisible(true)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    activeOpacity={0.6}
-                  >
-                    <Feather name="info" size={14} color={C.inkFaint} />
-                  </TouchableOpacity>
-                </View>
-                <Text style={s.summaryRowValue}>{taxaTotal.toFixed(1)}%</Text>
-              </View>
-            </View>
+            <InfoRows
+              items={[
+                {
+                  label: 'Frequência',
+                  value: `R$ ${fmtBRL(calc.valorParcela)}/${ciclo.unidade}`,
+                },
+                {
+                  label: ({ diario: 'Vencimentos diários', semanal: 'Vencimentos semanais', mensal: 'Vencimentos mensais' } as const)[cicloKey],
+                  value: `${calc.numParcelas}`,
+                },
+                {
+                  label: 'Taxa total',
+                  value: `${taxaTotal.toFixed(1)}%`,
+                  onInfo: () => setTaxaInfoVisible(true),
+                },
+              ]}
+            />
           </View>
         </View>
       </ScrollView>
@@ -672,26 +653,6 @@ const s = StyleSheet.create({
     color: C.ink,
     marginBottom: 18,
   },
-
-  // Inline summary rows
-  summaryRows: { borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, marginTop: 4, gap: 0 },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 13,
-  },
-  summaryDivider: { height: 1, backgroundColor: C.line },
-  summaryRowLabel: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.semibold,
-    color: C.inkFaint,
-  },
-  summaryRowRight: { alignItems: 'flex-end' },
-  summaryRowValue: { fontFamily: fonts.semibold, fontSize: fontSize.base, color: C.ink },
-  summaryRowSub: { fontSize: fontSize.xs, fontFamily: fonts.regular, color: C.inkFaint, marginTop: 2 },
-  taxaValueGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  taxaLabelGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 
   // Modal
   modalScrim: {

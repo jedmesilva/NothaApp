@@ -34,3 +34,5 @@ export type { AlertBannerVariant } from './AlertBanner';
 export { Timeline } from './Timeline';
 export type { TimelineEvent } from './Timeline';
 export { ConfirmDialog } from './ConfirmDialog';
+export { InfoRows } from './InfoRows';
+export type { InfoRowItem } from './InfoRows';
