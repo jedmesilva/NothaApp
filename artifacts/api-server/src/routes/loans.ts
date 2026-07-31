@@ -4,6 +4,7 @@ import {
   db,
   borrowerProfilesTable,
   loansTable,
+  loanEventsTable,
   fundingOrdersTable,
   fundingOrderOffersTable,
   loanInstallmentsTable,
@@ -87,6 +88,15 @@ router.post("/", requireAuth, async (req, res) => {
           updatedAt: new Date(),
         })
         .where(eq(borrowerProfilesTable.id, borrower.id));
+
+      // Registra evento de solicitação
+      await tx.insert(loanEventsTable).values({
+        loanId:    loan.id,
+        eventType: "loan_requested",
+        actorId:   userId,
+        actorType: "user",
+        payload:   { amountCents, cicloKey, numPeriodos, prazoDias, taxaTotal },
+      });
 
       return loan;
     });
@@ -295,6 +305,14 @@ router.patch("/:id/cancel", requireAuth, async (req, res) => {
         updatedAt: new Date(),
       })
       .where(eq(borrowerProfilesTable.id, borrower.id));
+
+    // Registra evento de cancelamento
+    await tx.insert(loanEventsTable).values({
+      loanId:    loan.id,
+      eventType: "loan_cancelled",
+      actorId:   userId,
+      actorType: "user",
+    });
 
     return updatedLoan;
   });
