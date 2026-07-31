@@ -401,12 +401,12 @@ export default function NovoEmprestimoScreen() {
               <View style={s.summaryDivider} />
 
               <View style={s.summaryRow}>
-                <Text style={s.summaryRowLabel}>Vencimentos</Text>
+                <Text style={s.summaryRowLabel}>
+                  {{ diario: 'Vencimentos diários', semanal: 'Vencimentos semanais', mensal: 'Vencimentos mensais' }[cicloKey]}
+                </Text>
                 <View style={s.summaryRowRight}>
                   <Text style={s.summaryRowValue}>{calc.numParcelas}</Text>
-                  <Text style={s.summaryRowSub}>
-                    1 por {ciclo.unidade} · {prazoDias} dias no total
-                  </Text>
+                  <Text style={s.summaryRowSub}>{prazoDias} dias no total</Text>
                 </View>
               </View>
 
