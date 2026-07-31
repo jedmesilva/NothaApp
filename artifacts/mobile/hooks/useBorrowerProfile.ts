@@ -5,8 +5,20 @@ export type BorrowerProfile = {
   id: string;
   userId: string;
   status: 'pending_review' | 'active' | 'suspended';
+  documentStatus: 'pending' | 'under_review' | 'approved' | 'rejected';
+  documentRejectionReason: string | null;
+  // Limite de crédito
+  creditLimitCents: number;
+  usedCreditCents: number;
+  creditScore: number | null;
+  riskTier: 'aa' | 'a' | 'b' | 'c' | 'd' | null;
+  // Dados financeiros
+  monthlyIncomeCents: number | null;
+  occupation: string | null;
+  // Contadores históricos
   totalLoans: number;
   totalBorrowedCents: number;
+  totalDefaulted: number;
   createdAt: string;
   updatedAt: string;
 };

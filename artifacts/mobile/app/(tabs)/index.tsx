@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  ActivityIndicator,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -15,6 +16,7 @@ import { useArea } from '@/contexts/AreaContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/hooks/useWallet';
 import { useLoans } from '@/hooks/useLoans';
+import { useBorrowerProfile } from '@/hooks/useBorrowerProfile';
 import { formatBRL, addDays, formatRelativeDueDate } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
@@ -36,6 +38,7 @@ export default function HomeScreen() {
   const { area, setArea, registerScrollTo } = useArea();
   const { user } = useAuth();
   const { data: walletData, isLoading: walletLoading } = useWallet();
+  const { data: borrowerData, isLoading: borrowerLoading } = useBorrowerProfile();
   const [activeTab, setActiveTab]   = useState<'credito' | 'investir'>('credito');
   const scrollRef                   = useRef<ScrollView>(null);
   const scrollTimeoutRef            = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,10 +63,11 @@ export default function HomeScreen() {
 
   const hoje = new Date();
 
-  const limiteTotal      = 10000;
-  const limiteDisponivel = 1500;
-  const limiteUsado      = limiteTotal - limiteDisponivel;
-  const percentUsado     = Math.round((limiteUsado / limiteTotal) * 100);
+  const borrowerProfile  = borrowerData?.profile ?? null;
+  const limiteTotal      = (borrowerProfile?.creditLimitCents ?? 0) / 100;
+  const limiteUsado      = (borrowerProfile?.usedCreditCents  ?? 0) / 100;
+  const limiteDisponivel = Math.max(0, limiteTotal - limiteUsado);
+  const percentUsado     = limiteTotal > 0 ? Math.round((limiteUsado / limiteTotal) * 100) : 0;
   const saldoConta       = walletData ? walletData.wallet.balanceCents / 100 : 0;
 
   const { data: allLoans } = useLoans();
@@ -156,19 +160,25 @@ export default function HomeScreen() {
 
           {/* Limite disponível */}
           <DarkCard>
-            <Eyebrow context="dark">Limite disponível</Eyebrow>
-            <BigValue context="dark">R$ {formatBRL(limiteDisponivel)}</BigValue>
-            <Text style={s.totalText}>de R$ {formatBRL(limiteTotal)}</Text>
-            <ThinBar pct={percentUsado} context="dark" style={{ marginBottom: 0 }} />
-            <View style={s.progressCaption}>
-              <Text style={s.progressCaptionText}>R$ {formatBRL(limiteUsado)} utilizados</Text>
-              <Text style={s.progressCaptionText}>{percentUsado}%</Text>
-            </View>
-            <PrimaryButton
-              label={limiteDisponivel > 0 ? 'Solicitar empréstimo' : 'Limite esgotado'}
-              disabled={limiteDisponivel <= 0}
-              onPress={() => router.push('/novo-emprestimo')}
-            />
+            {borrowerLoading ? (
+              <ActivityIndicator color="#fff" style={{ marginVertical: 32 }} />
+            ) : (
+              <>
+                <Eyebrow context="dark">Limite disponível</Eyebrow>
+                <BigValue context="dark">R$ {formatBRL(limiteDisponivel)}</BigValue>
+                <Text style={s.totalText}>de R$ {formatBRL(limiteTotal)}</Text>
+                <ThinBar pct={percentUsado} context="dark" style={{ marginBottom: 0 }} />
+                <View style={s.progressCaption}>
+                  <Text style={s.progressCaptionText}>R$ {formatBRL(limiteUsado)} utilizados</Text>
+                  <Text style={s.progressCaptionText}>{percentUsado}%</Text>
+                </View>
+                <PrimaryButton
+                  label={limiteDisponivel > 0 ? 'Solicitar empréstimo' : 'Limite esgotado'}
+                  disabled={limiteDisponivel <= 0}
+                  onPress={() => router.push('/novo-emprestimo')}
+                />
+              </>
+            )}
           </DarkCard>
 
           {/* Saldo / depósito em conta */}
