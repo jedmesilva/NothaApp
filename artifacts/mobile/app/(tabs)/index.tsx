@@ -110,6 +110,15 @@ export default function HomeScreen() {
     return soma + atrasados;
   }, 0);
 
+  // Pelo menos um vencimento de qualquer empréstimo ativo já passou?
+  // Só faz sentido mostrar "Em dia" depois que o usuário teve algo a pagar.
+  const hasAnyPastDueDate = activeLoans.some((loan) => {
+    const cicloDias     = CICLO_DIAS[loan.ciclo];
+    const dataConcessao = addDays(hoje, -(loan.diasDesdeConcessao ?? 0));
+    const primeiroVencimento = addDays(dataConcessao, cicloDias);
+    return primeiroVencimento < hoje;
+  });
+
   // Próximo vencimento futuro
   const proximoVencimentoGeral = proximasParcelas.find((p) => p.diasParaVencer >= 0) ?? null;
 
@@ -211,7 +220,7 @@ export default function HomeScreen() {
                     message={`${totalVencimentosAtrasados} ${totalVencimentosAtrasados === 1 ? 'vencimento em atraso' : 'vencimentos em atraso'}`}
                     style={{ marginTop: 12 }}
                   />
-                ) : hasActive ? (
+                ) : hasActive && hasAnyPastDueDate ? (
                   <View style={s.statusEmDia}>
                     <Feather name="check" size={14} color={C.ink} />
                     <Text style={s.statusEmDiaText}>Em dia</Text>
