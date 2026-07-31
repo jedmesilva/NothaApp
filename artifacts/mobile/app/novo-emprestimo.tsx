@@ -289,9 +289,7 @@ export default function NovoEmprestimoScreen() {
             <View style={s.divider} />
 
             {/* Prazo */}
-            <Text style={s.planBlockLabel}>
-              Em {ciclo.genero === 'f' ? 'quantas' : 'quantos'} {ciclo.unidadePlural} quer quitar?
-            </Text>
+            <Text style={s.planBlockLabel}>Defina a quantidade de parcelas</Text>
             <View style={s.prazoValueRow}>
               <View style={s.prazoValueGroup}>
                 <TextInput
