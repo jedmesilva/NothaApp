@@ -21,6 +21,7 @@ import {
   BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid,
   InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
 } from '@/components/ds';
+import InvestmentSlider from '@/components/InvestmentSlider';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 const PAGAMENTOS_LABEL: Record<string, string> = {
@@ -74,6 +75,7 @@ export default function AtivoDetalheScreen() {
   const [showVencimentos, setShowVencimentos] = useState(false);
   const [showPrevisao,    setShowPrevisao]    = useState(false);
   const [aceitou,         setAceitou]         = useState(false);
+  const [adjustedCents,   setAdjustedCents]   = useState(0); // 0 = use offer max
 
   const isLoading = isOferta ? offersLoading : posLoading;
 
@@ -168,12 +170,25 @@ export default function AtivoDetalheScreen() {
   }
 
   const {
-    contratoId, valorInvestido, originalInvestido, totalRetornado,
+    contratoId, valorInvestido: _valorBase, originalInvestido: _origBase, totalRetornado,
     taxaJurosTotal, prazoDias, ciclo,
     status, parcelasTotal, parcelasRecebidas,
     tomadorScore, emprestimosAnteriores, valorTotalTomado, cidade, proposito,
     jaInvestiu,
   } = posicao;
+
+  // ── Slider (oferta) ───────────────────────────────────────────────────────
+  const offerMaxCents = isOferta ? Math.round(_valorBase * 100) : 0;
+  const offerMinCents = isOferta
+    ? Math.max(1_000, Math.round(offerMaxCents * 0.25 / 100) * 100)
+    : 0;
+  const sliderCents = isOferta
+    ? (adjustedCents > 0 ? adjustedCents : offerMaxCents)
+    : Math.round(_valorBase * 100);
+
+  // Override investido/original so all hero-card calculations track the slider
+  const valorInvestido    = isOferta ? sliderCents / 100 : _valorBase;
+  const originalInvestido = isOferta ? sliderCents / 100 : _origBase;
 
   const cicloMeta      = CICLO_META[ciclo];
   const totalComRetorno = originalInvestido * (1 + taxaJurosTotal / 100);
@@ -253,12 +268,12 @@ export default function AtivoDetalheScreen() {
     if (aceitou) return;
     setAceitou(true);
     try {
-      await respond({ offerId: String(id), action: 'accepted', amountCents: Math.round(valorInvestido * 100) });
+      await respond({ offerId: String(id), action: 'accepted', amountCents: sliderCents });
     } catch (_) { /* continua mesmo com erro de rede */ }
     router.back();
     showToast({
       title: 'Oferta aceita',
-      subtitle: `R$ ${formatBRL(Math.round(valorInvestido))} investidos em ${contratoId}`,
+      subtitle: `R$ ${formatBRL(sliderCents / 100)} investidos em ${contratoId}`,
       actionLabel: 'Ver meus ativos',
       onAction: () => router.push('/ativos' as any),
       duration: 6000,
@@ -352,6 +367,18 @@ export default function AtivoDetalheScreen() {
             ]}
           />
         </View>
+
+        {/* ── Slider de valor (oferta) ── */}
+        {isOferta && !aceitou && (
+          <View style={s.sliderCard}>
+            <InvestmentSlider
+              minCents={offerMinCents}
+              maxCents={offerMaxCents}
+              valueCents={sliderCents}
+              onChange={setAdjustedCents}
+            />
+          </View>
+        )}
 
         {/* ── Previsão de vencimentos (captação) ── */}
         {!jaConcedido && parcelasPrevisao.length > 0 && (
@@ -562,6 +589,8 @@ const s = StyleSheet.create({
   splitRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
   splitLabel:   { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.onDarkFaint, textTransform: 'uppercase', marginBottom: 4 },
   splitValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: '#fff', letterSpacing: -0.3 },
+
+  sliderCard: { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5], paddingBottom: spacing[4] },
 
   datesRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: spacing[4], marginBottom: spacing[4], padding: 14, borderRadius: radii.lg, backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
