@@ -4,6 +4,7 @@ import {
   db,
   investorProfilesTable,
   positionsTable,
+  investmentOrdersTable,
   loansTable,
   loanInstallmentsTable,
   fundingOrderOffersTable,
@@ -272,9 +273,10 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
     })
     .where(eq(fundingOrderOffersTable.id, id));
 
-  // Ao aceitar: cria (ou soma a) posição do investidor no empréstimo
+  // Ao aceitar: cria (ou soma a) posição do investidor no empréstimo,
+  // e registra a investment_order como histórico imutável do aporte.
   if (action === "accepted") {
-    await db
+    const [position] = await db
       .insert(positionsTable)
       .values({
         loanId:                 offer.loanId,
@@ -286,12 +288,22 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
         status:                 "active",
       })
       .onConflictDoUpdate({
-        target:  [positionsTable.loanId, positionsTable.investorId],
+        target: [positionsTable.loanId, positionsTable.investorId],
         set: {
           principalBalanceCents:  sql`${positionsTable.principalBalanceCents} + ${finalAmountCents}`,
           originalPrincipalCents: sql`${positionsTable.originalPrincipalCents} + ${finalAmountCents}`,
         },
-      });
+      })
+      .returning({ id: positionsTable.id });
+
+    await db.insert(investmentOrdersTable).values({
+      fundingOrderOfferId:     offer.id,
+      positionId:              position.id,
+      loanId:                  offer.loanId,
+      investorId:              offer.investorId,
+      ratePct:                 offer.ratePct,
+      originalPrincipalCents:  finalAmountCents,
+    });
   }
 
   res.json({ ok: true, status: action });
