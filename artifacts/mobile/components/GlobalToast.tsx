@@ -14,37 +14,51 @@ interface Props {
 
 export default function GlobalToast({ toast, onClose }: Props) {
   const insets     = useSafeAreaInsets();
-  const translateY = useRef(new Animated.Value(300)).current;
+  const translateY = useRef(new Animated.Value(120)).current;
+  const opacity    = useRef(new Animated.Value(0)).current;
   const progress   = useRef(new Animated.Value(1)).current;
   const exitAnim   = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     if (!toast) return;
-    const duration = toast.duration ?? 6000;
+    const duration = toast.duration ?? 5000;
 
-    translateY.setValue(300);
+    translateY.setValue(120);
+    opacity.setValue(0);
     progress.setValue(1);
 
-    // Slide up com spring — igual ao padrão de bottom sheet do app
-    Animated.spring(translateY, {
-      toValue: 0,
-      damping: 24,
-      stiffness: 280,
-      mass: 0.9,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(translateY, {
+        toValue: 0,
+        damping: 22,
+        stiffness: 300,
+        mass: 0.8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
     exitAnim.current = Animated.timing(progress, {
       toValue: 0,
       duration,
       useNativeDriver: false,
     });
-    exitAnim.current.start(({ finished }) => { if (finished) onClose(); });
+    exitAnim.current.start(({ finished }) => {
+      if (finished) {
+        Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => onClose());
+      }
+    });
 
     return () => exitAnim.current?.stop();
   }, [toast?.id]);
 
   if (!toast) return null;
+
+  const bottomOffset = (insets.bottom || 0) + 72; // acima do bottom nav
 
   const widthInterp = progress.interpolate({
     inputRange: [0, 1],
@@ -52,43 +66,58 @@ export default function GlobalToast({ toast, onClose }: Props) {
   });
 
   return (
-    // Scrim — toca fora para fechar
-    <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
+    <Pressable
+      style={[StyleSheet.absoluteFill, { justifyContent: 'flex-end' }]}
+      onPress={onClose}
+      pointerEvents="box-none"
+    >
       <Animated.View
-        style={[s.sheet, { paddingBottom: insets.bottom + spacing[4], transform: [{ translateY }] }]}
-        // Impede que toques no sheet propaguem para o scrim
+        style={[
+          s.card,
+          { bottom: bottomOffset, opacity, transform: [{ translateY }] },
+        ]}
         onStartShouldSetResponder={() => true}
       >
-        {/* Barra de tempo no topo do sheet */}
-        <View style={s.progressTrack}>
-          <Animated.View style={[s.progressFill, { width: widthInterp }]} />
-        </View>
+        {/* Conteúdo principal */}
+        <View style={s.row}>
+          {/* Ícone */}
+          <View style={s.iconWrap}>
+            <Feather name="check" size={17} color="#fff" strokeWidth={2.8} />
+          </View>
 
-        {/* Ícone de confirmação */}
-        <View style={s.iconWrap}>
-          <Feather name="check" size={22} color="#fff" strokeWidth={2.6} />
-        </View>
+          {/* Textos */}
+          <View style={s.textWrap}>
+            <Text style={s.title} numberOfLines={1}>{toast.title}</Text>
+            {toast.subtitle ? (
+              <Text style={s.subtitle} numberOfLines={2}>{toast.subtitle}</Text>
+            ) : null}
+          </View>
 
-        <Text style={s.title}>{toast.title}</Text>
-        {toast.subtitle ? (
-          <Text style={s.subtitle}>{toast.subtitle}</Text>
-        ) : null}
-
-        {/* Botões */}
-        <View style={s.buttonRow}>
-          <TouchableOpacity style={s.dismissBtn} onPress={onClose} activeOpacity={0.7}>
-            <Text style={s.dismissBtnText}>Fechar</Text>
-          </TouchableOpacity>
-
+          {/* Ação ou fechar */}
           {toast.actionLabel && toast.onAction ? (
             <TouchableOpacity
               style={s.actionBtn}
               onPress={() => { onClose(); toast.onAction?.(); }}
-              activeOpacity={0.85}
+              activeOpacity={0.75}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
             >
               <Text style={s.actionBtnText}>{toast.actionLabel}</Text>
             </TouchableOpacity>
-          ) : null}
+          ) : (
+            <TouchableOpacity
+              style={s.closeBtn}
+              onPress={onClose}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            >
+              <Feather name="x" size={15} color={C.inkFaint} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Barra de progresso */}
+        <View style={s.progressTrack}>
+          <Animated.View style={[s.progressFill, { width: widthInterp }]} />
         </View>
       </Animated.View>
     </Pressable>
@@ -96,88 +125,82 @@ export default function GlobalToast({ toast, onClose }: Props) {
 }
 
 const s = StyleSheet.create({
-  sheet: {
+  card: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    left: spacing[4],
+    right: spacing[4],
     backgroundColor: C.card,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: spacing[5],
-    paddingTop: spacing[5],
-    alignItems: 'center',
+    borderRadius: radii.card,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 24,
-    elevation: 20,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.13,
+    shadowRadius: 20,
+    elevation: 12,
+    overflow: 'hidden',
   },
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[4] - 2,
+  },
+
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: C.dark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+
+  textWrap: {
+    flex: 1,
+  },
+  title: {
+    fontFamily: fonts.bold,
+    fontSize: fontSize.base,
+    color: C.ink,
+    lineHeight: 18,
+  },
+  subtitle: {
+    fontFamily: fonts.regular,
+    fontSize: fontSize['sm+'],
+    color: C.inkSoft,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+
+  actionBtn: {
+    flexShrink: 0,
+    paddingHorizontal: spacing[3],
+    paddingVertical: 7,
+    borderRadius: radii.md,
+    backgroundColor: C.dark,
+  },
+  actionBtnText: {
+    fontFamily: fonts.bold,
+    fontSize: fontSize.sm,
+    color: '#fff',
+  },
+
+  closeBtn: {
+    flexShrink: 0,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   progressTrack: {
-    width: '100%',
     height: 3,
     backgroundColor: C.line,
-    borderRadius: radii.full,
-    overflow: 'hidden',
-    marginBottom: spacing[5],
   },
   progressFill: {
     height: '100%',
     backgroundColor: C.dark,
-    borderRadius: radii.full,
-  },
-  iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: C.dark,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[4],
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: fontSize['3xl'],
-    color: C.ink,
-    marginBottom: spacing[2],
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: fontSize.md,
-    color: C.inkSoft,
-    fontFamily: fonts.regular,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: spacing[5],
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing[3],
-    width: '100%',
-    marginTop: spacing[2],
-  },
-  dismissBtn: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: radii.lg,
-    backgroundColor: C.chipMuted,
-    alignItems: 'center',
-  },
-  dismissBtnText: {
-    fontFamily: fonts.bold,
-    fontSize: fontSize.md,
-    color: C.ink,
-  },
-  actionBtn: {
-    flex: 2,
-    paddingVertical: 16,
-    borderRadius: radii.lg,
-    backgroundColor: C.dark,
-    alignItems: 'center',
-  },
-  actionBtnText: {
-    fontFamily: fonts.bold,
-    fontSize: fontSize.md,
-    color: '#fff',
   },
 });

@@ -4,6 +4,8 @@
  * Uber-style full-screen overlay that appears when a new funding offer
  * arrives for the authenticated investor. Slides up over whatever screen
  * is currently active, with a 30-second countdown to accept or decline.
+ * On accept/decline/expire the overlay animates out and fires the
+ * GlobalToast — same feedback element used everywhere else in the app.
  */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
@@ -20,16 +22,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useOfertaOverlay } from '@/contexts/OfertaOverlayContext';
 import { useRespondToOffer } from '@/hooks/useInvestorOffers';
+import { useToast } from '@/contexts/ToastContext';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import InvestmentSlider from '@/components/InvestmentSlider';
 
 const COUNTDOWN = 30;
 
-type ResultState = 'accepted' | 'rejected' | 'expired';
-
 export default function GlobalOfertaOverlay() {
   const { activeOffer, dismiss } = useOfertaOverlay();
   const { mutateAsync: respond }  = useRespondToOffer();
+  const { showToast }             = useToast();
   const insets = useSafeAreaInsets();
 
   // ── Animation refs ──────────────────────────────────────────────────────
@@ -41,7 +43,6 @@ export default function GlobalOfertaOverlay() {
 
   // ── Timer ────────────────────────────────────────────────────────────────
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN);
-  const [result,      setResult]      = useState<ResultState | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Reset & animate in whenever a new offer appears
@@ -49,10 +50,8 @@ export default function GlobalOfertaOverlay() {
     if (!activeOffer) return;
 
     setSecondsLeft(COUNTDOWN);
-    setResult(null);
-    setAdjustedCents(activeOffer.amountCents); // start at full offered amount
+    setAdjustedCents(activeOffer.amountCents);
 
-    // Fade scrim + slide sheet up
     Animated.parallel([
       Animated.timing(scrimOpacity, { toValue: 1, duration: 260, useNativeDriver: true }),
       Animated.spring(sheetY, {
@@ -64,12 +63,11 @@ export default function GlobalOfertaOverlay() {
       }),
     ]).start();
 
-    // Countdown
     intervalRef.current = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           clearInterval(intervalRef.current!);
-          setResult('expired');
+          handleExpire();
           return 0;
         }
         return s - 1;
@@ -79,21 +77,34 @@ export default function GlobalOfertaOverlay() {
     return () => clearInterval(intervalRef.current!);
   }, [activeOffer?.id]);
 
-  // Animate out after result shown, then dismiss
-  const animateOut = () => {
+  const animateOut = useCallback((onDone?: () => void) => {
     Animated.parallel([
       Animated.timing(scrimOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
       Animated.timing(sheetY, { toValue: 600, duration: 280, useNativeDriver: true }),
-    ]).start(() => dismiss());
-  };
+    ]).start(() => { dismiss(); onDone?.(); });
+  }, [dismiss]);
 
   const handleAccept = async () => {
     if (!activeOffer) return;
     clearInterval(intervalRef.current!);
+    const safeCents = adjustedCents > 0 ? adjustedCents : activeOffer.amountCents;
+    const adjR$ = safeCents / 100;
+    const formatBRL = (v: number) =>
+      v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
     try {
-      await respond({ offerId: activeOffer.id, action: 'accepted', amountCents: adjustedCents });
-    } catch (_) { /* silently continue — show result regardless */ }
-    setResult('accepted');
+      await respond({ offerId: activeOffer.id, action: 'accepted', amountCents: safeCents });
+    } catch (_) {}
+
+    animateOut(() => {
+      showToast({
+        title: 'Oferta aceita!',
+        subtitle: `R$ ${formatBRL(adjR$)} reservados em ${activeOffer.loan.contractId}`,
+        actionLabel: 'Ver meus ativos',
+        onAction: () => router.push('/ativos' as any),
+        duration: 5000,
+      });
+    });
   };
 
   const handleDecline = async () => {
@@ -102,14 +113,17 @@ export default function GlobalOfertaOverlay() {
     try {
       await respond({ offerId: activeOffer.id, action: 'rejected' });
     } catch (_) {}
-    setResult('rejected');
+    animateOut();
   };
+
+  const handleExpire = useCallback(() => {
+    animateOut();
+  }, [animateOut]);
 
   if (!activeOffer) return null;
 
   const ratePct    = activeOffer.ratePct / 100;
   const maxCents   = activeOffer.amountCents;
-  // Minimum: 25 % of the offered amount, floor at R$ 10 (1 000 cents), rounded to R$ 1
   const minCents   = Math.max(1_000, Math.round(maxCents * 0.25 / 100) * 100);
   const safeCents  = adjustedCents > 0 ? adjustedCents : maxCents;
 
@@ -122,51 +136,23 @@ export default function GlobalOfertaOverlay() {
   const formatBRL = (v: number) =>
     v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // ── Result card ──────────────────────────────────────────────────────────
-  const resultConfig: Record<ResultState, {
-    icon: 'check' | 'x' | 'clock';
-    bg: string; iconColor: string;
-    title: string; sub: string;
-  }> = {
-    accepted: {
-      icon: 'check', bg: C.dark, iconColor: '#fff',
-      title: 'Oferta aceita!',
-      sub: `R$ ${formatBRL(adjR$)} reservados.\nVocê será notificado quando a captação fechar.`,
-    },
-    rejected: {
-      icon: 'x', bg: C.chipMuted, iconColor: C.inkSoft,
-      title: 'Oferta recusada',
-      sub: 'Sem problema. Vamos te avisar quando surgir outra oportunidade.',
-    },
-    expired: {
-      icon: 'clock', bg: C.redBg, iconColor: C.red,
-      title: 'Tempo esgotado',
-      sub: 'Essa oferta foi repassada para outro credor.\nFique de olho na próxima.',
-    },
-  };
-
   return (
     <Animated.View
       style={[StyleSheet.absoluteFill, s.scrim, { opacity: scrimOpacity }]}
       pointerEvents="box-none"
     >
-      {/* Tap scrim only dismisses after result */}
-      <Pressable
-        style={StyleSheet.absoluteFill}
-        onPress={result ? animateOut : undefined}
-      />
+      {/* Tap scrim to decline */}
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleDecline} />
 
       {/* Close = recusar — outside the card, top-right */}
-      {!result && (
-        <TouchableOpacity
-          style={s.dismissBtn}
-          onPress={handleDecline}
-          activeOpacity={0.8}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Feather name="x" size={18} color="#fff" />
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={s.dismissBtn}
+        onPress={handleDecline}
+        activeOpacity={0.8}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+      >
+        <Feather name="x" size={18} color="#fff" />
+      </TouchableOpacity>
 
       <Animated.View
         style={[
@@ -175,75 +161,58 @@ export default function GlobalOfertaOverlay() {
           { transform: [{ translateY: sheetY }] },
         ]}
       >
-        {result ? (
-          /* ── Result state ── */
-          <>
-            <View style={[s.resultIcon, { backgroundColor: resultConfig[result].bg }]}>
-              <Feather name={resultConfig[result].icon} size={28} color={resultConfig[result].iconColor} />
+        {/* Tappable area — navigates to detail screen */}
+        <TouchableOpacity
+          style={{ width: '100%', alignItems: 'center' }}
+          activeOpacity={0.88}
+          onPress={() => { animateOut(); router.push(`/ativo-detalhe?id=${activeOffer.id}&source=oferta` as any); }}
+        >
+          {/* Grabber */}
+          <View style={s.grabber} />
+
+          {/* Header row */}
+          <View style={s.headerRow}>
+            <View style={s.headerLeft}>
+              <Feather name="clock" size={14} color={C.inkSoft} />
+              <Text style={s.headerLabel}>Nova solicitação de investimento</Text>
             </View>
-            <Text style={s.resultTitle}>{resultConfig[result].title}</Text>
-            <Text style={s.resultSub}>{resultConfig[result].sub}</Text>
-            <TouchableOpacity style={s.closeBtn} onPress={animateOut} activeOpacity={0.8}>
-              <Text style={s.closeBtnText}>Fechar</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          /* ── Active offer ── */
-          <>
-            {/* Tappable area — navigates to detail screen */}
-            <TouchableOpacity
-              style={{ width: '100%', alignItems: 'center' }}
-              activeOpacity={0.88}
-              onPress={() => { animateOut(); router.push(`/ativo-detalhe?id=${activeOffer.id}&source=oferta` as any); }}
-            >
-              {/* Grabber */}
-              <View style={s.grabber} />
+            <Text style={[s.countdown, { color: isUrgent ? C.red : C.ink }]}>
+              {secondsLeft}s
+            </Text>
+          </View>
 
-              {/* Header row */}
-              <View style={s.headerRow}>
-                <View style={s.headerLeft}>
-                  <Feather name="clock" size={14} color={C.inkSoft} />
-                  <Text style={s.headerLabel}>Nova solicitação de investimento</Text>
-                </View>
-                <Text style={[s.countdown, { color: isUrgent ? C.red : C.ink }]}>
-                  {secondsLeft}s
-                </Text>
-              </View>
+          {/* Hero */}
+          <Text style={s.eyebrow}>Retorno oferecido</Text>
+          <Text style={s.heroValue}>
+            <Text style={s.heroSign}>+</Text>{ratePct}%
+          </Text>
+          <Text style={s.heroCaption}>
+            Rendimento de R$ {formatBRL(retornoR$)} em {termDays} dias
+          </Text>
 
-              {/* Hero */}
-              <Text style={s.eyebrow}>Retorno oferecido</Text>
-              <Text style={s.heroValue}>
-                <Text style={s.heroSign}>+</Text>{ratePct}%
-              </Text>
-              <Text style={s.heroCaption}>
-                Rendimento de R$ {formatBRL(retornoR$)} em {termDays} dias
-              </Text>
+          {/* Retorno total */}
+          <View style={s.retornoRow}>
+            <Text style={s.retornoLabel}>Retorno total</Text>
+            <Text style={s.retornoValue}>R$ {formatBRL(totalR$)}</Text>
+          </View>
+        </TouchableOpacity>
 
-              {/* Retorno total */}
-              <View style={s.retornoRow}>
-                <Text style={s.retornoLabel}>Retorno total</Text>
-                <Text style={s.retornoValue}>R$ {formatBRL(totalR$)}</Text>
-              </View>
-            </TouchableOpacity>
+        {/* Investment slider — separate from nav area to preserve drag */}
+        <View style={s.sliderWrap}>
+          <Text style={s.sliderEyebrow}>Valor a investir</Text>
+          <InvestmentSlider
+            minCents={minCents}
+            maxCents={maxCents}
+            valueCents={safeCents}
+            onChange={setAdjustedCents}
+          />
+        </View>
 
-            {/* Investment slider — separate from nav area to preserve drag */}
-            <View style={s.sliderWrap}>
-              <Text style={s.sliderEyebrow}>Valor a investir</Text>
-              <InvestmentSlider
-                minCents={minCents}
-                maxCents={maxCents}
-                valueCents={safeCents}
-                onChange={setAdjustedCents}
-              />
-            </View>
-
-            {/* Button */}
-            <TouchableOpacity style={[s.acceptBtn, { width: '100%' }]} onPress={handleAccept} activeOpacity={0.85}>
-              <Feather name="check" size={18} color="#fff" />
-              <Text style={s.acceptBtnText}>Aceitar oferta</Text>
-            </TouchableOpacity>
-          </>
-        )}
+        {/* Accept button */}
+        <TouchableOpacity style={s.acceptBtn} onPress={handleAccept} activeOpacity={0.85}>
+          <Feather name="check" size={18} color="#fff" />
+          <Text style={s.acceptBtnText}>Aceitar oferta</Text>
+        </TouchableOpacity>
       </Animated.View>
     </Animated.View>
   );
@@ -373,44 +342,16 @@ const s = StyleSheet.create({
     zIndex: 1,
   },
 
-  // Buttons
-  btnRow: { flexDirection: 'row', gap: 10, width: '100%' },
-  detalhesBtn: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.chipMuted,
-  },
-  detalhesBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink },
+  // Accept button
   acceptBtn: {
-    flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.dark,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+    paddingVertical: 18,
+    borderRadius: radii.lg,
+    backgroundColor: C.dark,
   },
   acceptBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: '#fff' },
-
-  // Result
-  resultIcon: {
-    width: 64, height: 64, borderRadius: 32,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: spacing[4], marginTop: spacing[3],
-  },
-  resultTitle: {
-    fontFamily: fonts.display,
-    fontSize: fontSize['3xl'],
-    color: C.ink,
-    marginBottom: spacing[2],
-    textAlign: 'center',
-  },
-  resultSub: {
-    fontSize: fontSize.md,
-    color: C.inkSoft,
-    fontFamily: fonts.regular,
-    textAlign: 'center',
-    lineHeight: 21,
-    marginBottom: spacing[6],
-  },
-  closeBtn: {
-    width: '100%', paddingVertical: 17,
-    borderRadius: radii.lg, backgroundColor: C.chipMuted,
-    alignItems: 'center',
-  },
-  closeBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink },
 });
