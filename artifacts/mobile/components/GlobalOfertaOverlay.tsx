@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useOfertaOverlay } from '@/contexts/OfertaOverlayContext';
 import { useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
@@ -156,6 +157,18 @@ export default function GlobalOfertaOverlay() {
         onPress={result ? animateOut : undefined}
       />
 
+      {/* Close = recusar — outside the card, top-right */}
+      {!result && (
+        <TouchableOpacity
+          style={s.dismissBtn}
+          onPress={handleDecline}
+          activeOpacity={0.8}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Feather name="x" size={18} color="#fff" />
+        </TouchableOpacity>
+      )}
+
       <Animated.View
         style={[
           s.sheet,
@@ -233,9 +246,12 @@ export default function GlobalOfertaOverlay() {
 
             {/* Buttons */}
             <View style={s.btnRow}>
-              <TouchableOpacity style={s.declineBtn} onPress={handleDecline} activeOpacity={0.8}>
-                <Feather name="x" size={18} color={C.ink} />
-                <Text style={s.declineBtnText}>Recusar</Text>
+              <TouchableOpacity
+                style={s.detalhesBtn}
+                onPress={() => { animateOut(); router.push(`/ativo-detalhe?id=${activeOffer.id}&source=oferta` as any); }}
+                activeOpacity={0.8}
+              >
+                <Text style={s.detalhesBtnText}>Ver detalhes</Text>
               </TouchableOpacity>
               <TouchableOpacity style={s.acceptBtn} onPress={handleAccept} activeOpacity={0.85}>
                 <Feather name="check" size={18} color="#fff" />
@@ -369,13 +385,27 @@ const s = StyleSheet.create({
     marginBottom: spacing[3],
   },
 
+  // Dismiss button (outside the card, top-right of overlay)
+  dismissBtn: {
+    position: 'absolute',
+    top: 52,
+    right: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+
   // Buttons
   btnRow: { flexDirection: 'row', gap: 10, width: '100%' },
-  declineBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.chipMuted,
+  detalhesBtn: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.chipMuted,
   },
-  declineBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink },
+  detalhesBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink },
   acceptBtn: {
     flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.dark,

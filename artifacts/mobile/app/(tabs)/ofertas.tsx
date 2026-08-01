@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-// useRef still needed by OfertaSheet's intervalRef
+import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Platform, TextInput,
@@ -9,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { formatBRL } from '@/data/loans';
 import type { Oferta } from '@/data/ofertas';
-import { useInvestorOffers } from '@/hooks/useInvestorOffers';
+import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend, SplitRow, DetailGrid, Chip, ModalSheet } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
@@ -31,131 +30,6 @@ const CICLO_PLURAL: Record<string, string> = {
   Diário: 'diários', Semanal: 'semanais', Mensal: 'mensais',
 };
 
-// ─── Offer detail sheet (Ver detalhes) ────────────────────────────────────────
-
-const TOTAL_SECONDS = 30;
-
-function OfertaSheet({ oferta, onClose, onAceitar }: {
-  oferta: Oferta;
-  onClose: () => void;
-  onAceitar: (o: Oferta) => void;
-}) {
-  const [secondsLeft, setSecondsLeft] = useState(TOTAL_SECONDS);
-  const [status, setStatus] = useState<'pending' | 'accepted' | 'declined' | 'expired'>('pending');
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => { setSecondsLeft(TOTAL_SECONDS); setStatus('pending'); }, [oferta.id]);
-
-  useEffect(() => {
-    if (status !== 'pending') return;
-    intervalRef.current = setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) { clearInterval(intervalRef.current!); setStatus('expired'); return 0; }
-        return s - 1;
-      });
-    }, 1000);
-    return () => clearInterval(intervalRef.current!);
-  }, [status]);
-
-  const isUrgent        = secondsLeft <= 10;
-  const pctTempo        = (secondsLeft / TOTAL_SECONDS) * 100;
-  const pctCaptado       = Math.round((oferta.jaCaptado / oferta.valorTotalPedido) * 100);
-  const pctTotal         = Math.round(((oferta.jaCaptado + oferta.valor) / oferta.valorTotalPedido) * 100);
-  const pctOfertaClamped = Math.max(0, pctTotal - pctCaptado);
-  const retornoValor    = Math.round(oferta.valor * (oferta.taxaRetorno / 100));
-
-  const handleAccept = () => {
-    clearInterval(intervalRef.current!);
-    setStatus('accepted');
-    onAceitar(oferta);
-  };
-  const handleDecline = () => { clearInterval(intervalRef.current!); setStatus('declined'); };
-
-  if (status !== 'pending') {
-    const resultMap = {
-      accepted: { icon: 'check' as const,  bg: C.dark,       iconColor: '#fff',     title: 'Oferta aceita',    sub: `R$ ${formatBRL(oferta.valor)} reservados para esse pedido.\nVocê recebe a confirmação assim que a captação fechar.` },
-      declined: { icon: 'x' as const,      bg: C.chipMuted,  iconColor: C.inkSoft,  title: 'Oferta recusada',  sub: 'Sem problema. Vamos te avisar quando surgir outra oportunidade.' },
-      expired:  { icon: 'clock' as const,  bg: C.redBg,      iconColor: C.red,      title: 'Tempo esgotado',   sub: 'Essa oferta foi repassada para outro credor.\nFique de olho na próxima.' },
-    };
-    const r = resultMap[status as keyof typeof resultMap];
-    return (
-      <View style={bs.resultWrap}>
-        <View style={[bs.resultIcon, { backgroundColor: r.bg }]}>
-          <Feather name={r.icon} size={26} color={r.iconColor} />
-        </View>
-        <Text style={bs.resultTitle}>{r.title}</Text>
-        <Text style={bs.resultSub}>{r.sub}</Text>
-        <TouchableOpacity style={bs.closeBtn} onPress={onClose} activeOpacity={0.8}>
-          <Text style={bs.closeBtnText}>Fechar</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  return (
-    <>
-      <View style={bs.timerRow}>
-        <View style={bs.timerLabel}>
-          <Feather name="clock" size={14} color={C.inkSoft} />
-          <Text style={bs.timerLabelText}>Nova solicitação de investimento</Text>
-        </View>
-        <Text style={[bs.timerValue, { color: isUrgent ? C.red : C.ink }]}>{secondsLeft}s</Text>
-      </View>
-      <View style={bs.timerTrack}>
-        <View style={[bs.timerFill, { width: `${pctTempo}%` as any, backgroundColor: isUrgent ? C.red : C.dark }]} />
-      </View>
-
-      <Text style={bs.eyebrow}>Retorno oferecido</Text>
-      <Text style={bs.heroValue}><Text style={bs.heroSign}>+</Text>{oferta.taxaRetorno}%</Text>
-      <Text style={bs.heroCaption}>Rendimento de R$ {formatBRL(retornoValor)} em {oferta.prazoDias} dias</Text>
-
-      <SplitRow
-        left={{ label: 'Investimento', value: `R$ ${formatBRL(oferta.valor)}` }}
-        right={{ label: 'Retorno', value: `R$ ${formatBRL(oferta.valor + retornoValor)}` }}
-      />
-
-      <PoolBar
-        label="Captação do pedido"
-        headLeft={`${pctCaptado}% captado`}
-        headRight={`R$ ${formatBRL(oferta.jaCaptado)} de R$ ${formatBRL(oferta.valorTotalPedido)}`}
-        segments={[
-          { pct: pctCaptado,        variant: 'primary' },
-          { pct: pctOfertaClamped,  variant: 'secondary' },
-        ]}
-        style={{ marginBottom: 18 }}
-        footer={
-          <PoolLegend items={[
-            { color: C.ink,     label: 'captado'     },
-            { color: C.inkFaint, label: 'esta oferta' },
-            { color: C.line,    label: 'captando'    },
-          ]} />
-        }
-      />
-
-      <DetailGrid
-        items={[
-          { label: 'Prazo',      value: `${oferta.prazoDias} dias`, sub: `vencimentos ${CICLO_PLURAL[oferta.ciclo]}` },
-          { label: 'Classificação', value: oferta.tomadorScore },
-          { label: 'Histórico',  value: oferta.emprestimosAnteriores === 0 ? 'Primeiro' : `${oferta.emprestimosAnteriores + 1}º empréstimo` },
-          { label: 'Já tomado', value: oferta.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(oferta.valorTotalTomado)}` },
-        ]}
-        style={{ marginBottom: 22 }}
-      />
-
-      <View style={bs.btnRow}>
-        <TouchableOpacity style={bs.declineBtn} onPress={handleDecline} activeOpacity={0.8}>
-          <Feather name="x" size={18} color={C.ink} />
-          <Text style={bs.declineBtnText}>Recusar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={bs.acceptBtn} onPress={handleAccept} activeOpacity={0.85}>
-          <Feather name="check" size={18} color="#fff" />
-          <Text style={bs.acceptBtnText}>Aceitar oferta</Text>
-        </TouchableOpacity>
-      </View>
-    </>
-  );
-}
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function OfertasScreen() {
@@ -166,8 +40,9 @@ export default function OfertasScreen() {
   const [cicloFilter,         setCicloFilter]         = useState('todos');
   const [busca,               setBusca]               = useState('');
   const [modalOpen,           setModalOpen]           = useState(false);
-  const [selectedOferta,      setSelectedOferta]      = useState<Oferta | null>(null);
   const [aceitas,             setAceitas]             = useState<string[]>([]);
+
+  const { mutateAsync: respond, isPending: isResponding } = useRespondToOffer();
 
   const [draftClassificacao, setDraftClassificacao] = useState(classificacaoFilter);
   const [draftCiclo,         setDraftCiclo]         = useState(cicloFilter);
@@ -206,7 +81,10 @@ export default function OfertasScreen() {
     return classificacaoOk && cicloOk && buscaOk;
   });
 
-  const handleAceitar = (oferta: Oferta) => {
+  const handleAceitar = async (oferta: Oferta) => {
+    try {
+      await respond({ offerId: String(oferta.id), action: 'accepted', amountCents: Math.round(oferta.valor * 100) });
+    } catch (_) { /* continua mesmo com erro de rede */ }
     setAceitas((prev) => prev.includes(oferta.ofertaId) ? prev : [...prev, oferta.ofertaId]);
     showToast({
       title: 'Oferta aceita',
@@ -338,9 +216,10 @@ export default function OfertasScreen() {
                   <Text style={s.detalhesBtnText}>Ver detalhes</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={s.aceitarBtn}
-                  onPress={(e) => { e.stopPropagation?.(); setSelectedOferta(o); }}
+                  style={[s.aceitarBtn, isResponding && { opacity: 0.6 }]}
+                  onPress={(e) => { e.stopPropagation?.(); handleAceitar(o); }}
                   activeOpacity={0.85}
+                  disabled={isResponding}
                 >
                   <Text style={s.aceitarBtnText}>Aceitar oferta</Text>
                 </TouchableOpacity>
@@ -349,17 +228,6 @@ export default function OfertasScreen() {
           );
         })}
       </ScrollView>
-
-      {/* Modal: Ver detalhes */}
-      <ModalSheet visible={selectedOferta !== null} onClose={() => setSelectedOferta(null)}>
-        {selectedOferta && (
-          <OfertaSheet
-            oferta={selectedOferta}
-            onClose={() => setSelectedOferta(null)}
-            onAceitar={(o) => { handleAceitar(o); setSelectedOferta(null); }}
-          />
-        )}
-      </ModalSheet>
 
       {/* Modal: Filtros */}
       <ModalSheet
@@ -466,28 +334,4 @@ const s = StyleSheet.create({
   modalBtnSolidText: { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: '#fff' },
 });
 
-// Offer sheet styles
-const bs = StyleSheet.create({
-  timerRow:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  timerLabel:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  timerLabelText: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
-  timerValue:     { fontFamily: fonts.display, fontSize: fontSize.base },
-  timerTrack:     { width: '100%', height: 4, borderRadius: radii.full, backgroundColor: C.line, overflow: 'hidden', marginBottom: 22 },
-  timerFill:      { height: '100%', borderRadius: radii.full },
-  eyebrow:        { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint, marginBottom: 6 },
-  heroValue:      { fontFamily: fonts.display, fontSize: 46, color: C.ink, letterSpacing: -1.2, lineHeight: 50 },
-  heroSign:       { fontSize: 26, fontFamily: fonts.display },
-  heroCaption:    { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 18, marginTop: 4 },
-  btnRow:         { flexDirection: 'row', gap: 10 },
-  declineBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 17, borderRadius: spacing[4], backgroundColor: C.chipMuted },
-  declineBtnText: { fontSize: fontSize.lg, fontFamily: fonts.bold, color: C.ink },
-  acceptBtn:      { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 17, borderRadius: spacing[4], backgroundColor: C.dark },
-  acceptBtnText:  { fontSize: fontSize.lg, fontFamily: fonts.bold, color: '#fff' },
-  resultWrap:     { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 10 },
-  resultIcon:     { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  resultTitle:    { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, marginBottom: 8 },
-  resultSub:      { fontSize: fontSize.md, color: C.inkSoft, fontFamily: fonts.regular, textAlign: 'center', lineHeight: 20 },
-  closeBtn:       { marginTop: 20, paddingHorizontal: 28, paddingVertical: 14, borderRadius: radii.lg, backgroundColor: C.chipMuted },
-  closeBtnText:   { fontSize: fontSize.lg, fontFamily: fonts.bold, color: C.ink },
-});
 
