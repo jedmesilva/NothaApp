@@ -11,6 +11,7 @@ import {
 } from "@workspace/db";
 import { requireAuth, type AuthRequest } from "../middlewares/auth.js";
 import { z } from "zod";
+import { runDistribution } from "../lib/distribution-engine.js";
 
 const createLoanSchema = z.object({
   amountCents:  z.number().int().min(1000),
@@ -99,6 +100,13 @@ router.post("/", requireAuth, async (req, res) => {
       });
 
       return loan;
+    });
+
+    // Dispara a distribuição de forma assíncrona — não bloqueia a resposta
+    setImmediate(() => {
+      runDistribution(loan.id).catch((err) => {
+        console.error("[distribution-engine] Falha ao distribuir empréstimo", loan.id, err);
+      });
     });
 
     res.status(201).json({ loan });

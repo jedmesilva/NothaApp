@@ -8,6 +8,7 @@ import investorProfileRouter from "./investor-profile.js";
 import investorRouter from "./investor.js";
 import loansRouter from "./loans.js";
 import marketRateRouter from "./market-rate.js";
+import adminRouter from "./admin.js";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use("/investor-profile", investorProfileRouter);
 router.use("/investor", investorRouter);
 router.use("/loans", loansRouter);
 router.use("/market-rate", marketRateRouter);
+router.use("/admin", adminRouter);
 
 export default router;
