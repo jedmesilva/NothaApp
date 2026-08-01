@@ -206,24 +206,15 @@ export default function OfertasScreen() {
                 style={{ marginBottom: 14 }}
               />
 
-              {/* Botões */}
-              <View style={s.btnRow}>
-                <TouchableOpacity
-                  style={s.detalhesBtn}
-                  onPress={(e) => { e.stopPropagation?.(); router.push(`/ativo-detalhe?id=${o.id}&source=oferta` as any); }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={s.detalhesBtnText}>Ver detalhes</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[s.aceitarBtn, isResponding && { opacity: 0.6 }]}
-                  onPress={(e) => { e.stopPropagation?.(); handleAceitar(o); }}
-                  activeOpacity={0.85}
-                  disabled={isResponding}
-                >
-                  <Text style={s.aceitarBtnText}>Aceitar oferta</Text>
-                </TouchableOpacity>
-              </View>
+              {/* Botão */}
+              <TouchableOpacity
+                style={[s.aceitarBtn, isResponding && { opacity: 0.6 }]}
+                onPress={(e) => { e.stopPropagation?.(); handleAceitar(o); }}
+                activeOpacity={0.85}
+                disabled={isResponding}
+              >
+                <Text style={s.aceitarBtnText}>Aceitar oferta</Text>
+              </TouchableOpacity>
             </TouchableOpacity>
           );
         })}

@@ -190,36 +190,43 @@ export default function GlobalOfertaOverlay() {
         ) : (
           /* ── Active offer ── */
           <>
-            {/* Grabber */}
-            <View style={s.grabber} />
+            {/* Tappable area — navigates to detail screen */}
+            <TouchableOpacity
+              style={{ width: '100%', alignItems: 'center' }}
+              activeOpacity={0.88}
+              onPress={() => { animateOut(); router.push(`/ativo-detalhe?id=${activeOffer.id}&source=oferta` as any); }}
+            >
+              {/* Grabber */}
+              <View style={s.grabber} />
 
-            {/* Header row */}
-            <View style={s.headerRow}>
-              <View style={s.headerLeft}>
-                <Feather name="clock" size={14} color={C.inkSoft} />
-                <Text style={s.headerLabel}>Nova solicitação de investimento</Text>
+              {/* Header row */}
+              <View style={s.headerRow}>
+                <View style={s.headerLeft}>
+                  <Feather name="clock" size={14} color={C.inkSoft} />
+                  <Text style={s.headerLabel}>Nova solicitação de investimento</Text>
+                </View>
+                <Text style={[s.countdown, { color: isUrgent ? C.red : C.ink }]}>
+                  {secondsLeft}s
+                </Text>
               </View>
-              <Text style={[s.countdown, { color: isUrgent ? C.red : C.ink }]}>
-                {secondsLeft}s
+
+              {/* Hero */}
+              <Text style={s.eyebrow}>Retorno oferecido</Text>
+              <Text style={s.heroValue}>
+                <Text style={s.heroSign}>+</Text>{ratePct}%
               </Text>
-            </View>
+              <Text style={s.heroCaption}>
+                Rendimento de R$ {formatBRL(retornoR$)} em {termDays} dias
+              </Text>
 
-            {/* Hero */}
-            <Text style={s.eyebrow}>Retorno oferecido</Text>
-            <Text style={s.heroValue}>
-              <Text style={s.heroSign}>+</Text>{ratePct}%
-            </Text>
-            <Text style={s.heroCaption}>
-              Rendimento de R$ {formatBRL(retornoR$)} em {termDays} dias
-            </Text>
+              {/* Retorno total */}
+              <View style={s.retornoRow}>
+                <Text style={s.retornoLabel}>Retorno total</Text>
+                <Text style={s.retornoValue}>R$ {formatBRL(totalR$)}</Text>
+              </View>
+            </TouchableOpacity>
 
-            {/* Retorno total */}
-            <View style={s.retornoRow}>
-              <Text style={s.retornoLabel}>Retorno total</Text>
-              <Text style={s.retornoValue}>R$ {formatBRL(totalR$)}</Text>
-            </View>
-
-            {/* Investment slider */}
+            {/* Investment slider — separate from nav area to preserve drag */}
             <View style={s.sliderWrap}>
               <Text style={s.sliderEyebrow}>Valor a investir</Text>
               <InvestmentSlider
@@ -230,20 +237,11 @@ export default function GlobalOfertaOverlay() {
               />
             </View>
 
-            {/* Buttons */}
-            <View style={s.btnRow}>
-              <TouchableOpacity
-                style={s.detalhesBtn}
-                onPress={() => { animateOut(); router.push(`/ativo-detalhe?id=${activeOffer.id}&source=oferta` as any); }}
-                activeOpacity={0.8}
-              >
-                <Text style={s.detalhesBtnText}>Ver detalhes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.acceptBtn} onPress={handleAccept} activeOpacity={0.85}>
-                <Feather name="check" size={18} color="#fff" />
-                <Text style={s.acceptBtnText}>Aceitar oferta</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Button */}
+            <TouchableOpacity style={[s.acceptBtn, { width: '100%' }]} onPress={handleAccept} activeOpacity={0.85}>
+              <Feather name="check" size={18} color="#fff" />
+              <Text style={s.acceptBtnText}>Aceitar oferta</Text>
+            </TouchableOpacity>
           </>
         )}
       </Animated.View>

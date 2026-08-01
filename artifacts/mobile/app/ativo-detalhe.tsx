@@ -13,7 +13,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions';
 import type { InstallmentSummary } from '@/hooks/useInvestorPositions';
-import { useInvestorOffers } from '@/hooks/useInvestorOffers';
+import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
+import { useToast } from '@/contexts/ToastContext';
 import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
@@ -66,10 +67,13 @@ export default function AtivoDetalheScreen() {
 
   const { data: posData,    isLoading: posLoading    } = useInvestorPositions();
   const { data: offersData, isLoading: offersLoading } = useInvestorOffers();
+  const { mutateAsync: respond, isPending: isResponding } = useRespondToOffer();
+  const { showToast } = useToast();
 
   const [showTimeline,    setShowTimeline]    = useState(false);
   const [showVencimentos, setShowVencimentos] = useState(false);
   const [showPrevisao,    setShowPrevisao]    = useState(false);
+  const [aceitou,         setAceitou]         = useState(false);
 
   const isLoading = isOferta ? offersLoading : posLoading;
 
@@ -245,6 +249,23 @@ export default function AtivoDetalheScreen() {
     ? 'Primeiro'
     : `${emprestimosAnteriores + 1}º empréstimo`;
 
+  const handleAceitar = async () => {
+    if (aceitou) return;
+    try {
+      await respond({ offerId: String(id), action: 'accepted', amountCents: Math.round(valorInvestido * 100) });
+    } catch (_) { /* continua mesmo com erro de rede */ }
+    setAceitou(true);
+    showToast({
+      title: 'Oferta aceita',
+      subtitle: `R$ ${formatBRL(Math.round(valorInvestido))} investidos em ${contratoId}`,
+      actionLabel: 'Acompanhar captação',
+      onAction: () => {},
+      duration: 6000,
+    });
+  };
+
+  const footerHeight = (Platform.OS === 'ios' ? insets.bottom : 0) + 80;
+
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
 
@@ -254,7 +275,7 @@ export default function AtivoDetalheScreen() {
         <Text style={s.title}>Detalhes do ativo</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: isOferta && !aceitou ? footerHeight + 16 : 48 }}>
 
         {/* ── Alert: tomador em atraso ── */}
         {status === 'atrasado' && posicao.diasAtraso != null && (
@@ -507,6 +528,20 @@ export default function AtivoDetalheScreen() {
 
         <Timeline events={timelineEvents} />
       </ModalSheet>
+
+      {/* ── Footer fixo: aceitar oferta ── */}
+      {isOferta && !aceitou && (
+        <View style={[s.footer, { paddingBottom: (Platform.OS === 'ios' ? insets.bottom : 0) + spacing[4] }]}>
+          <TouchableOpacity
+            style={[s.footerBtn, isResponding && { opacity: 0.6 }]}
+            onPress={handleAceitar}
+            activeOpacity={0.85}
+            disabled={isResponding}
+          >
+            <Text style={s.footerBtnText}>Aceitar oferta</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -558,6 +593,10 @@ const s = StyleSheet.create({
   propositoValue:  { fontSize: fontSize.base, fontFamily: fonts.regular, color: C.ink, lineHeight: 20 },
 
   contratoId: { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', marginTop: spacing[3], marginBottom: spacing[1] },
+
+  footer:      { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line, paddingHorizontal: spacing[4], paddingTop: spacing[4] },
+  footerBtn:   { alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: radii.lg, backgroundColor: C.dark },
+  footerBtnText: { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: '#fff' },
 
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
   modalTitle:  { fontFamily: fonts.display, fontSize: fontSize.xl, color: C.ink },
