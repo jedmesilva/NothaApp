@@ -168,9 +168,12 @@ const s = StyleSheet.create({
     paddingVertical: 3,
   },
 
-  // Outer area that captures gestures (tall for easy touch)
+  // Outer area that captures gestures (tall for easy touch).
+  // marginHorizontal: THUMB_SIZE / 2 shrinks the measured width so the thumb
+  // never overflows: at min thumbX=0 → left=-14 sits inside the margin;
+  // at max thumbX=trackWidth → right edge sits inside the opposite margin.
   trackWrap: {
-    width: '100%',
+    marginHorizontal: THUMB_SIZE / 2,
     height: THUMB_SIZE + 16,
     justifyContent: 'center',
     position: 'relative',
