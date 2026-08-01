@@ -15,6 +15,7 @@ import { formatBRL } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { DarkCard, LightCard, ThinBar, SplitRow, Chip, SectionTitle, Eyebrow, BigValue, AlertBanner } from '@/components/ds';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInvestorPositions } from '@/hooks/useInvestorPositions';
 
 const W = Dimensions.get('window').width;
 
@@ -70,30 +71,66 @@ export default function CarteiraScreen() {
   const hour = hoje2.getHours();
   const saudacao = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
-  // Mock data
-  const investido         = 10000;
-  const rendimentoPercent = 20;
-  const rendimentoValor   = 2000;
-  const totalAReceber     = investido + rendimentoValor;
-  const recebido          = 3000;
-  const aReceber          = totalAReceber - recebido;
-  const percentRecebido   = Math.round((recebido / totalAReceber) * 100);
-  const ativosCount       = 30;
+  // Dados reais — positions do banco conforme o documento
+  const { data: posData, isLoading: posLoading } = useInvestorPositions();
+  const summary   = posData?.summary;
+  const positions = posData?.positions ?? [];
 
-  const temAtraso        = true;
-  const valorAtrasado    = 245;
-  const hoje             = new Date();
-  const dataAtraso       = new Date(hoje); dataAtraso.setDate(hoje.getDate() - 5);
-  const dataAtrasoLabel  = dataAtraso.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
-  const diasProximo      = 4;
-  const dataProximo      = new Date(hoje); dataProximo.setDate(hoje.getDate() + diasProximo);
-  const proximoLabel     = dataProximo.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
-  const proximoValor     = 780;
-  const diasUltimo       = 154;
-  const dataUltimo       = new Date(hoje); dataUltimo.setDate(hoje.getDate() + diasUltimo);
-  const ultimoLabel      = `${String(dataUltimo.getDate()).padStart(2, '0')} ${MESES[dataUltimo.getMonth()]} ${dataUltimo.getFullYear()}`;
-  const prazoLabel       = diasUltimo >= 60 ? `${Math.round(diasUltimo / 30)} meses` : `${diasUltimo} dias`;
-  const proximoPercent   = Math.min(92, Math.max(8, (diasProximo / diasUltimo) * 100));
+  const hoje = new Date();
+  const toDate = (s: string) => new Date(s + 'T00:00:00');
+
+  // Métricas do hero card (fontes diretas de positions, como no documento)
+  const investido       = (summary?.principalBalanceCents  ?? 0) / 100;
+  const recebido        = (summary?.totalReturnedCents     ?? 0) / 100;
+  const original        = (summary?.originalPrincipalCents ?? 0) / 100;
+  const ativosCount     = summary?.activeCount ?? 0;
+
+  // Retorno realizado: quanto foi recebido sobre o total originalmente investido
+  const rendimentoValor   = recebido;
+  const rendimentoPercent = original > 0
+    ? parseFloat(((recebido / original) * 100).toFixed(1))
+    : 0;
+
+  // Estimativa de "a receber": saldo em aberto + projeção de juros a 2%
+  const totalAReceber   = investido > 0 ? investido * 1.02 : 0;
+  const aReceber        = Math.max(0, totalAReceber - recebido);
+  const percentRecebido = totalAReceber > 0
+    ? Math.round((recebido / totalAReceber) * 100)
+    : 0;
+
+  // Timeline: próxima e última parcela consolidadas entre todas as posições
+  const allNext = positions.filter((p) => p.nextInstallment).map((p) => p.nextInstallment!);
+  const allLast = positions.filter((p) => p.lastInstallment).map((p) => p.lastInstallment!);
+  const nextInst = allNext.sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
+  const lastInst = allLast.sort((a, b) => b.dueDate.localeCompare(a.dueDate))[0] ?? null;
+
+  const temAtraso     = summary?.hasAnyOverdue ?? false;
+  const overduePos    = positions.find((p) => p.hasOverdue && p.earliestOverdue);
+  const valorAtrasado = (overduePos?.earliestOverdue?.amountCents ?? 0) / 100;
+  const dataAtraso    = overduePos?.earliestOverdue
+    ? toDate(overduePos.earliestOverdue.dueDate)
+    : hoje;
+  const dataAtrasoLabel = dataAtraso.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+
+  const proximoValor = (nextInst?.amountCents ?? 0) / 100;
+  const proximoLabel = nextInst
+    ? toDate(nextInst.dueDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })
+    : '—';
+  const diasProximo  = nextInst
+    ? Math.max(0, Math.round((toDate(nextInst.dueDate).getTime() - hoje.getTime()) / 86400000))
+    : 0;
+
+  const ultimoDate  = lastInst ? toDate(lastInst.dueDate) : null;
+  const diasUltimo  = ultimoDate
+    ? Math.max(0, Math.round((ultimoDate.getTime() - hoje.getTime()) / 86400000))
+    : 0;
+  const ultimoLabel = ultimoDate
+    ? `${String(ultimoDate.getDate()).padStart(2, '0')} ${MESES[ultimoDate.getMonth()]} ${ultimoDate.getFullYear()}`
+    : '—';
+  const prazoLabel     = diasUltimo >= 60 ? `${Math.round(diasUltimo / 30)} meses` : `${diasUltimo} dias`;
+  const proximoPercent = diasUltimo > 0
+    ? Math.min(92, Math.max(8, (diasProximo / diasUltimo) * 100))
+    : 50;
 
   // Chart
   const chartW = W - 72; const chartH = 120; const padTop = 10; const padBot = 6;

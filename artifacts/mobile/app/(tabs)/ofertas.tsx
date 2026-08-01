@@ -8,8 +8,8 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { formatBRL } from '@/data/loans';
-import { MOCK_OFERTAS } from '@/data/ofertas';
 import type { Oferta } from '@/data/ofertas';
+import { useInvestorOffers } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend, SplitRow, DetailGrid, Chip, ModalSheet } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
@@ -167,15 +167,39 @@ export default function OfertasScreen() {
   const [busca,               setBusca]               = useState('');
   const [modalOpen,           setModalOpen]           = useState(false);
   const [selectedOferta,      setSelectedOferta]      = useState<Oferta | null>(null);
-  const [aceitas,             setAceitas]             = useState<number[]>([]);
+  const [aceitas,             setAceitas]             = useState<string[]>([]);
 
   const [draftClassificacao, setDraftClassificacao] = useState(classificacaoFilter);
   const [draftCiclo,         setDraftCiclo]         = useState(cicloFilter);
 
+  const { data: offersData, isLoading: offersLoading } = useInvestorOffers();
+
+  const CICLO_API: Record<string, Oferta['ciclo']> = {
+    diario: 'Diário', semanal: 'Semanal', mensal: 'Mensal',
+  };
+
+  // Mapeia ofertas da API para o formato Oferta usado pela tela
+  const apiOfertas: Oferta[] = (offersData?.offers ?? []).map((o, idx) => ({
+    id:                    idx + 1,
+    ofertaId:              o.loan.contractId,
+    valor:                 o.amountCents / 100,
+    taxaRetorno:           o.ratePct / 100,
+    prazoDias:             o.loan.termDays,
+    ciclo:                 CICLO_API[o.loan.cycle] ?? 'Mensal',
+    risco:                 'N/D',
+    tomadorScore:          'N/D',
+    valorTotalPedido:      o.loan.amountCents / 100,
+    jaCaptado:             o.loan.fundedAmountCents / 100,
+    emprestimosAnteriores: 0,
+    valorTotalTomado:      0,
+    cidade:                '—',
+    proposito:             '—',
+  }));
+
   const filtersActive = classificacaoFilter !== 'todos' || cicloFilter !== 'todos';
 
-  const filtered = MOCK_OFERTAS.filter((o) => {
-    if (aceitas.includes(o.id)) return false;
+  const filtered = apiOfertas.filter((o) => {
+    if (aceitas.includes(o.ofertaId)) return false;
     const classificacaoOk = classificacaoFilter === 'todos' || o.tomadorScore === classificacaoFilter;
     const cicloOk         = cicloFilter === 'todos'         || o.ciclo === cicloFilter;
     const buscaOk         = busca.trim() === ''             || o.ofertaId.toLowerCase().includes(busca.trim().toLowerCase());
@@ -183,7 +207,7 @@ export default function OfertasScreen() {
   });
 
   const handleAceitar = (oferta: Oferta) => {
-    setAceitas((prev) => prev.includes(oferta.id) ? prev : [...prev, oferta.id]);
+    setAceitas((prev) => prev.includes(oferta.ofertaId) ? prev : [...prev, oferta.ofertaId]);
     showToast({
       title: 'Oferta aceita',
       subtitle: `R$ ${formatBRL(oferta.valor)} investidos em ${oferta.ofertaId}`,
@@ -215,7 +239,7 @@ export default function OfertasScreen() {
       {/* Header */}
       <View style={s.header}>
         <Text style={s.title}>Ofertas</Text>
-        <Text style={s.subtitle}>{MOCK_OFERTAS.length} ofertas disponíveis</Text>
+        <Text style={s.subtitle}>{offersLoading ? '…' : `${apiOfertas.length} ofertas disponíveis`}</Text>
       </View>
 
       {/* Busca + filtro */}
