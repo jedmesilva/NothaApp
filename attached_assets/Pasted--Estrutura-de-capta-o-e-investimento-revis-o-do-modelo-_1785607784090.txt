@@ -1,0 +1,330 @@
+# Estrutura de captação e investimento — revisão do modelo
+
+Este doc substitui os itens 2, 3 e 4 do doc de reconciliação anterior (`Reconciliação — Design conceitual × schema real`). O restante daquele doc (ajustes em `wallet_transactions`, `position_transfer_orders`, `position_transfers`, atomicidade/idempotência) continua válido e não é repetido aqui.
+
+## Por que a revisão
+
+O modelo anterior fatiava o empréstimo em slots pré-definidos (`funding_orders`, numerados por `orderNumber`) e só depois oferecia cada slot a um investidor. Isso pressupõe que o número de fatias é conhecido antes de qualquer avaliação de credor — o que é falso: a divisão real depende de saldo disponível, exposição, histórico e taxa negociável de cada credor individualmente. Não é possível saber quantas partes um empréstimo terá até essa avaliação acontecer, credor por credor.
+
+O modelo revisado inverte a ordem: primeiro avalia o credor, decide o valor e a taxa daquela oferta específica, e só a soma dessas decisões individuais determina em quantas partes o empréstimo acabou sendo dividido. Nenhuma tabela precisa pré-definir a divisão.
+
+## Os três papéis, em linguagem simples (antes de entrar nas tabelas)
+
+Pra não gerar confusão de novo: **oferta**, **ordem de investimento** e **posição** são três coisas diferentes, mesmo que pareçam a mesma informação depois que tudo já aconteceu.
+
+**Exemplo concreto.** Um tomador precisa de R$ 10.000. O sistema vai atrás de credores:
+
+1. **Oferta = o convite.** O sistema propõe ao João: "você toparia emprestar R$ 3.000 a 2% ao mês nesse empréstimo?". Isso é só uma proposta — João pode aceitar ou recusar. Nenhum dinheiro se moveu ainda. Se ele recusar ou deixar expirar, a oferta morre sem gerar nada.
+
+2. **Ordem de investimento = o compromisso de dinheiro real.** João aceita. Agora sim: R$ 3.000 saem da carteira dele e ficam comprometidos com esse empréstimo, a 2% ao mês. Isso é fato consumado — diferente da oferta, que podia não ter virado nada.
+   
+   **Ponto importante:** uma ordem de investimento também pode nascer **sem nenhuma oferta por trás**. Se, meses depois, João decide vender parte desse compromisso para a Maria no mercado secundário, Maria passa a ter sua própria ordem de investimento nesse mesmo empréstimo — mas ela nunca recebeu convite nenhum, ela comprou de João diretamente. É por isso que oferta e ordem de investimento não podem ser a mesma tabela: a ordem tem duas origens possíveis (oferta aceita, ou compra no secundário), e a oferta só tem uma (o convite em si).
+
+3. **Posição = o extrato consolidado.** Se João aceitou dois convites diferentes pro mesmo empréstimo em momentos diferentes (R$ 3.000 a 2%, depois mais R$ 1.000 a 2,5%), ele não quer ver duas linhas no app — ele quer ver uma linha só: "R$ 4.000 investidos nesse empréstimo". A posição é essa soma.
+
+| Papel | Pode morrer sem virar dinheiro? | Tem taxa própria? | É usada em cálculo (rateio, venda)? | É uma linha por quê? |
+|---|---|---|---|---|
+| Oferta | Sim (recusa/expira) | Sim (a taxa proposta) | Não | Cada convite enviado |
+| Ordem de investimento | Não — só existe depois que é real | Sim (a taxa daquele aporte, congelada) | **Não** — só histórico | Cada aporte individual (de aceite ou de compra) |
+| Posição | Não — é sempre soma de algo que já é real | Sim — **taxa consolidada**, ponderada pelo saldo das ordens que a compõem | **Sim** — é ela quem participa de rateio e de venda | Cada credor + empréstimo (uma linha só) |
+
+**Atualização importante em cima do exemplo do João:** depois de conversar mais sobre isso, ficou decidido que a taxa não fica presa em cada ordem separada na hora de operar — ela se consolida na posição, igual o saldo já fazia. João com R$ 6.000 a 2% e R$ 4.000 a 2,5% passa a ter uma posição única de R$ 10.000 com taxa consolidada de 2,2% (média ponderada pelo saldo). Essa é a taxa usada tanto pra calcular juro no rateio de parcela quanto pra decidir a taxa de uma venda no secundário. A ordem de investimento continua existindo, mas vira **puro histórico** — registro de proveniência (de onde veio cada real, a que taxa original, se foi aceite ou compra) — nunca é tocada por rateio ou transferência depois de criada.
+
+**Por que a média ponderada funciona sem perder precisão:** juro calculado ordem por ordem (`6.000 × 2% + 4.000 × 2,5% = 220`) é idêntico a juro calculado direto na posição com a taxa consolidada (`10.000 × 2,2% = 220`). É a própria definição de média ponderada — ela existe pra preservar o total. Então não há perda nenhuma em abandonar o cálculo por ordem.
+
+---
+
+## Tabelas eliminadas
+
+### `funding_orders`
+
+Removida por completo. Representava um fatiamento fixo e alheio ao credor — papel que deixa de existir no modelo revisado.
+
+---
+
+## Tabelas alteradas
+
+### `funding_order_offers`
+
+**Antes:** vínculo simples com `fundingOrderId`, sem valor, sem taxa — só um convite binário (aceitar/recusar).
+
+**Depois:** aponta direto para o `loanId` (não mais para uma fatia pré-existente) e carrega o valor e a taxa decididos pelo engine para aquele credor específico, naquele momento.
+
+```ts
+export const fundingOrderOfferStatusEnum = [
+  "pending",
+  "accepted",
+  "rejected",
+  "expired",
+] as const;
+
+export const fundingOrderOffersTable = pgTable(
+  "funding_order_offers",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    loanId: text("loan_id").notNull(),               // referência direta ao empréstimo, não mais a um slot
+    investorId: text("investor_id").notNull(),
+    amountCents: integer("amount_cents").notNull(),   // valor decidido pelo engine para este credor
+    ratePct: integer("rate_pct").notNull(),            // taxa oferecida a este credor especificamente
+    status: text("status").$type<FundingOrderOfferStatus>().notNull().default("pending"),
+    sentAt: timestamp("sent_at").notNull().defaultNow(),
+    respondedAt: timestamp("responded_at"),
+    expiresAt: timestamp("expires_at").notNull(),
+    escalationRound: integer("escalation_round").notNull().default(1),
+    walletTransactionId: text("wallet_transaction_id"), // reserva feita no aceite
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.loanId], foreignColumns: [loansTable.id] }).onDelete("cascade"),
+    foreignKey({ columns: [t.investorId], foreignColumns: [investorProfilesTable.id] }).onDelete("cascade"),
+  ],
+);
+```
+
+`expiresAt`, `escalationRound` e `walletTransactionId` já estavam previstos no doc de reconciliação anterior (item 3) e continuam válidos aqui — a mecânica de expiração e reoferta descrita naquele doc não muda.
+
+---
+
+### `positions`
+
+**Antes:** 1:1 com `fundingOrderOfferId` — cada oferta aceita virava uma posição própria, sem consolidação.
+
+**Depois:** uma linha por par `(investorId, loanId)`. Saldo **e taxa** são o agregado de todas as `investment_orders` ativas do credor naquele empréstimo — a posição é a única entidade que participa de cálculo (rateio de parcela, venda no secundário).
+
+```ts
+export const positionStatusEnum = ["active", "transferred_out", "settled"] as const;
+
+export const positionsTable = pgTable(
+  "positions",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    loanId: text("loan_id").notNull(),
+    investorId: text("investor_id").notNull(),
+    // Saldo consolidado — soma de principalBalanceCents de todas as investment_orders ativas
+    principalBalanceCents: integer("principal_balance_cents").notNull(),
+    originalPrincipalCents: integer("original_principal_cents").notNull(), // total investido, histórico, imutável
+    // Total já retornado (recebido) — só cresce, não zera nem quando a posição é liquidada
+    totalReturnedCents: integer("total_returned_cents").notNull().default(0),
+    // Taxa consolidada — média de ratePct das investment_orders ativas, ponderada por principalBalanceCents
+    ratePct: integer("rate_pct").notNull(),
+    status: text("status").$type<PositionStatus>().notNull().default("active"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.loanId], foreignColumns: [loansTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.investorId], foreignColumns: [investorProfilesTable.id] }).onDelete("restrict"),
+    // única linha por credor + empréstimo
+    uniqueIndex("positions_loan_investor_idx").on(t.loanId, t.investorId),
+  ],
+);
+```
+
+`status: "transferred_out"` é usado para a posição inteira (ou uma nova posição nascida de fração cedida) que muda de dono no secundário. Ver seção de mercado secundário abaixo.
+
+**Os três valores do dashboard, direto na posição, sem agregação:**
+
+| Campo na tela | Fonte |
+|---|---|
+| Investido (saldo em aberto) | `principalBalanceCents` — diminui a cada amortização |
+| Total investido (histórico) | `originalPrincipalCents` — fixo desde a criação |
+| Recebido (histórico) | `totalReturnedCents` — só cresce, nunca zera |
+
+**Consistência transacional obrigatória:** `totalReturnedCents` precisa ser incrementado dentro da mesma transação de banco que grava cada `installment_payment_distribution` — junto com o decremento de `principalBalanceCents`. Se os dois updates não acontecerem atomicamente, a posição fica com saldo e histórico dessincronizados (mesma classe de risco já descrita na seção de atomicidade do doc de reconciliação original, aplicada aqui ao rateio de parcela).
+
+**Quando `ratePct` precisa ser recalculado:** só quando a composição de ordens muda — ou seja, quando uma `investment_order` nova entra na posição (novo aporte do credor, ou compra no secundário). Amortização normal (pagamento de parcela) reduz o saldo de todas as ordens por baixo na mesma proporção entre si, então a média ponderada não muda — não precisa recalcular a cada parcela paga, só a cada mudança de composição.
+
+---
+
+## Tabela nova
+
+### `investment_orders` — histórico imutável, não usada em cálculo
+
+Representa o aporte individual — cada vez que uma oferta é aceita (ou uma posição recebe uma fração cedida no secundário), nasce um registro aqui. **Depois de criada, nunca mais é escrita.** Ela não participa de rateio de parcela nem de venda no secundário — essas duas operações acontecem inteiramente no nível de `positions`. O papel dela é só registrar a proveniência: de onde veio cada real que compõe o saldo e a taxa consolidada da posição.
+
+```ts
+export const investmentOrdersTable = pgTable(
+  "investment_orders",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    // Origem: captação primária (null se nasceu de cessão) — mutuamente exclusivo com parentInvestmentOrderId abaixo
+    fundingOrderOfferId: text("funding_order_offer_id"),
+    // Origem: cessão no secundário (null se nasceu de aceite de oferta)
+    parentInvestmentOrderId: text("parent_investment_order_id"),
+    positionId: text("position_id").notNull(),        // para qual posição consolidada este aporte contribui
+    loanId: text("loan_id").notNull(),                  // atalho denormalizado, mesmo padrão já usado em installment_payments
+    investorId: text("investor_id").notNull(),          // atalho denormalizado
+    ratePct: integer("rate_pct").notNull(),             // taxa pactuada na origem — congelada, nunca muda
+    originalPrincipalCents: integer("original_principal_cents").notNull(), // valor do aporte, imutável
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.fundingOrderOfferId], foreignColumns: [fundingOrderOffersTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.parentInvestmentOrderId], foreignColumns: [t.id] }).onDelete("set null"),
+    foreignKey({ columns: [t.positionId], foreignColumns: [positionsTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.loanId], foreignColumns: [loansTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.investorId], foreignColumns: [investorProfilesTable.id] }).onDelete("restrict"),
+    index("investment_orders_position_id_idx").on(t.positionId),
+    index("investment_orders_loan_id_idx").on(t.loanId),
+  ],
+);
+```
+
+Note que não tem `principalBalanceCents` nem `status` — como ela não é decrementada por rateio nem afetada por venda, não existe "saldo atual" nem "estado" pra rastrear aqui. `originalPrincipalCents` é o único valor monetário, e é fixo pra sempre.
+
+Cessão no mercado secundário (`position_transfer_orders` / `position_transfers`) volta a operar sobre `positions`, não sobre `investment_orders` — ver seção abaixo. Quando uma venda se concretiza, nasce uma `investment_order` nova do lado do comprador (via `parentInvestmentOrderId`), só para fins de histórico — a operação de cálculo em si (débito/crédito, atualização de saldo e taxa) acontece nas `positions` envolvidas.
+
+---
+
+## Tabela alterada — `installment_payment_distributions`
+
+**Antes:** referenciava `fundingOrderId`.
+
+**Depois:** referencia `positionId` — é a posição ativa naquele momento que recebe a distribuição (isso já resolve venda/cessão: se o investidor mudou entre uma parcela e outra, a distribution simplesmente aponta pra posição do novo dono, sem precisar de nenhum vínculo com ordens). Ganha também `interestCents`/`principalCents`, calculados e **gravados uma única vez, no momento da distribuição** — não recalculados depois.
+
+```ts
+export const installmentPaymentDistributionsTable = pgTable(
+  "installment_payment_distributions",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    installmentPaymentId: text("installment_payment_id").notNull(),
+    positionId: text("position_id").notNull(), // era fundingOrderId
+    investorId: text("investor_id").notNull(), // o investidor ativo NAQUELE momento — resolve venda/cessão automaticamente
+    amountCents: integer("amount_cents").notNull(),
+    // Calculados uma vez, no momento do rateio, usando principalBalanceCents/ratePct da position
+    // ANTES desta distribuição — gravados aqui, nunca recalculados depois
+    interestCents: integer("interest_cents").notNull(),
+    principalCents: integer("principal_cents").notNull(),
+    walletTransactionId: text("wallet_transaction_id"),
+    distributedAt: timestamp("distributed_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.installmentPaymentId], foreignColumns: [installmentPaymentsTable.id] }).onDelete("cascade"),
+    foreignKey({ columns: [t.positionId], foreignColumns: [positionsTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.investorId], foreignColumns: [investorProfilesTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.walletTransactionId], foreignColumns: [walletTransactionsTable.id] }).onDelete("set null"),
+  ],
+);
+```
+
+### Split principal/juros — calculado uma vez, gravado na distribution
+
+```
+interestCents  = principalBalanceCents_da_position_antes_desta_distribuição × ratePct_da_position
+principalCents = amountCents_desta_distribuição − interestCents
+```
+
+Isso substitui o pré-requisito do doc `Métricas do dashboard do investidor`, que propunha adicionar `principalCents`/`interestCents` em `loan_installments`. No modelo revisado, essas colunas não vão em `loan_installments` nem em `positions`/`investment_orders` — vão direto na `distribution`, calculadas uma única vez no momento em que ela nasce.
+
+**Por que gravar em vez de recalcular sob demanda:** rentabilidade por período (7 dias, 1 mês, 1 ano) precisa somar juro de distribuições passadas. Se `interestCents` não fosse armazenado, seria preciso reconstruir o saldo da posição em cada ponto do passado pra recalcular — o mesmo problema de saldo médio ponderado discutido antes, só que replicado por distribuição. Gravar no momento certo evita essa reconstrução.
+
+### Rentabilidade por período — soma direta, sem reconstrução
+
+```sql
+SELECT COALESCE(SUM(interest_cents), 0) AS period_yield_cents
+FROM installment_payment_distributions
+WHERE position_id = :positionId
+  AND distributed_at BETWEEN :periodStart AND :periodEnd;
+```
+
+```
+rentabilidade_percentual_periodo = period_yield_cents / principal_balance_cents_atual * 100
+```
+
+Como `investorId` é gravado por distribution (o investidor ativo naquele momento específico), a soma do período já separa automaticamente o que cada investidor recebeu enquanto era dono da posição — sem precisar filtrar por ordem de investimento nem reconstruir histórico de titularidade em caso de venda no meio do caminho.
+
+**Ressalva que continua valendo:** `principal_balance_cents` atual como denominador é aproximação — boa para janelas curtas (7 dias, 1 mês), imprecisa para "1 ano" se a posição mudou de composição no meio do período (novo aporte ou compra parcial no secundário alteram saldo e possivelmente `ratePct`). Ver discussão de saldo médio ponderado por tempo, se precisão em "1 ano" for prioridade.
+
+---
+
+## Mercado secundário — `position_transfer_orders` e `position_transfers`
+
+Nomes mantidos como estavam no doc de reconciliação original — voltam a referenciar `positionId`, não `investmentOrderId`.
+
+```ts
+export const positionTransferOrdersTable = pgTable(
+  "position_transfer_orders",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    positionId: text("position_id").notNull(),
+    offeredAmountCents: integer("offered_amount_cents").notNull(),
+    remainingAmountCents: integer("remaining_amount_cents").notNull(),
+    priceCents: integer("price_cents").notNull(), // valor de face ajustado por deságio/ágio
+    status: text("status").$type<PositionTransferOrderStatus>().notNull().default("open"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.positionId], foreignColumns: [positionsTable.id] }).onDelete("cascade"),
+  ],
+);
+
+export const positionTransfersTable = pgTable(
+  "position_transfers",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    orderId: text("order_id").notNull(),
+    sourcePositionId: text("source_position_id").notNull(),
+    destinationPositionId: text("destination_position_id").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    priceCents: integer("price_cents").notNull(),
+    debitWalletTransactionId: text("debit_wallet_transaction_id"),
+    creditWalletTransactionId: text("credit_wallet_transaction_id"),
+    executedAt: timestamp("executed_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.orderId], foreignColumns: [positionTransferOrdersTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.sourcePositionId], foreignColumns: [positionsTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.destinationPositionId], foreignColumns: [positionsTable.id] }).onDelete("restrict"),
+  ],
+);
+```
+
+**Quando a venda executa:**
+
+1. A posição do vendedor (João) tem `principalBalanceCents` decrementado pelo `amountCents` vendido.
+2. Nasce (ou é atualizada) a posição do comprador (Maria) — `principalBalanceCents` incrementado, e `ratePct` recalculado como média ponderada, herdando a taxa que veio junto no `priceCents`/condições da negociação.
+3. Uma `investment_order` nova nasce do lado da Maria, com `parentInvestmentOrderId` apontando para a ordem original de João que deu origem àquela fração — **só para histórico/auditoria**, não usada em cálculo futuro.
+4. Se a venda for parcial de uma posição só (não zera o saldo do vendedor), a taxa consolidada do João **não muda** — ele continua com o mesmo mix proporcional de ordens, só em volume menor.
+
+**Ponto em aberto:** se João tem duas ordens de origem com taxas diferentes por baixo (2% e 2,5%) e vende uma fração da posição consolidada, qual taxa "sai" primeiro nas ordens de histórico gerado pro comprador — a posição vendida sempre carrega a taxa consolidada (2,2%), mas as `investment_orders` de histórico dessa venda precisam ser geradas de algum jeito (FIFO, proporcional, ou uma única ordem nova "sintética" com a taxa consolidada em vez de tentar decompor). Como isso é só histórico e não afeta cálculo, a decisão aqui é de menor risco — mas precisa de uma regra pra não ficar em aberto na implementação.
+
+---
+
+## Fluxo completo, ponta a ponta
+
+```
+1. Engine avalia credores elegíveis para o loan (saldo, exposição, histórico)
+2. Para cada credor selecionado: cria funding_order_offer
+   (loanId, investorId, amountCents, ratePct — decididos individualmente)
+3. Credor aceita → reserva na wallet (status: reserved)
+4. Captação do loan fecha (soma das ofertas aceitas atinge o valor total) →
+   dentro de uma única transação de banco (ver doc de reconciliação anterior):
+     a. Para cada oferta aceita: wallet_transaction reserved → completed
+     b. Para cada oferta aceita: cria investment_order (histórico, imutável)
+     c. Para cada investment_order: upsert em positions
+        (cria a linha se não existir para esse investorId+loanId, somando
+         principalBalanceCents e recalculando ratePct como média ponderada;
+         se já existir, soma no saldo e recalcula a taxa)
+     d. Credita o tomador (loan_disbursement)
+     e. loans.status → "active"
+5. A cada parcela paga pelo tomador:
+     a. Rateio entre as positions ativas do loan, proporcional a
+        principalBalanceCents de cada uma
+     b. Para cada position: interestCents/principalCents calculados usando
+        principalBalanceCents + ratePct da position ANTES desta distribuição,
+        e gravados direto na distribution (nunca recalculados depois)
+     c. Cada distribution nasce ligada à position ativa naquele momento
+        (resolve venda/cessão automaticamente — investorId é o dono atual)
+     d. Dentro da mesma transação: principalBalanceCents da position é
+        decrementado E totalReturnedCents é incrementado pelo amountCents
+        distribuído (ratePct NÃO muda aqui — amortização não altera a composição)
+6. Em venda no secundário: ver seção "Mercado secundário" acima
+```
+
+---
+
+## Pontos em aberto
+
+1. **Regra de geração das `investment_orders` de histórico numa venda parcial** — quando João vende uma fração da posição consolidada (que pode ter várias ordens de origem com taxas diferentes por baixo), como fica o registro de histórico do lado do comprador: proporcional às ordens originais, FIFO, ou uma ordem sintética única com a taxa consolidada? Não afeta cálculo (só auditoria), mas precisa de uma regra definida antes de implementar.
+2. **Taxa do loan para o tomador vs. taxa por investidor** — se cada `position` pode ter `ratePct` diferente da mesma parcela, o spread da plataforma é a diferença entre a taxa cobrada do tomador e a taxa consolidada paga a cada credor. Precisa confirmar se isso já está modelado em `loans` ou se é um cálculo derivado.
+3. **Migração de dados existentes** — se já existem `positions` e `distributions` em produção no modelo antigo (1:1 com oferta, referenciando `fundingOrderId`, sem `ratePct`), a migração precisa: adicionar `ratePct` em `positions` (herdando a taxa da oferta de origem, já que hoje é 1:1), criar uma `investment_order` histórica para cada `position` atual, trocar `distributions.fundingOrderId` por `positionId`, e então consolidar `positions` por `(investorId, loanId)` — somando saldo e recalculando a taxa ponderada onde havia mais de uma linha para o mesmo par.
