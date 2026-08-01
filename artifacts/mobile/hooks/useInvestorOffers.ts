@@ -43,10 +43,10 @@ export function useInvestorOffers(refetchInterval?: number) {
 export function useRespondToOffer() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ offerId, action }: { offerId: string; action: OfferAction }) =>
+    mutationFn: ({ offerId, action, amountCents }: { offerId: string; action: OfferAction; amountCents?: number }) =>
       apiFetch<{ ok: boolean; status: string }>(`/api/investor/offers/${offerId}/respond`, {
         method: 'POST',
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, amountCents }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['investor-offers'] });

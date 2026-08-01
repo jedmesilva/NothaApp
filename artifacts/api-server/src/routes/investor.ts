@@ -229,7 +229,7 @@ router.get("/offers", requireAuth, async (req, res) => {
 router.post("/offers/:id/respond", requireAuth, async (req, res) => {
   const { userId } = (req as AuthRequest).user;
   const { id }     = req.params;
-  const { action } = req.body as { action: string };
+  const { action, amountCents } = req.body as { action: string; amountCents?: number };
 
   if (action !== "accepted" && action !== "rejected") {
     res.status(400).json({ error: "action must be 'accepted' or 'rejected'" });
@@ -258,9 +258,18 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
     return;
   }
 
+  // If investor chose a partial amount, clamp it within valid bounds
+  const finalAmountCents = (action === "accepted" && amountCents != null)
+    ? Math.min(Math.max(amountCents, 1), offer.amountCents)
+    : offer.amountCents;
+
   await db
     .update(fundingOrderOffersTable)
-    .set({ status: action as "accepted" | "rejected", respondedAt: new Date() })
+    .set({
+      status: action as "accepted" | "rejected",
+      respondedAt: new Date(),
+      amountCents: action === "accepted" ? finalAmountCents : offer.amountCents,
+    })
     .where(eq(fundingOrderOffersTable.id, id));
 
   res.json({ ok: true, status: action });

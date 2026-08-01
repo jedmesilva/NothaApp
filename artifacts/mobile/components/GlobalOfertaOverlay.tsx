@@ -5,7 +5,7 @@
  * arrives for the authenticated investor. Slides up over whatever screen
  * is currently active, with a 30-second countdown to accept or decline.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOfertaOverlay } from '@/contexts/OfertaOverlayContext';
 import { useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import InvestmentSlider from '@/components/InvestmentSlider';
 
 const COUNTDOWN = 30;
 
@@ -34,6 +35,9 @@ export default function GlobalOfertaOverlay() {
   const scrimOpacity  = useRef(new Animated.Value(0)).current;
   const sheetY        = useRef(new Animated.Value(600)).current;
 
+  // ── Slider state ─────────────────────────────────────────────────────────
+  const [adjustedCents, setAdjustedCents] = useState(0);
+
   // ── Timer ────────────────────────────────────────────────────────────────
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN);
   const [result,      setResult]      = useState<ResultState | null>(null);
@@ -45,6 +49,7 @@ export default function GlobalOfertaOverlay() {
 
     setSecondsLeft(COUNTDOWN);
     setResult(null);
+    setAdjustedCents(activeOffer.amountCents); // start at full offered amount
 
     // Fade scrim + slide sheet up
     Animated.parallel([
@@ -85,7 +90,7 @@ export default function GlobalOfertaOverlay() {
     if (!activeOffer) return;
     clearInterval(intervalRef.current!);
     try {
-      await respond({ offerId: activeOffer.id, action: 'accepted' });
+      await respond({ offerId: activeOffer.id, action: 'accepted', amountCents: adjustedCents });
     } catch (_) { /* silently continue — show result regardless */ }
     setResult('accepted');
   };
@@ -101,13 +106,18 @@ export default function GlobalOfertaOverlay() {
 
   if (!activeOffer) return null;
 
-  const ratePct       = activeOffer.ratePct / 100;
-  const amountR$      = activeOffer.amountCents / 100;
-  const retornoR$     = Math.round(amountR$ * (ratePct / 100));
-  const totalR$       = amountR$ + retornoR$;
-  const termDays      = activeOffer.loan.termDays;
-  const pctTempo      = (secondsLeft / COUNTDOWN) * 100;
-  const isUrgent      = secondsLeft <= 10;
+  const ratePct    = activeOffer.ratePct / 100;
+  const maxCents   = activeOffer.amountCents;
+  // Minimum: 25 % of the offered amount, floor at R$ 10 (1 000 cents), rounded to R$ 1
+  const minCents   = Math.max(1_000, Math.round(maxCents * 0.25 / 100) * 100);
+  const safeCents  = adjustedCents > 0 ? adjustedCents : maxCents;
+
+  const adjR$      = safeCents / 100;
+  const retornoR$  = Math.round(adjR$ * (ratePct / 100));
+  const totalR$    = adjR$ + retornoR$;
+  const termDays   = activeOffer.loan.termDays;
+  const pctTempo   = (secondsLeft / COUNTDOWN) * 100;
+  const isUrgent   = secondsLeft <= 10;
 
   const formatBRL = (v: number) =>
     v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -121,7 +131,7 @@ export default function GlobalOfertaOverlay() {
     accepted: {
       icon: 'check', bg: C.dark, iconColor: '#fff',
       title: 'Oferta aceita!',
-      sub: `R$ ${formatBRL(amountR$)} reservados.\nVocê será notificado quando a captação fechar.`,
+      sub: `R$ ${formatBRL(adjR$)} reservados.\nVocê será notificado quando a captação fechar.`,
     },
     rejected: {
       icon: 'x', bg: C.chipMuted, iconColor: C.inkSoft,
@@ -204,16 +214,21 @@ export default function GlobalOfertaOverlay() {
               Rendimento de R$ {formatBRL(retornoR$)} em {termDays} dias
             </Text>
 
-            {/* Split row */}
-            <View style={s.splitRow}>
-              <View>
-                <Text style={s.splitLabel}>Investimento</Text>
-                <Text style={s.splitValue}>R$ {formatBRL(amountR$)}</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={s.splitLabel}>Retorno total</Text>
-                <Text style={s.splitValue}>R$ {formatBRL(totalR$)}</Text>
-              </View>
+            {/* Retorno total */}
+            <View style={s.retornoRow}>
+              <Text style={s.retornoLabel}>Retorno total</Text>
+              <Text style={s.retornoValue}>R$ {formatBRL(totalR$)}</Text>
+            </View>
+
+            {/* Investment slider */}
+            <View style={s.sliderWrap}>
+              <Text style={s.sliderEyebrow}>Valor a investir</Text>
+              <InvestmentSlider
+                minCents={minCents}
+                maxCents={maxCents}
+                valueCents={safeCents}
+                onChange={setAdjustedCents}
+              />
             </View>
 
             {/* Buttons */}
@@ -310,29 +325,48 @@ const s = StyleSheet.create({
     marginTop: 4,
   },
 
-  // Split
-  splitRow: {
+  // Retorno total summary row
+  retornoRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
     backgroundColor: C.bg,
     borderRadius: radii.lg,
-    padding: spacing[4],
-    marginBottom: spacing[5],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    marginBottom: spacing[4],
   },
-  splitLabel: {
+  retornoLabel: {
     fontSize: fontSize.xs,
     fontFamily: fonts.semibold,
     color: C.inkFaint,
     textTransform: 'uppercase',
     letterSpacing: 0.2,
-    marginBottom: 3,
   },
-  splitValue: {
+  retornoValue: {
     fontFamily: fonts.display,
     fontSize: fontSize.xl,
     color: C.ink,
     letterSpacing: -0.3,
+  },
+
+  // Slider section
+  sliderWrap: {
+    width: '100%',
+    backgroundColor: C.bg,
+    borderRadius: radii.lg,
+    padding: spacing[4],
+    paddingBottom: spacing[3],
+    marginBottom: spacing[5],
+  },
+  sliderEyebrow: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.semibold,
+    color: C.inkFaint,
+    textTransform: 'uppercase',
+    letterSpacing: 0.2,
+    marginBottom: spacing[3],
   },
 
   // Buttons
