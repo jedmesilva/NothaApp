@@ -172,7 +172,7 @@ export default function CarteiraScreen() {
     ? `${linePath} L ${points[points.length - 1].x} ${chartH} L ${points[0].x} ${chartH} Z`
     : '';
   const retornoValor   = valores[valores.length - 1] ?? 0;
-  const retornoPercent = (retornoValor / investido) * 100;
+  const retornoPercent = investido > 0 ? (retornoValor / investido) * 100 : 0;
   const step     = Math.max(1, Math.ceil(labels.length / 6));
   const visLabels = labels.filter((_, i) => i % step === 0 || i === labels.length - 1);
 
