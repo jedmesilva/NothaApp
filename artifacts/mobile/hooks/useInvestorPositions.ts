@@ -10,6 +10,8 @@ export type LoanSummary = {
   termDays: number;
   status: string;
   grantedAt: string | null;
+  /** Soma de principalBalanceCents de todos os investidores desse empréstimo */
+  fundedAmountCents: number;
 };
 
 export type InstallmentSummary = {
@@ -32,6 +34,8 @@ export type InvestorPosition = {
   status: 'active' | 'transferred_out' | 'settled';
   createdAt: string;
   loan: LoanSummary;
+  /** Todas as parcelas do empréstimo, ordenadas por número */
+  installments: InstallmentSummary[];
   nextInstallment: InstallmentSummary | null;
   lastInstallment: InstallmentSummary | null;
   hasOverdue: boolean;
@@ -56,4 +60,13 @@ export function useInvestorPositions() {
     queryKey: ['investor-positions'],
     queryFn: () => apiFetch<InvestorPositionsData>('/api/investor/positions'),
   });
+}
+
+/** Deriva o status de exibição a partir dos dados de posição + empréstimo */
+export function getPosStatus(pos: InvestorPosition): 'captacao' | 'ativo' | 'atrasado' | 'quitado' {
+  const ls = pos.loan.status;
+  if (ls === 'captacao' || ls === 'analise') return 'captacao';
+  if (pos.status === 'settled' || ls === 'quitado') return 'quitado';
+  if (pos.hasOverdue) return 'atrasado';
+  return 'ativo';
 }

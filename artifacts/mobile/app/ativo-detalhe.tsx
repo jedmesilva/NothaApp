@@ -5,19 +5,16 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { POSICOES } from '@/data/ativos';
-import type { Posicao } from '@/data/ativos';
-import { MOCK_OFERTAS } from '@/data/ofertas';
+import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions';
+import type { InstallmentSummary } from '@/hooks/useInvestorPositions';
+import { useInvestorOffers } from '@/hooks/useInvestorOffers';
 import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno } from '@/data/loans';
-
-const OFERTA_CICLO_MAP: Record<string, 'diario' | 'semanal' | 'mensal'> = {
-  Diário: 'diario', Semanal: 'semanal', Mensal: 'mensal',
-};
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid,
@@ -35,6 +32,31 @@ const CICLO_UNIT_PLURAL: Record<string, string> = {
   diario: 'dias', semanal: 'semanas', mensal: 'meses',
 };
 
+// ─── Tipo de exibição unificado ──────────────────────────────────────────────
+type PosDisplay = {
+  contratoId: string;
+  valorInvestido: number;        // principalBalanceCents / 100
+  originalInvestido: number;     // originalPrincipalCents / 100
+  totalRetornado: number;        // totalReturnedCents / 100
+  taxaJurosTotal: number;        // ratePct (%)
+  prazoDias: number;
+  ciclo: 'diario' | 'semanal' | 'mensal';
+  status: string;
+  parcelasTotal: number;
+  parcelasRecebidas: number;
+  diasDesdeConcessao?: number;
+  diasAtraso?: number;
+  jaCaptado: number;             // já captado por outros investidores (R$)
+  valorTotalPedido: number;      // loan.amountCents / 100
+  tomadorScore: string;
+  emprestimosAnteriores: number;
+  valorTotalTomado: number;
+  cidade: string;
+  proposito: string;
+  installments: InstallmentSummary[];
+  jaInvestiu: boolean;
+};
+
 export default function AtivoDetalheScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
@@ -42,39 +64,97 @@ export default function AtivoDetalheScreen() {
   const { id, source } = useLocalSearchParams<{ id: string; source?: string }>();
   const isOferta = source === 'oferta';
 
-  // Se vier da tela de ofertas, converte Oferta → Posicao em captação
-  const posicao: Posicao | undefined = (() => {
-    if (isOferta) {
-      const o = MOCK_OFERTAS.find((x) => x.id === Number(id));
-      if (!o) return undefined;
-      return {
-        id:                    o.id,
-        contratoId:            o.ofertaId,
-        valorInvestido:        o.valor,
-        taxaJurosTotal:        o.taxaRetorno,
-        prazoDias:             o.prazoDias,
-        ciclo:                 OFERTA_CICLO_MAP[o.ciclo],
-        status:                'captacao' as const,
-        parcelasTotal:         0,
-        parcelasRecebidas:     0,
-        jaCaptado:             o.jaCaptado,
-        valorTotalPedido:      o.valorTotalPedido,
-        numCredores:           0,
-        risco:                 o.risco,
-        tomadorScore:          o.tomadorScore,
-        emprestimosAnteriores: o.emprestimosAnteriores,
-        valorTotalTomado:      o.valorTotalTomado,
-        cidade:                o.cidade,
-        proposito:             o.proposito,
-      };
-    }
-    return POSICOES.find((p) => p.id === Number(id));
-  })();
+  const { data: posData,    isLoading: posLoading    } = useInvestorPositions();
+  const { data: offersData, isLoading: offersLoading } = useInvestorOffers();
 
   const [showTimeline,    setShowTimeline]    = useState(false);
   const [showVencimentos, setShowVencimentos] = useState(false);
   const [showPrevisao,    setShowPrevisao]    = useState(false);
 
+  const isLoading = isOferta ? offersLoading : posLoading;
+
+  // ── Constrói o objeto de exibição a partir dos dados da API ──────────────
+  let posicao: PosDisplay | undefined;
+
+  if (!isLoading) {
+    if (isOferta) {
+      const offer = offersData?.offers.find((o) => o.id === id);
+      if (offer) {
+        posicao = {
+          contratoId:            offer.loan.contractId,
+          valorInvestido:        offer.amountCents / 100,
+          originalInvestido:     offer.amountCents / 100,
+          totalRetornado:        0,
+          taxaJurosTotal:        offer.ratePct,
+          prazoDias:             offer.loan.termDays,
+          ciclo:                 offer.loan.cycle,
+          status:                'captacao',
+          parcelasTotal:         offer.loan.installmentsTotal,
+          parcelasRecebidas:     0,
+          jaCaptado:             Math.max(0, offer.loan.fundedAmountCents - offer.amountCents) / 100,
+          valorTotalPedido:      offer.loan.amountCents / 100,
+          tomadorScore:          '—',
+          emprestimosAnteriores: 0,
+          valorTotalTomado:      0,
+          cidade:                '—',
+          proposito:             '—',
+          installments:          [],
+          jaInvestiu:            false,
+        };
+      }
+    } else {
+      const pos = posData?.positions.find((p) => p.id === id);
+      if (pos) {
+        const posStatus  = getPosStatus(pos);
+        const grantedAt  = pos.loan.grantedAt
+          ? new Date(pos.loan.grantedAt.slice(0, 10) + 'T00:00:00')
+          : null;
+        const diasDesdeConcessao = grantedAt
+          ? Math.max(0, Math.floor((Date.now() - grantedAt.getTime()) / 86400000))
+          : undefined;
+        const diasAtraso = pos.earliestOverdue
+          ? Math.max(0, Math.floor(
+              (Date.now() - new Date(pos.earliestOverdue.dueDate + 'T00:00:00').getTime()) / 86400000,
+            ))
+          : undefined;
+
+        posicao = {
+          contratoId:            pos.loan.contractId,
+          valorInvestido:        pos.principalBalanceCents / 100,
+          originalInvestido:     pos.originalPrincipalCents / 100,
+          totalRetornado:        pos.totalReturnedCents / 100,
+          taxaJurosTotal:        pos.ratePct,
+          prazoDias:             pos.loan.termDays,
+          ciclo:                 pos.loan.cycle,
+          status:                posStatus,
+          parcelasTotal:         pos.loan.installmentsTotal,
+          parcelasRecebidas:     pos.installments.filter((i) => i.status === 'paid').length,
+          diasDesdeConcessao,
+          diasAtraso,
+          jaCaptado:             Math.max(0, pos.loan.fundedAmountCents - pos.principalBalanceCents) / 100,
+          valorTotalPedido:      pos.loan.amountCents / 100,
+          tomadorScore:          '—',
+          emprestimosAnteriores: 0,
+          valorTotalTomado:      0,
+          cidade:                '—',
+          proposito:             '—',
+          installments:          pos.installments,
+          jaInvestiu:            true,
+        };
+      }
+    }
+  }
+
+  // ── Loading ───────────────────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <View style={[s.screen, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={C.ink} />
+      </View>
+    );
+  }
+
+  // ── Não encontrado ────────────────────────────────────────────────────────
   if (!posicao) {
     return (
       <View style={[s.screen, { alignItems: 'center', justifyContent: 'center' }]}>
@@ -84,18 +164,22 @@ export default function AtivoDetalheScreen() {
   }
 
   const {
-    contratoId, valorInvestido, taxaJurosTotal, prazoDias, ciclo,
+    contratoId, valorInvestido, originalInvestido, totalRetornado,
+    taxaJurosTotal, prazoDias, ciclo,
     status, parcelasTotal, parcelasRecebidas,
-    risco, tomadorScore, emprestimosAnteriores, valorTotalTomado, cidade, proposito,
+    tomadorScore, emprestimosAnteriores, valorTotalTomado, cidade, proposito,
+    jaInvestiu,
   } = posicao;
 
   const cicloMeta      = CICLO_META[ciclo];
-  const totalComRetorno = valorInvestido * (1 + taxaJurosTotal / 100);
-  const retornoTotal    = totalComRetorno - valorInvestido;
+  const totalComRetorno = originalInvestido * (1 + taxaJurosTotal / 100);
+  const retornoTotal    = totalComRetorno - originalInvestido;
 
-  const jaConcedido    = status !== 'captacao';
+  const jaConcedido    = posicao.status !== 'captacao';
   const hoje           = new Date();
-  const dataConcessao  = jaConcedido ? addDays(hoje, -(posicao.diasDesdeConcessao ?? 0)) : hoje;
+  const dataConcessao  = jaConcedido
+    ? addDays(hoje, -(posicao.diasDesdeConcessao ?? 0))
+    : hoje;
   const dataSolicitacao       = addDays(dataConcessao, -3);
   const dataCaptacaoIniciada  = addDays(dataSolicitacao, 1);
   const dataCaptacaoConcluida = addDays(dataConcessao, -1);
@@ -103,64 +187,63 @@ export default function AtivoDetalheScreen() {
   const dataVencimentoFinal   = addDays(dataConcessao, prazoDias);
   const vencimentoEhEstimado  = !jaConcedido;
 
-  // Pool bar data
-  // Calcula o total combinado primeiro, depois deriva os segmentos — nunca soma arredondamentos individuais
-  const pctCaptado    = !jaConcedido && posicao.valorTotalPedido > 0
-    ? Math.round((posicao.jaCaptado / posicao.valorTotalPedido) * 100) : 0;
-  const pctTotal      = !jaConcedido && posicao.valorTotalPedido > 0
-    ? Math.round(((posicao.jaCaptado + valorInvestido) / posicao.valorTotalPedido) * 100) : 0;
-  const pctPosClamped = Math.max(0, pctTotal - pctCaptado);
-
-  // Previsão de vencimentos (captação) — datas relativas à concessão
-  const parcelasPrevistas = !jaConcedido
-    ? Math.round(prazoDias / cicloMeta.dias)
+  // Pool bar — captação
+  const pctCaptadoOutros = posicao.valorTotalPedido > 0
+    ? Math.round((posicao.jaCaptado / posicao.valorTotalPedido) * 100)
     : 0;
-  const parcelasPrevisao = !jaConcedido && parcelasPrevistas > 0
-    ? Array.from({ length: parcelasPrevistas }, (_, i) => {
-        const numero            = i + 1;
-        const diasAposConcessao = numero * cicloMeta.dias;
-        return { numero, diasAposConcessao };
-      })
+  const pctTotal = posicao.valorTotalPedido > 0
+    ? Math.round(((posicao.jaCaptado + valorInvestido) / posicao.valorTotalPedido) * 100)
+    : 0;
+  const pctPosClamped = Math.max(0, pctTotal - pctCaptadoOutros);
+
+  // Parcelas previstas (captação) — estimativa baseada em prazo/ciclo
+  const parcelasPrevistas = !jaConcedido ? Math.round(prazoDias / cicloMeta.dias) : 0;
+  const parcelasPrevisao  = !jaConcedido && parcelasPrevistas > 0
+    ? Array.from({ length: parcelasPrevistas }, (_, i) => ({
+        numero: i + 1,
+        diasAposConcessao: (i + 1) * cicloMeta.dias,
+      }))
     : [];
 
-  // Calcula direto da proporção — evita dividir e multiplicar de volta acumulando erro de ponto flutuante
-  // Durante captação usa parcelasPrevistas (derivadas do prazo/ciclo) pois parcelasTotal ainda é 0
   const parcelasRef      = jaConcedido ? parcelasTotal : parcelasPrevistas;
   const valorRecebimento = parcelasRef > 0 ? totalComRetorno / parcelasRef : 0;
   const pctPago          = jaConcedido && parcelasTotal > 0
-    ? Math.round((parcelasRecebidas / parcelasTotal) * 100) : 0;
-  const recebidoValor    = parcelasTotal > 0 ? totalComRetorno * parcelasRecebidas / parcelasTotal : 0;
+    ? Math.round((parcelasRecebidas / parcelasTotal) * 100)
+    : 0;
+  const recebidoValor    = totalRetornado;
 
-  // Vencimentos (ativo/atrasado/quitado) — datas reais
-  const parcelas = jaConcedido && parcelasTotal > 0
-    ? Array.from({ length: parcelasTotal }, (_, i) => {
-        const numero = i + 1;
-        const data   = addDays(dataConcessao, numero * cicloMeta.dias);
-        let pStatus: 'recebida' | 'atrasada' | 'pendente' = 'pendente';
-        if (numero <= parcelasRecebidas) pStatus = 'recebida';
-        else if (data < hoje)            pStatus = 'atrasada';
-        return { numero, data, status: pStatus };
-      })
+  // Parcelas reais (ativo/atrasado/quitado) — vindas da API
+  const parcelas = jaConcedido && posicao.installments.length > 0
+    ? posicao.installments.map((inst) => ({
+        numero: inst.installmentNumber,
+        data:   new Date(inst.dueDate + 'T00:00:00'),
+        status: (inst.status === 'paid'
+          ? 'recebida'
+          : inst.status === 'overdue'
+          ? 'atrasada'
+          : 'pendente') as 'recebida' | 'atrasada' | 'pendente',
+      }))
     : [];
 
   const parcelasRestantes = parcelasTotal - parcelasRecebidas;
-  const saldoRestante     = valorRecebimento * parcelasRestantes;
+  const saldoRestante     = valorInvestido; // saldo em aberto (principal restante)
 
-  const jaInvestiu     = !isOferta;
   const todosRecebidos = jaConcedido && parcelasRecebidas >= parcelasTotal && parcelasTotal > 0;
   const jaEncerrado    = status === 'quitado' || todosRecebidos;
 
   const timelineEvents: TimelineEvent[] = [
-    { label: 'Solicitação',        date: dataSolicitacao,                                done: true         },
-    { label: 'Captação iniciada',  date: dataCaptacaoIniciada,                           done: true         },
-    { label: 'Investimento realizado', ...(jaInvestiu ? { date: dataInvestimento } : {}), done: jaInvestiu   },
-    { label: 'Captação concluída', ...(jaConcedido ? { date: dataCaptacaoConcluida } : {}), done: jaConcedido },
-    { label: 'Concedido',          ...(jaConcedido ? { date: dataConcessao } : {}),      done: jaConcedido  },
-    { label: 'Pagamentos',         done: todosRecebidos, progress: { value: jaConcedido ? parcelasRecebidas : 0, total: jaConcedido ? parcelasTotal : parcelasPrevistas } },
-    { label: 'Encerrado',          ...(jaEncerrado ? { date: dataVencimentoFinal } : {}), done: jaEncerrado },
+    { label: 'Solicitação',            date: dataSolicitacao,                                    done: true         },
+    { label: 'Captação iniciada',      date: dataCaptacaoIniciada,                               done: true         },
+    { label: 'Investimento realizado', ...(jaInvestiu ? { date: dataInvestimento } : {}),        done: jaInvestiu   },
+    { label: 'Captação concluída',     ...(jaConcedido ? { date: dataCaptacaoConcluida } : {}),  done: jaConcedido  },
+    { label: 'Concedido',              ...(jaConcedido ? { date: dataConcessao } : {}),          done: jaConcedido  },
+    { label: 'Pagamentos',             done: todosRecebidos, progress: { value: jaConcedido ? parcelasRecebidas : 0, total: jaConcedido ? parcelasTotal : parcelasPrevistas } },
+    { label: 'Encerrado',              ...(jaEncerrado ? { date: dataVencimentoFinal } : {}),    done: jaEncerrado  },
   ];
 
-  const numeroDoContrato = emprestimosAnteriores === 0 ? 'Primeiro' : `${emprestimosAnteriores + 1}º empréstimo`;
+  const numeroDoContrato = emprestimosAnteriores === 0
+    ? 'Primeiro'
+    : `${emprestimosAnteriores + 1}º empréstimo`;
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
@@ -173,7 +256,7 @@ export default function AtivoDetalheScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
 
-        {/* ── Alert: tomador em atraso (topo, antes do hero) ── */}
+        {/* ── Alert: tomador em atraso ── */}
         {status === 'atrasado' && posicao.diasAtraso != null && (
           <AlertBanner
             style={{ marginHorizontal: spacing[4], marginBottom: 2 }}
@@ -193,30 +276,28 @@ export default function AtivoDetalheScreen() {
             <Text style={s.heroSign}>+</Text>{taxaJurosTotal}%
           </Text>
           <Text style={s.heroCaption}>
-            Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
+            Rendimento estimado de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
           </Text>
 
-          {/* Split: investido / retorno */}
           <View style={s.splitRow}>
             <View>
               <Text style={s.splitLabel}>Valor investido</Text>
               <Text style={s.splitValue}>R$ {formatBRL(valorInvestido)}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.splitLabel}>Retorno</Text>
+              <Text style={s.splitLabel}>Retorno estimado</Text>
               <Text style={s.splitValue}>R$ {formatBRL(Math.round(totalComRetorno))}</Text>
             </View>
           </View>
 
-          {/* Pool bar */}
           {!jaConcedido ? (
             <PoolBar
               label="Captação"
               headLeft={`${pctTotal}% captado`}
               headRight={`R$ ${formatBRL(posicao.jaCaptado + valorInvestido)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
               segments={[
-                { pct: pctCaptado,    variant: 'primary' },
-                { pct: pctPosClamped, variant: 'secondary' },
+                { pct: pctCaptadoOutros, variant: 'primary' },
+                { pct: pctPosClamped,    variant: 'secondary' },
               ]}
               context="dark"
               style={{ marginBottom: 20 }}
@@ -264,11 +345,7 @@ export default function AtivoDetalheScreen() {
                   R$ {formatBRL(Math.round(valorRecebimento))}/{CICLO_UNIT[ciclo]} · {parcelasPrevistas} {parcelasPrevistas === 1 ? CICLO_UNIT[ciclo] : CICLO_UNIT_PLURAL[ciclo]}
                 </Text>
               </View>
-              <Feather
-                name={showPrevisao ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={C.inkFaint}
-              />
+              <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
             </TouchableOpacity>
 
             {showPrevisao && (
@@ -283,9 +360,7 @@ export default function AtivoDetalheScreen() {
                   <View key={p.numero} style={s.parcelaCard}>
                     <InstallmentBadge variant="default" label={String(p.numero)} />
                     <View style={s.parcelaInfo}>
-                      <Text style={s.parcelaLabel}>
-                        ~{p.diasAposConcessao} dias após a concessão
-                      </Text>
+                      <Text style={s.parcelaLabel}>~{p.diasAposConcessao} dias após a concessão</Text>
                       <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorRecebimento))}</Text>
                     </View>
                     <View style={s.statusTag}>
@@ -298,8 +373,8 @@ export default function AtivoDetalheScreen() {
           </View>
         )}
 
-        {/* ── Vencimentos (colapsável) ── */}
-        {jaConcedido && parcelasTotal > 0 && (
+        {/* ── Vencimentos reais (colapsável) ── */}
+        {jaConcedido && parcelas.length > 0 && (
           <View style={s.vencimentosCard}>
             <TouchableOpacity
               style={s.sectionToggle}
@@ -312,11 +387,7 @@ export default function AtivoDetalheScreen() {
                   {parcelasRecebidas}/{parcelasTotal} recebidos · R$ {formatBRL(Math.round(saldoRestante))} restantes
                 </Text>
               </View>
-              <Feather
-                name={showVencimentos ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={C.inkFaint}
-              />
+              <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
             </TouchableOpacity>
 
             {showVencimentos && (
@@ -337,7 +408,6 @@ export default function AtivoDetalheScreen() {
                         variant={isRecebida ? 'paid' : isAtrasada ? 'overdue' : 'default'}
                         label={String(p.numero)}
                       />
-
                       <View style={s.parcelaInfo}>
                         <Text style={[s.parcelaLabel, isAtrasada && s.parcelaLabelAtrasada]}>
                           {isRecebida ? 'Recebido em ' : isAtrasada ? 'Venceu em ' : 'Vence em '}
@@ -345,7 +415,6 @@ export default function AtivoDetalheScreen() {
                         </Text>
                         <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorRecebimento))}</Text>
                       </View>
-
                       <View style={[s.statusTag, isAtrasada && s.statusTagAtrasada]}>
                         {isRecebida ? (
                           <>
@@ -374,9 +443,9 @@ export default function AtivoDetalheScreen() {
             <DetailGrid
               items={[
                 { label: 'Classificação', value: tomadorScore },
-                { label: 'Histórico', value: numeroDoContrato },
-                { label: 'Já tomado', value: emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(valorTotalTomado)}` },
-                { label: 'Cidade',    value: cidade },
+                { label: 'Histórico',     value: numeroDoContrato },
+                { label: 'Já tomado',     value: emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(valorTotalTomado)}` },
+                { label: 'Cidade',        value: cidade },
               ]}
             />
           </View>
@@ -445,11 +514,9 @@ export default function AtivoDetalheScreen() {
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
 
-  // Header
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingBottom: spacing[3] },
   title:  { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
 
-  // Hero dark card
   heroCard:     { borderRadius: radii.hero, marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: spacing[4], padding: spacing[6], backgroundColor: C.dark },
   heroTopRow:   { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 },
   heroEyebrow:  { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.onDarkSoft },
@@ -460,13 +527,11 @@ const s = StyleSheet.create({
   splitLabel:   { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.onDarkFaint, textTransform: 'uppercase', marginBottom: 4 },
   splitValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: '#fff', letterSpacing: -0.3 },
 
-  // Dates row
   datesRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: spacing[4], marginBottom: spacing[4], padding: 14, borderRadius: radii.lg, backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
   dateLabel:    { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 3 },
   dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
 
-  // Vencimentos collapsible card
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
   sectionToggle:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing[4] + 2 },
   sectionToggleTitle:   { fontFamily: fonts.display, fontSize: fontSize['md+'], color: C.ink, marginBottom: 3 },
@@ -483,21 +548,17 @@ const s = StyleSheet.create({
   statusTagText:        { fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.inkSoft },
   statusTagPrevisto:    { color: C.inkFaint },
 
-  // Previsão de vencimentos
-  previsaoAviso:        { flexDirection: 'row', alignItems: 'flex-start', gap: 7, marginHorizontal: spacing[4], marginBottom: spacing[2], marginTop: -2 },
-  previsaoAvisoText:    { flex: 1, fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, lineHeight: 16 },
+  previsaoAviso:     { flexDirection: 'row', alignItems: 'flex-start', gap: 7, marginHorizontal: spacing[4], marginBottom: spacing[2], marginTop: -2 },
+  previsaoAvisoText: { flex: 1, fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, lineHeight: 16 },
 
-  // Tomador card
   tomadorCard:     { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5] },
   tomadorTitle:    { fontFamily: fonts.display, fontSize: fontSize['md+'], color: C.ink, marginBottom: spacing[4] },
   tomadorGridWrap: { borderBottomWidth: 1, borderBottomColor: C.line, paddingBottom: spacing[4], marginBottom: spacing[4] },
   propositoLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   propositoValue:  { fontSize: fontSize.base, fontFamily: fonts.regular, color: C.ink, lineHeight: 20 },
 
-  // Contrato ID
   contratoId: { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', marginTop: spacing[3], marginBottom: spacing[1] },
 
-  // Timeline modal
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
   modalTitle:  { fontFamily: fonts.display, fontSize: fontSize.xl, color: C.ink },
   modalClose:  { width: 32, height: 32, borderRadius: radii.md, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },

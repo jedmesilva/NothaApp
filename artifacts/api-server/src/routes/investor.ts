@@ -76,6 +76,20 @@ router.get("/positions", requireAuth, async (req, res) => {
     installmentsByLoan.get(inst.loanId)!.push(inst);
   }
 
+  // Total captado por empréstimo (soma de principalBalanceCents de todos os investidores)
+  const fundedRows = await db
+    .select({
+      loanId: positionsTable.loanId,
+      fundedCents: sql<number>`COALESCE(SUM(${positionsTable.principalBalanceCents}), 0)`,
+    })
+    .from(positionsTable)
+    .where(inArray(positionsTable.loanId, loanIds))
+    .groupBy(positionsTable.loanId);
+
+  const fundedByLoan = new Map(
+    fundedRows.map((r) => [r.loanId, Number(r.fundedCents)]),
+  );
+
   // Monta resultado por posição
   const positions = rows.map(({ position, loan }) => {
     const installments = installmentsByLoan.get(loan.id) ?? [];
@@ -99,7 +113,11 @@ router.get("/positions", requireAuth, async (req, res) => {
 
     return {
       ...position,
-      loan,
+      loan: {
+        ...loan,
+        fundedAmountCents: fundedByLoan.get(loan.id) ?? 0,
+      },
+      installments: all,
       nextInstallment,
       lastInstallment,
       hasOverdue,

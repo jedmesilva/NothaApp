@@ -6,13 +6,15 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  ActivityIndicator,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { formatBRL } from '@/data/loans';
-import { POSICOES } from '@/data/ativos';
+import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions';
+import type { InvestorPosition } from '@/hooks/useInvestorPositions';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, StatusBadge, PoolBar, DetailGrid, SplitRow, Chip, ModalSheet } from '@/components/ds';
 import type { LoanStatus } from '@/components/ds';
@@ -30,37 +32,64 @@ const FILTERS = [
   { key: 'captacao', label: 'Em captação' },
   { key: 'quitado',  label: 'Quitados' },
 ];
-const CLASSIFICACOES = [
-  { key: 'todos', label: 'Todas' },
-  { key: 'A', label: 'A' },
-  { key: 'B', label: 'B' },
-  { key: 'C', label: 'C' },
-  { key: 'D', label: 'D' },
-  { key: 'E', label: 'E' },
-  { key: 'F', label: 'F' },
-];
+
+function buildCardData(pos: InvestorPosition) {
+  const posStatus  = getPosStatus(pos);
+  const original   = pos.originalPrincipalCents / 100;
+  const investido  = pos.principalBalanceCents / 100;
+  const taxa       = pos.ratePct;
+  const totalComRetorno = original * (1 + taxa / 100);
+  const retornoTotal    = totalComRetorno - original;
+  const prazoDias  = pos.loan.termDays;
+  const ciclo      = pos.loan.cycle;
+  const isCaptacao = posStatus === 'captacao';
+
+  const parcelasTotal  = pos.loan.installmentsTotal;
+  const parcelasPagas  = pos.installments.filter((i) => i.status === 'paid').length;
+  const recebido       = pos.totalReturnedCents / 100;
+  const pctRecebido    = parcelasTotal > 0
+    ? Math.round((parcelasPagas / parcelasTotal) * 100)
+    : 0;
+
+  const valorTotalPedido = pos.loan.amountCents / 100;
+  const fundedOutros     = Math.max(0, pos.loan.fundedAmountCents - pos.principalBalanceCents) / 100;
+  const pctCaptado       = valorTotalPedido > 0
+    ? Math.round((fundedOutros / valorTotalPedido) * 100)
+    : 0;
+  const pctPos           = valorTotalPedido > 0
+    ? Math.round((investido / valorTotalPedido) * 100)
+    : 0;
+  const pctPosClamped    = Math.min(pctPos, Math.max(0, 100 - pctCaptado));
+
+  return {
+    posStatus, taxa, original, investido, totalComRetorno, retornoTotal,
+    prazoDias, ciclo, isCaptacao,
+    parcelasTotal, parcelasPagas, recebido, pctRecebido,
+    valorTotalPedido, fundedOutros, pctCaptado, pctPosClamped,
+  };
+}
 
 export default function AtivosScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
-  const [activeFilter, setActiveFilter] = useState('todas');
-  const [classificacaoFilter, setClassificacaoFilter] = useState('todos');
-  const [busca, setBusca]               = useState('');
-  const [modalOpen, setModalOpen]       = useState(false);
-  const [draftFilter, setDraftFilter]   = useState('todas');
-  const [draftClassificacao, setDraftClassificacao] = useState('todos');
+  const [activeFilter, setActiveFilter]   = useState('todas');
+  const [busca, setBusca]                 = useState('');
+  const [modalOpen, setModalOpen]         = useState(false);
+  const [draftFilter, setDraftFilter]     = useState('todas');
 
-  const filtersActive = activeFilter !== 'todas' || classificacaoFilter !== 'todos';
+  const { data: posData, isLoading } = useInvestorPositions();
+  const positions = posData?.positions ?? [];
 
-  const filtered = POSICOES.filter((p) => {
-    const statusOk        = activeFilter === 'todas'       || p.status === activeFilter;
-    const classificacaoOk = classificacaoFilter === 'todos' || p.tomadorScore === classificacaoFilter;
-    const buscaOk         = busca.trim() === ''            || p.contratoId.toLowerCase().includes(busca.trim().toLowerCase());
-    return statusOk && classificacaoOk && buscaOk;
+  const filtered = positions.filter((p) => {
+    const statusOk = activeFilter === 'todas' || getPosStatus(p) === activeFilter;
+    const buscaOk  = busca.trim() === ''
+      || p.loan.contractId.toLowerCase().includes(busca.trim().toLowerCase());
+    return statusOk && buscaOk;
   });
 
-  const openModal = () => { setDraftFilter(activeFilter); setDraftClassificacao(classificacaoFilter); setModalOpen(true); };
+  const filtersActive = activeFilter !== 'todas';
+  const openModal = () => { setDraftFilter(activeFilter); setModalOpen(true); };
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
@@ -92,56 +121,69 @@ export default function AtivosScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: spacing[4], gap: 12, paddingBottom: 40 }}>
-        {filtered.length === 0 && (
-          <Text style={s.emptyState}>Nenhuma posição nessa categoria.</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: spacing[4], gap: 12, paddingBottom: 40 }}
+      >
+        {isLoading && (
+          <ActivityIndicator
+            color={C.ink}
+            style={{ paddingVertical: 60 }}
+          />
         )}
 
-        {filtered.map((p) => {
-          const ciclo          = CICLO_META[p.ciclo];
-          const totalComRetorno = p.valorInvestido * (1 + p.taxaJurosTotal / 100);
-          const retornoTotal   = totalComRetorno - p.valorInvestido;
-          const isAtrasado     = p.status === 'atrasado';
-          const isCaptacao     = p.status === 'captacao';
-          const isQuitado      = p.status === 'quitado';
+        {!isLoading && filtered.length === 0 && (
+          <Text style={s.emptyState}>
+            {positions.length === 0
+              ? 'Você ainda não tem ativos.'
+              : 'Nenhuma posição nessa categoria.'}
+          </Text>
+        )}
 
-          // Progress bar data
-          const pctCaptado    = isCaptacao && p.valorTotalPedido > 0 ? Math.round((p.jaCaptado / p.valorTotalPedido) * 100) : 0;
-          const pctPos        = isCaptacao && p.valorTotalPedido > 0 ? Math.round((p.valorInvestido / p.valorTotalPedido) * 100) : 0;
-          const pctPosClamped = Math.min(pctPos, 100 - pctCaptado);
-          const valParcela    = !isCaptacao && p.parcelasTotal > 0 ? totalComRetorno / p.parcelasTotal : 0;
-          const recebido      = valParcela * p.parcelasRecebidas;
-          const pctRecebido   = !isCaptacao && p.parcelasTotal > 0 ? Math.round((recebido / totalComRetorno) * 100) : 0;
+        {filtered.map((pos) => {
+          const {
+            posStatus, taxa, original, investido, totalComRetorno, retornoTotal,
+            prazoDias, ciclo, isCaptacao,
+            parcelasTotal, pctRecebido, recebido,
+            valorTotalPedido, fundedOutros, pctCaptado, pctPosClamped,
+          } = buildCardData(pos);
+
+          const isAtrasado = posStatus === 'atrasado';
+          const cicloDisplay = CICLO_META[ciclo];
 
           return (
             <TouchableOpacity
-              key={p.id}
+              key={pos.id}
               style={[
                 s.posCard,
                 isAtrasado && s.posCardAtrasado,
                 isCaptacao && s.posCardCaptacao,
               ]}
               activeOpacity={0.85}
-              onPress={() => router.push(`/ativo-detalhe?id=${p.id}` as any)}
+              onPress={() => router.push(`/ativo-detalhe?id=${pos.id}` as any)}
             >
               <View style={s.posTopRow}>
                 <Text style={s.eyebrow}>Retorno do contrato</Text>
-                <StatusBadge status={p.status as LoanStatus} />
+                <StatusBadge status={posStatus as LoanStatus} />
               </View>
 
-              <Text style={s.heroValue}><Text style={s.heroSign}>+</Text>{p.taxaJurosTotal}%</Text>
-              <Text style={s.heroCaption}>Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {p.prazoDias} dias</Text>
+              <Text style={s.heroValue}>
+                <Text style={s.heroSign}>+</Text>{taxa}%
+              </Text>
+              <Text style={s.heroCaption}>
+                Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
+              </Text>
 
               <SplitRow
-                left={{ label: 'Valor investido', value: `R$ ${formatBRL(p.valorInvestido)}` }}
-                right={{ label: 'Retorno', value: `R$ ${formatBRL(Math.round(totalComRetorno))}` }}
+                left={{ label: 'Valor investido', value: `R$ ${formatBRL(investido)}` }}
+                right={{ label: 'Retorno estimado', value: `R$ ${formatBRL(Math.round(totalComRetorno))}` }}
               />
 
               {isCaptacao ? (
                 <PoolBar
                   label="Captação"
-                  headLeft={`${pctCaptado + pctPos}% captado`}
-                  headRight={`R$ ${formatBRL(p.jaCaptado + p.valorInvestido)} de R$ ${formatBRL(p.valorTotalPedido)}`}
+                  headLeft={`${pctCaptado + (valorTotalPedido > 0 ? Math.round((investido / valorTotalPedido) * 100) : 0)}% captado`}
+                  headRight={`R$ ${formatBRL(Math.round(fundedOutros + investido))} de R$ ${formatBRL(valorTotalPedido)}`}
                   segments={[
                     { pct: pctCaptado,    variant: 'primary' },
                     { pct: pctPosClamped, variant: 'secondary' },
@@ -166,10 +208,8 @@ export default function AtivosScreen() {
 
               <DetailGrid
                 items={[
-                  { label: 'Prazo',    value: `${p.prazoDias} dias`, sub: `pagamentos ${ciclo.pagamentosLabel}` },
-                  { label: 'Classificação', value: p.tomadorScore },
-                  { label: 'Histórico', value: p.emprestimosAnteriores === 0 ? 'Primeiro' : `${p.emprestimosAnteriores + 1}º empréstimo` },
-                  { label: 'Já tomado', value: p.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(p.valorTotalTomado)}` },
+                  { label: 'Prazo',    value: `${prazoDias} dias`, sub: `pagamentos ${cicloDisplay?.pagamentosLabel ?? ''}` },
+                  { label: 'Parcelas', value: parcelasTotal > 0 ? `${parcelasTotal}x` : '—' },
                 ]}
               />
             </TouchableOpacity>
@@ -194,28 +234,27 @@ export default function AtivosScreen() {
         <Text style={s.modalSectionLabel}>Status</Text>
         <View style={s.pillsWrap}>
           {FILTERS.map((f) => (
-            <Chip key={f.key} label={f.label} variant="outlined" active={draftFilter === f.key} onPress={() => setDraftFilter(f.key)} />
-          ))}
-        </View>
-
-        <Text style={s.modalSectionLabel}>Classificação</Text>
-        <View style={s.pillsWrap}>
-          {CLASSIFICACOES.map((c) => (
-            <Chip key={c.key} label={c.label} variant="outlined" active={draftClassificacao === c.key} onPress={() => setDraftClassificacao(c.key)} />
+            <Chip
+              key={f.key}
+              label={f.label}
+              variant="outlined"
+              active={draftFilter === f.key}
+              onPress={() => setDraftFilter(f.key)}
+            />
           ))}
         </View>
 
         <View style={s.modalFooter}>
           <TouchableOpacity
             style={s.footerBtnGhost}
-            onPress={() => { setDraftFilter('todas'); setDraftClassificacao('todos'); }}
+            onPress={() => setDraftFilter('todas')}
             activeOpacity={0.8}
           >
             <Text style={s.footerBtnGhostText}>Limpar</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={s.footerBtnSolid}
-            onPress={() => { setActiveFilter(draftFilter); setClassificacaoFilter(draftClassificacao); setModalOpen(false); }}
+            onPress={() => { setActiveFilter(draftFilter); setModalOpen(false); }}
             activeOpacity={0.85}
           >
             <Text style={s.footerBtnSolidText}>Aplicar filtros</Text>
@@ -245,7 +284,6 @@ const s = StyleSheet.create({
   heroValue:  { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:   { fontSize: 24, fontFamily: fonts.display },
   heroCaption:{ fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 18 },
-  poolCaption:{ fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
   legend:     { flexDirection: 'row', gap: 16, marginTop: 4 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot:  { width: 8, height: 8, borderRadius: 2 },
