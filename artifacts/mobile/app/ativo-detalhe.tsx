@@ -85,7 +85,7 @@ export default function AtivoDetalheScreen() {
           valorInvestido:        offer.amountCents / 100,
           originalInvestido:     offer.amountCents / 100,
           totalRetornado:        0,
-          taxaJurosTotal:        offer.ratePct,
+          taxaJurosTotal:        offer.ratePct / 100,
           prazoDias:             offer.loan.termDays,
           ciclo:                 offer.loan.cycle,
           status:                'captacao',
@@ -293,8 +293,8 @@ export default function AtivoDetalheScreen() {
           {!jaConcedido ? (
             <PoolBar
               label="Captação"
-              headLeft={`${pctTotal}% captado`}
-              headRight={`R$ ${formatBRL(posicao.jaCaptado + valorInvestido)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
+              headLeft={`${pctCaptadoOutros}% captado`}
+              headRight={`R$ ${formatBRL(posicao.jaCaptado)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
               segments={[
                 { pct: pctCaptadoOutros, variant: 'primary' },
                 { pct: pctPosClamped,    variant: 'secondary' },
