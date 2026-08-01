@@ -37,7 +37,7 @@ function buildCardData(pos: InvestorPosition) {
   const posStatus  = getPosStatus(pos);
   const original   = pos.originalPrincipalCents / 100;
   const investido  = pos.principalBalanceCents / 100;
-  const taxa       = pos.ratePct;
+  const taxa       = pos.ratePct / 100;
   const totalComRetorno = original * (1 + taxa / 100);
   const retornoTotal    = totalComRetorno - original;
   const prazoDias  = pos.loan.termDays;

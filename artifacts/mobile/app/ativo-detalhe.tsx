@@ -123,7 +123,7 @@ export default function AtivoDetalheScreen() {
           valorInvestido:        pos.principalBalanceCents / 100,
           originalInvestido:     pos.originalPrincipalCents / 100,
           totalRetornado:        pos.totalReturnedCents / 100,
-          taxaJurosTotal:        pos.ratePct,
+          taxaJurosTotal:        pos.ratePct / 100,
           prazoDias:             pos.loan.termDays,
           ciclo:                 pos.loan.cycle,
           status:                posStatus,
