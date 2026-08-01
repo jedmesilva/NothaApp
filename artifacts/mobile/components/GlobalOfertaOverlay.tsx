@@ -117,7 +117,6 @@ export default function GlobalOfertaOverlay() {
   const retornoR$  = Math.round(adjR$ * (ratePct / 100));
   const totalR$    = adjR$ + retornoR$;
   const termDays   = activeOffer.loan.termDays;
-  const pctTempo   = (secondsLeft / COUNTDOWN) * 100;
   const isUrgent   = secondsLeft <= 10;
 
   const formatBRL = (v: number) =>
@@ -205,19 +204,6 @@ export default function GlobalOfertaOverlay() {
               </Text>
             </View>
 
-            {/* Timer bar */}
-            <View style={s.timerTrack}>
-              <View
-                style={[
-                  s.timerFill,
-                  {
-                    width: `${pctTempo}%` as any,
-                    backgroundColor: isUrgent ? C.red : C.dark,
-                  },
-                ]}
-              />
-            </View>
-
             {/* Hero */}
             <Text style={s.eyebrow}>Retorno oferecido</Text>
             <Text style={s.heroValue}>
@@ -303,16 +289,6 @@ const s = StyleSheet.create({
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headerLabel: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
   countdown: { fontFamily: fonts.display, fontSize: fontSize.base },
-
-  // Timer bar
-  timerTrack: {
-    width: '100%', height: 4,
-    borderRadius: radii.full,
-    backgroundColor: C.line,
-    overflow: 'hidden',
-    marginBottom: spacing[5],
-  },
-  timerFill: { height: '100%', borderRadius: radii.full },
 
   // Hero
   eyebrow: {
