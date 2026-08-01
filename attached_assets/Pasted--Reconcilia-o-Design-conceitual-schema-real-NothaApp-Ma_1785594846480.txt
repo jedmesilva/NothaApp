@@ -1,0 +1,239 @@
+# Reconciliação — Design conceitual × schema real (NothaApp)
+
+Mapeamento entre o que desenhamos na conversa e o que já existe em `lib/db/src/schema/`, com o plano de ajuste. Nomenclatura em inglês, seguindo o padrão já estabelecido no repo (`funding_orders`, `investor_profiles`, etc.) — os nomes em português da conversa foram usados só para facilitar a discussão conceitual.
+
+## Resumo da divergência
+
+O repo já tem uma modelagem de mercado primário funcional, mas mais simples do que desenhamos — sem range de valor na oferta, sem posição com saldo persistido, e nenhuma estrutura de mercado secundário. `funding_orders` não é nem nossa "oferta" nem nossa "posição": é a unidade de captação (o "slot" a ser preenchido), sequencialmente ofertada a investidores via `funding_order_offers`, no estilo do matching que já tínhamos desenhado.
+
+---
+
+## 1. `wallet_transactions` — ajustes no enum
+
+**Hoje:**
+```ts
+walletTransactionStatusEnum = ["pending", "completed", "failed"]
+walletTransactionTypeEnum = ["deposit", "withdrawal", "loan_disbursement", "loan_payment", "investment_out", "investment_return"]
+```
+
+**Ajustar para:**
+```ts
+walletTransactionStatusEnum = ["pending", "reserved", "completed", "failed"]
+
+walletTransactionTypeEnum = [
+  "deposit",
+  "withdrawal",
+  "loan_disbursement",
+  "loan_payment",
+  "investment_out",
+  "investment_return",
+  "position_transfer_out",  // investidor vende posição no secundário
+  "position_transfer_in",   // investidor compra posição no secundário
+]
+```
+
+`status: "reserved"` é o que sustenta a reserva de saldo no aceite de oferta — sem criar sub-wallet, só um estado intermediário na própria transação, exatamente como decidimos.
+
+---
+
+## 2. `funding_orders` — adicionar saldo restante
+
+**Hoje:** `amountCents` fixo, sem rastrear quanto já foi preenchido.
+
+**Adicionar:**
+```ts
+remainingAmountCents: integer("remaining_amount_cents").notNull()
+```
+Inicializado com o valor de `amountCents` na criação, decrementado a cada oferta aceita (parcial ou total). Quando chega a zero, `status` vira `"filled"`. Isso é o equivalente ao `valor_restante` que desenhamos para `ofertas_captacao` — sustenta o cenário de um mesmo funding_order sendo parcialmente preenchido por múltiplos investidores ao longo de várias rodadas.
+
+---
+
+## 3. `funding_order_offers` — adicionar range e escalonamento
+
+**Hoje:**
+```ts
+{ fundingOrderId, investorId, status, sentAt, respondedAt }
+```
+
+**Adicionar:**
+```ts
+minAmountCents: integer("min_amount_cents").notNull(),
+maxAmountCents: integer("max_amount_cents").notNull(),
+acceptedAmountCents: integer("accepted_amount_cents"), // preenchido no aceite, dentro do range
+offeredRatePct: integer("offered_rate_pct").notNull(),
+escalationRound: integer("escalation_round").notNull().default(1),
+expiresAt: timestamp("expires_at").notNull(),
+walletTransactionId: text("wallet_transaction_id"), // a reserva feita no aceite
+```
+
+Isso cobre: range de aceite parcial, taxa congelada por rodada, prazo de resposta, rastreabilidade do escalonamento, e o vínculo com a transação de reserva na wallet (seguindo o mesmo padrão que `installment_payments` já usa com `walletTransactionId`).
+
+O status `"expired"` já existe no enum (`funding_order_offer_status`), só faltava o campo de tempo e a mecânica em volta.
+
+**Mecânica de expiração:**
+```
+Oferta criada → expiresAt = sentAt + N horas (configurável)
+        │
+        ├── Aceita antes de expirar → status: accepted
+        ├── Recusada antes de expirar → status: rejected
+        └── Job periódico varre pending WHERE expiresAt < now()
+                → status: expired
+                → nenhum wallet_transaction para reverter (reserva só
+                  acontece no aceite, não na criação da oferta — expirar
+                  é uma operação "grátis" no ledger)
+                → valor volta para remainingAmountCents ser reofertado
+```
+
+**Prioridade de reoferta ao expirar (ou recusar):** o engine tenta primeiro **novos investidores elegíveis** que ainda não receberam oferta para essa `funding_order`. Só reoferta **para o mesmo investidor que deixou expirar** (em nova `escalationRound`, com taxa maior) quando não sobrar mais ninguém novo na fila de elegíveis. Isso evita gastar a melhor taxa em quem já demonstrou, por inação, que talvez não converta.
+
+---
+
+## 4. Nova tabela `positions` — nasce quando a oferta é aceita e a captação fecha
+
+Ainda não existe. É o equivalente ao nosso `posicoes`.
+
+```ts
+export const positionStatusEnum = ["active", "transferred_out", "settled"] as const;
+
+export const positionsTable = pgTable(
+  "positions",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    loanId: text("loan_id").notNull(),
+    investorId: text("investor_id").notNull(),
+    fundingOrderOfferId: text("funding_order_offer_id"), // origem, se nasceu de captação
+    parentPositionId: text("parent_position_id"),          // origem, se nasceu de cessão
+    principalBalanceCents: integer("principal_balance_cents").notNull(),
+    originalPrincipalCents: integer("original_principal_cents").notNull(), // histórico, não muda
+    status: text("status").$type<PositionStatus>().notNull().default("active"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.loanId], foreignColumns: [loansTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.investorId], foreignColumns: [investorProfilesTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.fundingOrderOfferId], foreignColumns: [fundingOrderOffersTable.id] }).onDelete("set null"),
+    foreignKey({ columns: [t.parentPositionId], foreignColumns: [t.id] }).onDelete("set null"),
+    index("positions_loan_id_idx").on(t.loanId),
+    index("positions_investor_id_idx").on(t.investorId),
+  ],
+);
+```
+
+Criada quando `funding_order_offers.status` vira `"accepted"` **e** a captação do empréstimo fecha (não no aceite em si — mesma lógica de reserva-depois-confirma que já fechamos).
+
+---
+
+## 5. Novas tabelas `position_transfer_orders` e `position_transfers` — mercado secundário
+
+Equivalente a `ordens_cessao` e `cessoes`. Não existe nada disso hoje.
+
+```ts
+export const positionTransferOrderStatusEnum = ["open", "partial", "closed", "cancelled"] as const;
+
+export const positionTransferOrdersTable = pgTable(
+  "position_transfer_orders",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    positionId: text("position_id").notNull(),
+    offeredAmountCents: integer("offered_amount_cents").notNull(),
+    remainingAmountCents: integer("remaining_amount_cents").notNull(),
+    priceCents: integer("price_cents").notNull(), // valor de face ajustado por deságio/ágio
+    status: text("status").$type<PositionTransferOrderStatus>().notNull().default("open"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.positionId], foreignColumns: [positionsTable.id] }).onDelete("cascade"),
+  ],
+);
+
+export const positionTransfersTable = pgTable(
+  "position_transfers",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    orderId: text("order_id").notNull(),
+    sourcePositionId: text("source_position_id").notNull(),
+    destinationPositionId: text("destination_position_id").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    priceCents: integer("price_cents").notNull(),
+    debitWalletTransactionId: text("debit_wallet_transaction_id"),  // comprador
+    creditWalletTransactionId: text("credit_wallet_transaction_id"), // vendedor
+    executedAt: timestamp("executed_at").notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ columns: [t.orderId], foreignColumns: [positionTransferOrdersTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.sourcePositionId], foreignColumns: [positionsTable.id] }).onDelete("restrict"),
+    foreignKey({ columns: [t.destinationPositionId], foreignColumns: [positionsTable.id] }).onDelete("restrict"),
+  ],
+);
+```
+
+---
+
+## 6. `installment_payment_distributions` — trocar a referência
+
+**Hoje:**
+```ts
+{ installmentPaymentId, fundingOrderId, investorId, amountCents, walletTransactionId }
+```
+
+**Ajustar para:**
+```ts
+{ installmentPaymentId, positionId, investorId, amountCents, walletTransactionId }
+```
+
+`investorId` continua como atalho denormalizado (mesmo padrão que `installment_payments` já usa com `loanId`), mas a referência estrutural passa a ser `positionId`, não mais `fundingOrderId`. O rateio passa a olhar `principalBalanceCents` de todas as `positions` ativas do `loanId`, não mais os `funding_orders` — cessão de posição não deveria exigir reabrir ou recriar `funding_orders`.
+
+---
+
+## Atomicidade e idempotência no fechamento da captação
+
+Isto não é um requisito de schema — é um requisito de implementação que precisa estar explícito, porque nenhuma tabela por si só garante isso.
+
+### O risco
+
+O fechamento da captação envolve múltiplas escritas: debitar (reserved → completed) cada investidor, criar cada `position`, creditar o tomador (`loan_disbursement`), atualizar `loans.status`, inserir `loan_events`. Se qualquer uma falhar no meio do processo, sem proteção, é possível debitar os investidores e nunca creditar o tomador — dinheiro reservado desaparece sem gerar a contrapartida.
+
+### A solução: uma única transação de banco
+
+Todo o fechamento precisa rodar dentro de uma transação Postgres (`BEGIN...COMMIT`), nunca como operações soltas:
+
+```
+db.transaction(async (tx) => {
+  // 1. Para cada funding_order_offer aceita: wallet_transaction reserved → completed
+  // 2. Para cada funding_order_offer aceita: cria a position correspondente
+  // 3. Cria a wallet_transaction loan_disbursement (tomador), valor agregado
+  // 4. Atualiza loans.status → "active"
+  // 5. Insere loan_events (loan_activated)
+})
+```
+
+Se qualquer passo falhar, o Postgres desfaz tudo — incluindo débitos já aplicados. Não existe estado intermediário visível: ou a captação fecha por completo, ou nada muda e o processo pode ser retentado. Isso é garantia básica de ACID, não exige nenhuma estrutura extra de schema.
+
+**Por que uma transação de banco basta aqui:** o fechamento da captação é puramente interno — não chama nenhum sistema externo (PSP, banco). É diferente de um saque via PIX, que cruza fronteira de sistema e não pode ser desfeito após enviado; ali sim seria necessário um padrão tipo outbox/saga. Captação não precisa disso.
+
+### Idempotência
+
+Requisito separado da atomicidade: se o processo travar **depois** do `COMMIT` mas antes de confirmar sucesso para quem chamou (timeout de rede, por exemplo), reprocessar não pode debitar/creditar de novo.
+
+Mitigação: usar `loans.status` como guarda de execução —
+
+```sql
+UPDATE loans SET status = 'active' WHERE id = $1 AND status = 'funding'
+```
+
+Se a linha não for afetada (porque `status` já não é mais `'funding'`), o processo de fechamento não deve rodar de novo. Alternativa/complemento: lock a nível de linha (`SELECT ... FOR UPDATE`) no `loan` antes de iniciar o fechamento, evitando duas execuções concorrentes do mesmo fechamento.
+
+Esse mesmo cuidado (transação atômica + guarda de idempotência) vale, com adaptações, para a execução de `position_transfers` no secundário — ali as duas pontas (débito do comprador, crédito do vendedor) também precisam nascer ou falhar juntas.
+
+---
+
+## Ordem de implementação sugerida
+
+1. `wallet_transactions` — enum de status e tipos (não quebra nada existente)
+2. `funding_orders` — adicionar `remainingAmountCents`
+3. `funding_order_offers` — adicionar range, taxa, rodada, `walletTransactionId`
+4. `positions` — tabela nova
+5. Migrar `installment_payment_distributions` para referenciar `positionId`
+6. `position_transfer_orders` + `position_transfers` — mercado secundário, só depois do primário estar validado ponta a ponta
+
+Os passos 1–5 fecham o mercado primário como desenhamos (reserva, aceite parcial, escalonamento, posição com saldo). O passo 6 é aditivo e não exige nenhuma migração nas tabelas existentes — pode entrar em qualquer momento depois.

@@ -8,9 +8,16 @@ export const walletTransactionTypeEnum = [
   "loan_payment",
   "investment_out",
   "investment_return",
+  "position_transfer_out", // investidor vende posição no mercado secundário
+  "position_transfer_in",  // investidor compra posição no mercado secundário
 ] as const;
 
-export const walletTransactionStatusEnum = ["pending", "completed", "failed"] as const;
+export const walletTransactionStatusEnum = [
+  "pending",
+  "reserved",   // saldo reservado no aceite de oferta — débito pendente de confirmação
+  "completed",
+  "failed",
+] as const;
 export const walletTransactionDirectionEnum = ["credit", "debit"] as const;
 
 export type WalletTransactionType = typeof walletTransactionTypeEnum[number];

@@ -7,12 +7,14 @@ export type FundingOrderStatus = typeof fundingOrderStatusEnum[number];
 export const fundingOrdersTable = pgTable(
   "funding_orders",
   {
-    id:          text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    loanId:      text("loan_id").notNull(),
-    orderNumber: integer("order_number").notNull(),
-    amountCents: integer("amount_cents").notNull(),
-    status:      text("status").$type<FundingOrderStatus>().notNull().default("open"),
-    createdAt:   timestamp("created_at").notNull().defaultNow(),
+    id:                   text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    loanId:               text("loan_id").notNull(),
+    orderNumber:          integer("order_number").notNull(),
+    amountCents:          integer("amount_cents").notNull(),
+    // Decrementado a cada oferta aceita; quando chega a zero → status "filled"
+    remainingAmountCents: integer("remaining_amount_cents").notNull(),
+    status:               text("status").$type<FundingOrderStatus>().notNull().default("open"),
+    createdAt:            timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [
     foreignKey({ columns: [t.loanId], foreignColumns: [loansTable.id] }).onDelete("cascade"),
