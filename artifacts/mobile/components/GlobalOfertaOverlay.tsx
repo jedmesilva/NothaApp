@@ -1,0 +1,378 @@
+/**
+ * GlobalOfertaOverlay
+ *
+ * Uber-style full-screen overlay that appears when a new funding offer
+ * arrives for the authenticated investor. Slides up over whatever screen
+ * is currently active, with a 30-second countdown to accept or decline.
+ */
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Pressable,
+  Platform,
+} from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useOfertaOverlay } from '@/contexts/OfertaOverlayContext';
+import { useRespondToOffer } from '@/hooks/useInvestorOffers';
+import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
+
+const COUNTDOWN = 30;
+
+type ResultState = 'accepted' | 'rejected' | 'expired';
+
+export default function GlobalOfertaOverlay() {
+  const { activeOffer, dismiss } = useOfertaOverlay();
+  const { mutateAsync: respond }  = useRespondToOffer();
+  const insets = useSafeAreaInsets();
+
+  // ── Animation refs ──────────────────────────────────────────────────────
+  const scrimOpacity  = useRef(new Animated.Value(0)).current;
+  const sheetY        = useRef(new Animated.Value(600)).current;
+
+  // ── Timer ────────────────────────────────────────────────────────────────
+  const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN);
+  const [result,      setResult]      = useState<ResultState | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Reset & animate in whenever a new offer appears
+  useEffect(() => {
+    if (!activeOffer) return;
+
+    setSecondsLeft(COUNTDOWN);
+    setResult(null);
+
+    // Fade scrim + slide sheet up
+    Animated.parallel([
+      Animated.timing(scrimOpacity, { toValue: 1, duration: 260, useNativeDriver: true }),
+      Animated.spring(sheetY, {
+        toValue: 0,
+        damping: 26,
+        stiffness: 300,
+        mass: 0.85,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Countdown
+    intervalRef.current = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(intervalRef.current!);
+          setResult('expired');
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalRef.current!);
+  }, [activeOffer?.id]);
+
+  // Animate out after result shown, then dismiss
+  const animateOut = () => {
+    Animated.parallel([
+      Animated.timing(scrimOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.timing(sheetY, { toValue: 600, duration: 280, useNativeDriver: true }),
+    ]).start(() => dismiss());
+  };
+
+  const handleAccept = async () => {
+    if (!activeOffer) return;
+    clearInterval(intervalRef.current!);
+    try {
+      await respond({ offerId: activeOffer.id, action: 'accepted' });
+    } catch (_) { /* silently continue — show result regardless */ }
+    setResult('accepted');
+  };
+
+  const handleDecline = async () => {
+    if (!activeOffer) return;
+    clearInterval(intervalRef.current!);
+    try {
+      await respond({ offerId: activeOffer.id, action: 'rejected' });
+    } catch (_) {}
+    setResult('rejected');
+  };
+
+  if (!activeOffer) return null;
+
+  const ratePct       = activeOffer.ratePct / 100;
+  const amountR$      = activeOffer.amountCents / 100;
+  const retornoR$     = Math.round(amountR$ * (ratePct / 100));
+  const totalR$       = amountR$ + retornoR$;
+  const termDays      = activeOffer.loan.termDays;
+  const pctTempo      = (secondsLeft / COUNTDOWN) * 100;
+  const isUrgent      = secondsLeft <= 10;
+
+  const formatBRL = (v: number) =>
+    v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // ── Result card ──────────────────────────────────────────────────────────
+  const resultConfig: Record<ResultState, {
+    icon: 'check' | 'x' | 'clock';
+    bg: string; iconColor: string;
+    title: string; sub: string;
+  }> = {
+    accepted: {
+      icon: 'check', bg: C.dark, iconColor: '#fff',
+      title: 'Oferta aceita!',
+      sub: `R$ ${formatBRL(amountR$)} reservados.\nVocê será notificado quando a captação fechar.`,
+    },
+    rejected: {
+      icon: 'x', bg: C.chipMuted, iconColor: C.inkSoft,
+      title: 'Oferta recusada',
+      sub: 'Sem problema. Vamos te avisar quando surgir outra oportunidade.',
+    },
+    expired: {
+      icon: 'clock', bg: C.redBg, iconColor: C.red,
+      title: 'Tempo esgotado',
+      sub: 'Essa oferta foi repassada para outro credor.\nFique de olho na próxima.',
+    },
+  };
+
+  return (
+    <Animated.View
+      style={[StyleSheet.absoluteFill, s.scrim, { opacity: scrimOpacity }]}
+      pointerEvents="box-none"
+    >
+      {/* Tap scrim only dismisses after result */}
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={result ? animateOut : undefined}
+      />
+
+      <Animated.View
+        style={[
+          s.sheet,
+          { paddingBottom: (Platform.OS === 'ios' ? insets.bottom : 0) + spacing[5] },
+          { transform: [{ translateY: sheetY }] },
+        ]}
+      >
+        {result ? (
+          /* ── Result state ── */
+          <>
+            <View style={[s.resultIcon, { backgroundColor: resultConfig[result].bg }]}>
+              <Feather name={resultConfig[result].icon} size={28} color={resultConfig[result].iconColor} />
+            </View>
+            <Text style={s.resultTitle}>{resultConfig[result].title}</Text>
+            <Text style={s.resultSub}>{resultConfig[result].sub}</Text>
+            <TouchableOpacity style={s.closeBtn} onPress={animateOut} activeOpacity={0.8}>
+              <Text style={s.closeBtnText}>Fechar</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          /* ── Active offer ── */
+          <>
+            {/* Grabber */}
+            <View style={s.grabber} />
+
+            {/* Header row */}
+            <View style={s.headerRow}>
+              <View style={s.headerLeft}>
+                <Feather name="clock" size={14} color={C.inkSoft} />
+                <Text style={s.headerLabel}>Nova solicitação de investimento</Text>
+              </View>
+              <Text style={[s.countdown, { color: isUrgent ? C.red : C.ink }]}>
+                {secondsLeft}s
+              </Text>
+            </View>
+
+            {/* Timer bar */}
+            <View style={s.timerTrack}>
+              <View
+                style={[
+                  s.timerFill,
+                  {
+                    width: `${pctTempo}%` as any,
+                    backgroundColor: isUrgent ? C.red : C.dark,
+                  },
+                ]}
+              />
+            </View>
+
+            {/* Hero */}
+            <Text style={s.eyebrow}>Retorno oferecido</Text>
+            <Text style={s.heroValue}>
+              <Text style={s.heroSign}>+</Text>{ratePct}%
+            </Text>
+            <Text style={s.heroCaption}>
+              Rendimento de R$ {formatBRL(retornoR$)} em {termDays} dias
+            </Text>
+
+            {/* Split row */}
+            <View style={s.splitRow}>
+              <View>
+                <Text style={s.splitLabel}>Investimento</Text>
+                <Text style={s.splitValue}>R$ {formatBRL(amountR$)}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={s.splitLabel}>Retorno total</Text>
+                <Text style={s.splitValue}>R$ {formatBRL(totalR$)}</Text>
+              </View>
+            </View>
+
+            {/* Buttons */}
+            <View style={s.btnRow}>
+              <TouchableOpacity style={s.declineBtn} onPress={handleDecline} activeOpacity={0.8}>
+                <Feather name="x" size={18} color={C.ink} />
+                <Text style={s.declineBtnText}>Recusar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.acceptBtn} onPress={handleAccept} activeOpacity={0.85}>
+                <Feather name="check" size={18} color="#fff" />
+                <Text style={s.acceptBtnText}>Aceitar oferta</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+const s = StyleSheet.create({
+  scrim: {
+    backgroundColor: C.scrimHeavy,
+    justifyContent: 'flex-end',
+    zIndex: 9999,
+  },
+  sheet: {
+    backgroundColor: C.card,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 28,
+    elevation: 24,
+  },
+
+  grabber: {
+    width: 36, height: 4,
+    borderRadius: 2,
+    backgroundColor: C.line,
+    marginBottom: spacing[4],
+  },
+
+  // Header
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 12,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  headerLabel: { fontSize: fontSize['sm+'], fontFamily: fonts.semibold, color: C.inkSoft },
+  countdown: { fontFamily: fonts.display, fontSize: fontSize.base },
+
+  // Timer bar
+  timerTrack: {
+    width: '100%', height: 4,
+    borderRadius: radii.full,
+    backgroundColor: C.line,
+    overflow: 'hidden',
+    marginBottom: spacing[5],
+  },
+  timerFill: { height: '100%', borderRadius: radii.full },
+
+  // Hero
+  eyebrow: {
+    alignSelf: 'flex-start',
+    fontSize: fontSize.xs,
+    fontFamily: fonts.semibold,
+    letterSpacing: 0.3,
+    color: C.inkFaint,
+    marginBottom: 4,
+  },
+  heroValue: {
+    alignSelf: 'flex-start',
+    fontFamily: fonts.display,
+    fontSize: 52,
+    color: C.ink,
+    letterSpacing: -1.5,
+    lineHeight: 56,
+  },
+  heroSign: { fontSize: 28, fontFamily: fonts.display },
+  heroCaption: {
+    alignSelf: 'flex-start',
+    fontSize: fontSize['base+'],
+    color: C.inkSoft,
+    fontFamily: fonts.regular,
+    marginBottom: spacing[5],
+    marginTop: 4,
+  },
+
+  // Split
+  splitRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    backgroundColor: C.bg,
+    borderRadius: radii.lg,
+    padding: spacing[4],
+    marginBottom: spacing[5],
+  },
+  splitLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.semibold,
+    color: C.inkFaint,
+    textTransform: 'uppercase',
+    letterSpacing: 0.2,
+    marginBottom: 3,
+  },
+  splitValue: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.xl,
+    color: C.ink,
+    letterSpacing: -0.3,
+  },
+
+  // Buttons
+  btnRow: { flexDirection: 'row', gap: 10, width: '100%' },
+  declineBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.chipMuted,
+  },
+  declineBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink },
+  acceptBtn: {
+    flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.dark,
+  },
+  acceptBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: '#fff' },
+
+  // Result
+  resultIcon: {
+    width: 64, height: 64, borderRadius: 32,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: spacing[4], marginTop: spacing[3],
+  },
+  resultTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSize['3xl'],
+    color: C.ink,
+    marginBottom: spacing[2],
+    textAlign: 'center',
+  },
+  resultSub: {
+    fontSize: fontSize.md,
+    color: C.inkSoft,
+    fontFamily: fonts.regular,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: spacing[6],
+  },
+  closeBtn: {
+    width: '100%', paddingVertical: 17,
+    borderRadius: radii.lg, backgroundColor: C.chipMuted,
+    alignItems: 'center',
+  },
+  closeBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink },
+});

@@ -220,6 +220,52 @@ router.get("/offers", requireAuth, async (req, res) => {
   res.json({ offers });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/investor/offers/:id/respond
+//
+// Aceita ou recusa uma oferta pendente.
+// body: { action: "accepted" | "rejected" }
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/offers/:id/respond", requireAuth, async (req, res) => {
+  const { userId } = (req as AuthRequest).user;
+  const { id }     = req.params;
+  const { action } = req.body as { action: string };
+
+  if (action !== "accepted" && action !== "rejected") {
+    res.status(400).json({ error: "action must be 'accepted' or 'rejected'" });
+    return;
+  }
+
+  const investorId = await getInvestorId(userId);
+  if (!investorId) {
+    res.status(404).json({ error: "Investor not found" });
+    return;
+  }
+
+  const [offer] = await db
+    .select()
+    .from(fundingOrderOffersTable)
+    .where(
+      and(
+        eq(fundingOrderOffersTable.id, id),
+        eq(fundingOrderOffersTable.investorId, investorId),
+        eq(fundingOrderOffersTable.status, "pending"),
+      ),
+    );
+
+  if (!offer) {
+    res.status(404).json({ error: "Oferta não encontrada ou já respondida" });
+    return;
+  }
+
+  await db
+    .update(fundingOrderOffersTable)
+    .set({ status: action as "accepted" | "rejected", respondedAt: new Date() })
+    .where(eq(fundingOrderOffersTable.id, id));
+
+  res.json({ ok: true, status: action });
+});
+
 function emptySummary() {
   return {
     principalBalanceCents: 0,

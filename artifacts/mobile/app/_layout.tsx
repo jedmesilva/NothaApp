@@ -10,6 +10,8 @@ import { ToastProvider } from '@/contexts/ToastContext';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import type { ToastState } from '@/contexts/ToastContext';
 import GlobalToast from '@/components/GlobalToast';
+import GlobalOfertaOverlay from '@/components/GlobalOfertaOverlay';
+import { OfertaOverlayProvider } from '@/contexts/OfertaOverlayContext';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -46,33 +48,36 @@ function RootLayoutNav() {
 
   return (
     <ToastProvider onToast={handleToast}>
-      <AreaProvider>
-        <View style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerBackTitle: 'Back' }}>
-            <Stack.Screen name="(auth)"              options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)"              options={{ headerShown: false }} />
-            <Stack.Screen name="emprestimos"         options={{ headerShown: false }} />
-            <Stack.Screen name="emprestimo-detalhe"  options={{ headerShown: false }} />
-            <Stack.Screen name="ativos"              options={{ headerShown: false }} />
-            <Stack.Screen name="ativo-detalhe"       options={{ headerShown: false }} />
-            <Stack.Screen name="conta"               options={{ headerShown: false }} />
-            <Stack.Screen name="novo-emprestimo"     options={{ headerShown: false }} />
-            <Stack.Screen name="aceite-contrato"     options={{ headerShown: false }} />
-            <Stack.Screen name="contrato-leitura"    options={{ headerShown: false }} />
-            <Stack.Screen name="notificacoes"        options={{ headerShown: false }} />
-            <Stack.Screen name="saque-valor"         options={{ headerShown: false }} />
-            <Stack.Screen name="saque-pix"           options={{ headerShown: false }} />
-            <Stack.Screen name="saque-confirmacao"   options={{ headerShown: false }} />
-            <Stack.Screen name="saque-comprovante"   options={{ headerShown: false }} />
-            <Stack.Screen name="depositar"           options={{ headerShown: false }} />
-            <Stack.Screen name="perfil"              options={{ headerShown: false }} />
-            <Stack.Screen name="dados-pessoais"      options={{ headerShown: false }} />
-            <Stack.Screen name="emprestimo-ajuda"    options={{ headerShown: false }} />
-          </Stack>
+      <OfertaOverlayProvider>
+        <AreaProvider>
+          <View style={{ flex: 1 }}>
+            <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+              <Stack.Screen name="(auth)"              options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)"              options={{ headerShown: false }} />
+              <Stack.Screen name="emprestimos"         options={{ headerShown: false }} />
+              <Stack.Screen name="emprestimo-detalhe"  options={{ headerShown: false }} />
+              <Stack.Screen name="ativos"              options={{ headerShown: false }} />
+              <Stack.Screen name="ativo-detalhe"       options={{ headerShown: false }} />
+              <Stack.Screen name="conta"               options={{ headerShown: false }} />
+              <Stack.Screen name="novo-emprestimo"     options={{ headerShown: false }} />
+              <Stack.Screen name="aceite-contrato"     options={{ headerShown: false }} />
+              <Stack.Screen name="contrato-leitura"    options={{ headerShown: false }} />
+              <Stack.Screen name="notificacoes"        options={{ headerShown: false }} />
+              <Stack.Screen name="saque-valor"         options={{ headerShown: false }} />
+              <Stack.Screen name="saque-pix"           options={{ headerShown: false }} />
+              <Stack.Screen name="saque-confirmacao"   options={{ headerShown: false }} />
+              <Stack.Screen name="saque-comprovante"   options={{ headerShown: false }} />
+              <Stack.Screen name="depositar"           options={{ headerShown: false }} />
+              <Stack.Screen name="perfil"              options={{ headerShown: false }} />
+              <Stack.Screen name="dados-pessoais"      options={{ headerShown: false }} />
+              <Stack.Screen name="emprestimo-ajuda"    options={{ headerShown: false }} />
+            </Stack>
 
-          <GlobalToast toast={toast} onClose={() => setToast(null)} />
-        </View>
-      </AreaProvider>
+            <GlobalToast toast={toast} onClose={() => setToast(null)} />
+            <GlobalOfertaOverlay />
+          </View>
+        </AreaProvider>
+      </OfertaOverlayProvider>
     </ToastProvider>
   );
 }

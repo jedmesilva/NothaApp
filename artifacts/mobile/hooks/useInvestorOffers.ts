@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+export type OfferAction = 'accepted' | 'rejected';
 import { apiFetch } from '@/lib/apiClient';
 
 export type OfferLoan = {
@@ -31,9 +32,24 @@ export type InvestorOffersData = {
   offers: InvestorOffer[];
 };
 
-export function useInvestorOffers() {
+export function useInvestorOffers(refetchInterval?: number) {
   return useQuery({
     queryKey: ['investor-offers'],
     queryFn: () => apiFetch<InvestorOffersData>('/api/investor/offers'),
+    refetchInterval,
+  });
+}
+
+export function useRespondToOffer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ offerId, action }: { offerId: string; action: OfferAction }) =>
+      apiFetch<{ ok: boolean; status: string }>(`/api/investor/offers/${offerId}/respond`, {
+        method: 'POST',
+        body: JSON.stringify({ action }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['investor-offers'] });
+    },
   });
 }
