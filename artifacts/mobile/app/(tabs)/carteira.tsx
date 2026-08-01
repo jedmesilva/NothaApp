@@ -236,8 +236,8 @@ export default function CarteiraScreen() {
           {valores.length > 0 ? (
             <>
               <View style={{ marginBottom: 16 }}>
-                <Text style={s.chartReturnValue}>+{retornoPercent.toFixed(1)}%</Text>
-                <Text style={s.chartReturnSub}>R$ {formatBRL(retornoValor)}</Text>
+                <Text style={s.chartReturnValue}>+{rendimentoPercent.toFixed(1)}%</Text>
+                <Text style={s.chartReturnSub}>R$ {formatBRL(rendimentoValor)}</Text>
               </View>
               <Svg width={chartW} height={chartH} style={{ display: 'flex' }}>
                 <Defs>
