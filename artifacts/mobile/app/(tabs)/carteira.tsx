@@ -104,6 +104,8 @@ export default function CarteiraScreen() {
   const nextInst = allNext.sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] ?? null;
   const lastInst = allLast.sort((a, b) => b.dueDate.localeCompare(a.dueDate))[0] ?? null;
 
+  const hasInvestments  = investido > 0 || original > 0;
+
   const temAtraso     = summary?.hasAnyOverdue ?? false;
   const overduePos    = positions.find((p) => p.hasOverdue && p.earliestOverdue);
   const valorAtrasado = (overduePos?.earliestOverdue?.amountCents ?? 0) / 100;
@@ -120,7 +122,8 @@ export default function CarteiraScreen() {
     ? Math.max(0, Math.round((toDate(nextInst.dueDate).getTime() - hoje.getTime()) / 86400000))
     : 0;
 
-  const ultimoDate  = lastInst ? toDate(lastInst.dueDate) : null;
+  const ultimoDate      = lastInst ? toDate(lastInst.dueDate) : null;
+  const hasInstallments = nextInst !== null || ultimoDate !== null;
   const diasUltimo  = ultimoDate
     ? Math.max(0, Math.round((ultimoDate.getTime() - hoje.getTime()) / 86400000))
     : 0;
@@ -189,29 +192,33 @@ export default function CarteiraScreen() {
           <Eyebrow context="dark">Investido</Eyebrow>
           <BigValue context="dark">R$ {formatBRL(investido)}</BigValue>
 
-          <View style={{ marginTop: 14, marginBottom: 20 }}>
-            <Eyebrow context="dark">Retorno</Eyebrow>
-            <Text style={s.retornoValue}><Text style={s.retornoSign}>+</Text>{rendimentoPercent}%</Text>
-            <Text style={s.retornoCaption}>R$ {formatBRL(rendimentoValor)} de retorno sobre investimento</Text>
-          </View>
+          {hasInvestments && (
+            <>
+              <View style={{ marginTop: 14, marginBottom: 20 }}>
+                <Eyebrow context="dark">Retorno</Eyebrow>
+                <Text style={s.retornoValue}><Text style={s.retornoSign}>+</Text>{rendimentoPercent}%</Text>
+                <Text style={s.retornoCaption}>R$ {formatBRL(rendimentoValor)} de retorno sobre investimento</Text>
+              </View>
 
-          <SplitRow
-            context="dark"
-            left={{ label: 'Recebido', value: `R$ ${formatBRL(recebido)}` }}
-            right={{ label: 'A receber', value: `R$ ${formatBRL(aReceber)}` }}
-            style={{ marginBottom: 16 }}
-          />
+              <SplitRow
+                context="dark"
+                left={{ label: 'Recebido', value: `R$ ${formatBRL(recebido)}` }}
+                right={{ label: 'A receber', value: `R$ ${formatBRL(aReceber)}` }}
+                style={{ marginBottom: 16 }}
+              />
 
-          <ThinBar pct={percentRecebido} context="dark" />
-          <View style={s.progressCaption}>
-            <Text style={s.progressCaptionText}>{percentRecebido}% recebido</Text>
-            <Text style={s.progressCaptionText}>de R$ {formatBRL(totalAReceber)}</Text>
-          </View>
+              <ThinBar pct={percentRecebido} context="dark" />
+              <View style={s.progressCaption}>
+                <Text style={s.progressCaptionText}>{percentRecebido}% recebido</Text>
+                <Text style={s.progressCaptionText}>de R$ {formatBRL(totalAReceber)}</Text>
+              </View>
+            </>
+          )}
         </DarkCard>
 
-        {/* Rentabilidade */}
-        <SectionTitle style={s.sectionTitle}>Rentabilidade</SectionTitle>
-        <LightCard>
+        {/* Rentabilidade — só exibe quando há posições ativas */}
+        {hasInvestments && <SectionTitle style={s.sectionTitle}>Rentabilidade</SectionTitle>}
+        {hasInvestments && <LightCard>
           <Text style={s.statLabel}>Período</Text>
           <View style={s.periodChips}>
             {CHIPS.map((c) => (
@@ -259,7 +266,7 @@ export default function CarteiraScreen() {
           ) : periodo === 'custom' ? (
             <Text style={s.customEmptyHint}>Preencha as duas datas para ver o rendimento do período</Text>
           ) : null}
-        </LightCard>
+        </LightCard>}
 
         {/* Ativos */}
         <SectionTitle style={s.sectionTitle}>Meus Ativos</SectionTitle>
@@ -285,27 +292,35 @@ export default function CarteiraScreen() {
               />
             )}
 
-            {/* Timeline */}
-            <View style={s.timelineWrap}>
-              <View style={s.timelineTrack}>
-                <View style={[s.timelineDot, { left: 0 }]} />
-                <View style={[s.timelineDot, s.timelineDotAccent, { left: `${proximoPercent}%` as any }]} />
-                <View style={[s.timelineDot, { right: 0 }]} />
-              </View>
-            </View>
+            {/* Timeline — só exibe quando há parcelas */}
+            {hasInstallments && (
+              <>
+                <View style={s.timelineWrap}>
+                  <View style={s.timelineTrack}>
+                    <View style={[s.timelineDot, { left: 0 }]} />
+                    {nextInst && <View style={[s.timelineDot, s.timelineDotAccent, { left: `${proximoPercent}%` as any }]} />}
+                    <View style={[s.timelineDot, { right: 0 }]} />
+                  </View>
+                </View>
 
-            <View style={s.timelineLabels}>
-              <View style={{ maxWidth: '55%' }}>
-                <Text style={s.statLabel}>Próximo vencimento</Text>
-                <Text style={s.statValue}>{proximoLabel}</Text>
-                <Text style={s.statSub}>R$ {formatBRL(proximoValor)}</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={s.statLabel}>Último vencimento</Text>
-                <Text style={s.statValue}>{ultimoLabel}</Text>
-                <Text style={s.statSub}>em {prazoLabel}</Text>
-              </View>
-            </View>
+                <View style={s.timelineLabels}>
+                  {nextInst && (
+                    <View style={{ maxWidth: '55%' }}>
+                      <Text style={s.statLabel}>Próximo vencimento</Text>
+                      <Text style={s.statValue}>{proximoLabel}</Text>
+                      <Text style={s.statSub}>R$ {formatBRL(proximoValor)}</Text>
+                    </View>
+                  )}
+                  {ultimoDate && (
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={s.statLabel}>Último vencimento</Text>
+                      <Text style={s.statValue}>{ultimoLabel}</Text>
+                      <Text style={s.statSub}>em {prazoLabel}</Text>
+                    </View>
+                  )}
+                </View>
+              </>
+            )}
           </LightCard>
         </TouchableOpacity>
       </ScrollView>
