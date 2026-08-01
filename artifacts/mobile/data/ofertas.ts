@@ -6,7 +6,7 @@
 export type OfertaCiclo = 'Diário' | 'Semanal' | 'Mensal';
 
 export interface Oferta {
-  id:                    number;
+  id:                    string | number;
   ofertaId:              string;
   valor:                 number;   // quanto o investidor colocaria nessa oferta
   taxaRetorno:           number;

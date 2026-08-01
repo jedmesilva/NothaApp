@@ -179,8 +179,8 @@ export default function OfertasScreen() {
   };
 
   // Mapeia ofertas da API para o formato Oferta usado pela tela
-  const apiOfertas: Oferta[] = (offersData?.offers ?? []).map((o, idx) => ({
-    id:                    idx + 1,
+  const apiOfertas: Oferta[] = (offersData?.offers ?? []).map((o) => ({
+    id:                    o.id,
     ofertaId:              o.loan.contractId,
     valor:                 o.amountCents / 100,
     taxaRetorno:           o.ratePct / 100,
