@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -16,6 +17,7 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import { DarkCard, LightCard, ThinBar, SplitRow, Chip, SectionTitle, Eyebrow, BigValue, AlertBanner } from '@/components/ds';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInvestorPositions } from '@/hooks/useInvestorPositions';
+import { useInvestorProfile, useActivateInvestorProfile } from '@/hooks/useInvestorProfile';
 
 const W = Dimensions.get('window').width;
 
@@ -66,6 +68,10 @@ export default function CarteiraScreen() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim]       = useState('');
   const { user } = useAuth();
+
+  // ── Perfil de investidor ────────────────────────────────────────────────────
+  const { data: profileData, isLoading: profileLoading } = useInvestorProfile();
+  const activateMutation = useActivateInvestorProfile();
 
   const hoje2 = new Date();
   const hour = hoje2.getHours();
@@ -178,6 +184,61 @@ export default function CarteiraScreen() {
   const retornoPercent = investido > 0 ? (retornoValor / investido) * 100 : 0;
   const step     = Math.max(1, Math.ceil(labels.length / 6));
   const visLabels = labels.filter((_, i) => i % step === 0 || i === labels.length - 1);
+
+  // ── Gate de perfil de investidor ───────────────────────────────────────────
+  if (profileLoading) {
+    return (
+      <View style={g.center}>
+        <ActivityIndicator size="large" color={C.ink} />
+      </View>
+    );
+  }
+
+  const investorProfile = profileData?.profile;
+
+  if (!investorProfile) {
+    return (
+      <View style={g.wrap}>
+        <View style={g.iconWrap}>
+          <Feather name="trending-up" size={28} color={C.ink} />
+        </View>
+        <Text style={g.title}>Seja um credor</Text>
+        <Text style={g.body}>
+          Ative seu perfil de credor para receber ofertas de empréstimo e
+          investir no retorno de outros usuários da plataforma.
+        </Text>
+        <TouchableOpacity
+          style={[g.btn, activateMutation.isPending && g.btnDisabled]}
+          onPress={() => activateMutation.mutate()}
+          activeOpacity={0.85}
+          disabled={activateMutation.isPending}
+        >
+          {activateMutation.isPending
+            ? <ActivityIndicator size="small" color="#fff" />
+            : <Text style={g.btnText}>Ativar perfil de credor</Text>
+          }
+        </TouchableOpacity>
+        {activateMutation.isError && (
+          <Text style={g.errorText}>Não foi possível ativar. Tente novamente.</Text>
+        )}
+      </View>
+    );
+  }
+
+  if (investorProfile.status === 'pending_review') {
+    return (
+      <View style={g.wrap}>
+        <View style={[g.iconWrap, { backgroundColor: C.chipMuted }]}>
+          <Feather name="clock" size={28} color={C.inkSoft} />
+        </View>
+        <Text style={g.title}>Perfil em análise</Text>
+        <Text style={g.body}>
+          Seu perfil de credor está sendo analisado. Em breve você receberá
+          ofertas de investimento disponíveis na plataforma.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={s.screen}>
@@ -327,6 +388,18 @@ export default function CarteiraScreen() {
     </View>
   );
 }
+
+const g = StyleSheet.create({
+  center:     { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg },
+  wrap:       { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing[7], backgroundColor: C.bg },
+  iconWrap:   { width: 64, height: 64, borderRadius: 32, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', marginBottom: spacing[5] },
+  title:      { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, marginBottom: 10, textAlign: 'center' },
+  body:       { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, textAlign: 'center', lineHeight: 22, marginBottom: spacing[7] },
+  btn:        { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingVertical: 17, borderRadius: radii.lg, backgroundColor: C.dark, minHeight: 54 },
+  btnDisabled:{ opacity: 0.6 },
+  btnText:    { fontSize: fontSize.lg, fontFamily: fonts.bold, color: '#fff' },
+  errorText:  { marginTop: spacing[3], fontSize: fontSize.sm, color: C.red, fontFamily: fonts.regular, textAlign: 'center' },
+});
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
