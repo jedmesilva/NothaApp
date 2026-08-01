@@ -272,6 +272,28 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
     })
     .where(eq(fundingOrderOffersTable.id, id));
 
+  // Ao aceitar: cria (ou soma a) posição do investidor no empréstimo
+  if (action === "accepted") {
+    await db
+      .insert(positionsTable)
+      .values({
+        loanId:                 offer.loanId,
+        investorId:             offer.investorId,
+        principalBalanceCents:  finalAmountCents,
+        originalPrincipalCents: finalAmountCents,
+        totalReturnedCents:     0,
+        ratePct:                offer.ratePct,
+        status:                 "active",
+      })
+      .onConflictDoUpdate({
+        target:  [positionsTable.loanId, positionsTable.investorId],
+        set: {
+          principalBalanceCents:  sql`${positionsTable.principalBalanceCents} + ${finalAmountCents}`,
+          originalPrincipalCents: sql`${positionsTable.originalPrincipalCents} + ${finalAmountCents}`,
+        },
+      });
+  }
+
   res.json({ ok: true, status: action });
 });
 
