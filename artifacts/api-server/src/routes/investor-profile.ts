@@ -35,7 +35,7 @@ router.post("/", requireAuth, async (req, res) => {
 
   const [profile] = await db
     .insert(investorProfilesTable)
-    .values({ userId })
+    .values({ userId, status: "active" })
     .returning();
 
   res.status(201).json({ profile });
