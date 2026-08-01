@@ -251,15 +251,16 @@ export default function AtivoDetalheScreen() {
 
   const handleAceitar = async () => {
     if (aceitou) return;
+    setAceitou(true);
     try {
       await respond({ offerId: String(id), action: 'accepted', amountCents: Math.round(valorInvestido * 100) });
     } catch (_) { /* continua mesmo com erro de rede */ }
-    setAceitou(true);
+    router.back();
     showToast({
       title: 'Oferta aceita',
       subtitle: `R$ ${formatBRL(Math.round(valorInvestido))} investidos em ${contratoId}`,
-      actionLabel: 'Acompanhar captação',
-      onAction: () => {},
+      actionLabel: 'Ver meus ativos',
+      onAction: () => router.push('/ativos' as any),
       duration: 6000,
     });
   };

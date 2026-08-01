@@ -89,8 +89,8 @@ export default function OfertasScreen() {
     showToast({
       title: 'Oferta aceita',
       subtitle: `R$ ${formatBRL(oferta.valor)} investidos em ${oferta.ofertaId}`,
-      actionLabel: 'Acompanhar captação',
-      onAction: () => router.push(`/ativo-detalhe?id=${oferta.id}` as any),
+      actionLabel: 'Ver meus ativos',
+      onAction: () => router.push('/ativos' as any),
       duration: 6000,
     });
   };
