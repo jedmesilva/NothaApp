@@ -1,23 +1,26 @@
-import { pgTable, text, integer, timestamp, foreignKey, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, foreignKey, uniqueIndex } from "drizzle-orm/pg-core";
 import { loansTable } from "./loans";
 import { investorProfilesTable } from "./investor-profiles";
-import { fundingOrderOffersTable } from "./funding-order-offers";
 
 export const positionStatusEnum = ["active", "transferred_out", "settled"] as const;
 export type PositionStatus = typeof positionStatusEnum[number];
 
 /**
- * Representa a fatia de um empréstimo que pertence a um investidor.
+ * Uma linha por par (investorId, loanId) — representa a fatia consolidada
+ * de um credor naquele empréstimo.
  *
  * Ciclo de vida:
- *   - Nasce quando a captação fecha (funding_order_offer aceita + loan ativado)
- *   - principalBalanceCents decrementado a cada repasse de parcela recebido
- *   - status → "transferred_out" quando cedida via position_transfer_orders
- *   - status → "settled" quando principalBalanceCents chega a zero (empréstimo quitado)
+ *   - Nasce (ou é atualizada via upsert) quando captação fecha e uma
+ *     investment_order é registrada para esse credor
+ *   - principalBalanceCents decrementado e totalReturnedCents incrementado
+ *     atomicamente a cada distribuição de parcela
+ *   - ratePct recalculado como média ponderada sempre que a composição de
+ *     investment_orders mudar (novo aporte ou compra no secundário)
+ *   - status → "transferred_out" quando o saldo é integralmente cedido
+ *   - status → "settled" quando principalBalanceCents chega a zero
  *
- * Duas origens possíveis (mutuamente exclusivas):
- *   - fundingOrderOfferId → nasceu de captação primária
- *   - parentPositionId    → nasceu de cessão no mercado secundário
+ * É a única entidade que participa de cálculo (rateio de parcela, venda no
+ * secundário). investment_orders são puro histórico de proveniência.
  */
 export const positionsTable = pgTable(
   "positions",
@@ -26,15 +29,17 @@ export const positionsTable = pgTable(
     loanId:     text("loan_id").notNull(),
     investorId: text("investor_id").notNull(),
 
-    // Origem: captação primária (null se nasceu de cessão)
-    fundingOrderOfferId: text("funding_order_offer_id"),
-    // Origem: cessão no secundário (null se nasceu de captação)
-    parentPositionId:    text("parent_position_id"),
-
     // Saldo atual do principal — decrementado em cada distribuição de parcela
     principalBalanceCents: integer("principal_balance_cents").notNull(),
-    // Valor original quando a posição foi criada — imutável, para histórico
+    // Total investido desde a criação — imutável, para histórico
     originalPrincipalCents: integer("original_principal_cents").notNull(),
+    // Total já retornado ao investidor — só cresce, nunca zera
+    totalReturnedCents: integer("total_returned_cents").notNull().default(0),
+
+    // Taxa consolidada — média de ratePct das investment_orders ativas,
+    // ponderada por principalBalanceCents de cada uma.
+    // Recalculada apenas quando a composição de ordens muda (não a cada parcela).
+    ratePct: integer("rate_pct").notNull(),
 
     status:    text("status").$type<PositionStatus>().notNull().default("active"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -42,11 +47,8 @@ export const positionsTable = pgTable(
   (t) => [
     foreignKey({ columns: [t.loanId],     foreignColumns: [loansTable.id] }).onDelete("restrict"),
     foreignKey({ columns: [t.investorId], foreignColumns: [investorProfilesTable.id] }).onDelete("restrict"),
-    foreignKey({ columns: [t.fundingOrderOfferId], foreignColumns: [fundingOrderOffersTable.id] }).onDelete("set null"),
-    // Auto-referência: posição filha aponta para a posição pai que foi cedida
-    foreignKey({ columns: [t.parentPositionId], foreignColumns: [t.id] }).onDelete("set null"),
-    index("positions_loan_id_idx").on(t.loanId),
-    index("positions_investor_id_idx").on(t.investorId),
+    // Uma única linha por credor + empréstimo
+    uniqueIndex("positions_loan_investor_idx").on(t.loanId, t.investorId),
   ],
 );
 

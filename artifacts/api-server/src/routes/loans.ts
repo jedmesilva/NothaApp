@@ -5,8 +5,8 @@ import {
   borrowerProfilesTable,
   loansTable,
   loanEventsTable,
-  fundingOrdersTable,
   fundingOrderOffersTable,
+  positionsTable,
   loanInstallmentsTable,
 } from "@workspace/db";
 import { requireAuth, type AuthRequest } from "../middlewares/auth.js";
@@ -144,25 +144,19 @@ router.get("/", requireAuth, async (req, res) => {
               eq(loanInstallmentsTable.status, "paid"),
             ),
           ),
+        // Soma do principal original de todas as posições ativas — representa
+        // o total captado para este empréstimo no novo modelo
         db
-          .select({ amountCents: fundingOrdersTable.amountCents })
-          .from(fundingOrdersTable)
-          .where(
-            and(
-              eq(fundingOrdersTable.loanId, loan.id),
-              eq(fundingOrdersTable.status, "filled"),
-            ),
-          ),
+          .select({ amountCents: positionsTable.originalPrincipalCents })
+          .from(positionsTable)
+          .where(eq(positionsTable.loanId, loan.id)),
+        // Conta ofertas aceitas diretamente pelo loanId — não há mais fundingOrdersTable
         db
           .select({ count: count() })
           .from(fundingOrderOffersTable)
-          .innerJoin(
-            fundingOrdersTable,
-            eq(fundingOrderOffersTable.fundingOrderId, fundingOrdersTable.id),
-          )
           .where(
             and(
-              eq(fundingOrdersTable.loanId, loan.id),
+              eq(fundingOrderOffersTable.loanId, loan.id),
               eq(fundingOrderOffersTable.status, "accepted"),
             ),
           ),
@@ -183,7 +177,7 @@ router.get("/", requireAuth, async (req, res) => {
 // GET /api/loans/:id — detalhe de um empréstimo com suas parcelas
 router.get("/:id", requireAuth, async (req, res) => {
   const { userId } = (req as AuthRequest).user;
-  const { id } = req.params;
+  const id = req.params["id"] as string;
 
   const [borrower] = await db
     .select({ id: borrowerProfilesTable.id })
@@ -218,25 +212,18 @@ router.get("/:id", requireAuth, async (req, res) => {
             eq(loanInstallmentsTable.status, "paid"),
           ),
         ),
+      // Soma do principal original de todas as posições — total captado
       db
-        .select({ amountCents: fundingOrdersTable.amountCents })
-        .from(fundingOrdersTable)
-        .where(
-          and(
-            eq(fundingOrdersTable.loanId, loan.id),
-            eq(fundingOrdersTable.status, "filled"),
-          ),
-        ),
+        .select({ amountCents: positionsTable.originalPrincipalCents })
+        .from(positionsTable)
+        .where(eq(positionsTable.loanId, loan.id)),
+      // Conta credores com oferta aceita diretamente pelo loanId
       db
         .select({ count: count() })
         .from(fundingOrderOffersTable)
-        .innerJoin(
-          fundingOrdersTable,
-          eq(fundingOrderOffersTable.fundingOrderId, fundingOrdersTable.id),
-        )
         .where(
           and(
-            eq(fundingOrdersTable.loanId, loan.id),
+            eq(fundingOrderOffersTable.loanId, loan.id),
             eq(fundingOrderOffersTable.status, "accepted"),
           ),
         ),
@@ -261,7 +248,7 @@ router.get("/:id", requireAuth, async (req, res) => {
 // PATCH /api/loans/:id/cancel — cancela uma solicitação em análise ou captação
 router.patch("/:id/cancel", requireAuth, async (req, res) => {
   const { userId } = (req as AuthRequest).user;
-  const { id } = req.params;
+  const id = req.params["id"] as string;
 
   const [borrower] = await db
     .select({ id: borrowerProfilesTable.id })

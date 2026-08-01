@@ -15,12 +15,12 @@ export type JwtPayload = {
 
 export function signToken(payload: Omit<JwtPayload, "jti">): string {
   const jti = crypto.randomUUID();
-  return jwt.sign({ jti, ...payload }, secret, { expiresIn: TOKEN_TTL_SECONDS });
+  return jwt.sign({ jti, ...payload }, secret!, { expiresIn: TOKEN_TTL_SECONDS });
 }
 
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    return jwt.verify(token, secret) as JwtPayload;
+    return jwt.verify(token, secret!) as JwtPayload;
   } catch {
     return null;
   }
