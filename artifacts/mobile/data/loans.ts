@@ -45,6 +45,7 @@ export const EMPRESTIMOS: Emprestimo[] = [
     diasAtraso: 6,
     diasDesdeConcessao: 36,
     contratoId: 'EMP-2026-80121',
+    createdAt: '2026-05-26T00:00:00.000Z',
   },
   {
     id: 2,
@@ -57,6 +58,7 @@ export const EMPRESTIMOS: Emprestimo[] = [
     status: 'ativo',
     diasDesdeConcessao: 42,
     contratoId: 'EMP-2026-90214',
+    createdAt: '2026-06-20T00:00:00.000Z',
   },
   {
     id: 3,
@@ -70,6 +72,7 @@ export const EMPRESTIMOS: Emprestimo[] = [
     valorCaptado: 3100,
     numCredores: 14,
     contratoId: 'EMP-2026-70398',
+    createdAt: '2026-07-01T00:00:00.000Z',
   },
   {
     id: 4,
@@ -81,6 +84,7 @@ export const EMPRESTIMOS: Emprestimo[] = [
     parcelasPagas: 0,
     status: 'analise',
     contratoId: 'EMP-2026-70421',
+    createdAt: '2026-07-28T00:00:00.000Z',
   },
   {
     id: 5,
@@ -93,6 +97,7 @@ export const EMPRESTIMOS: Emprestimo[] = [
     status: 'quitado',
     diasDesdeConcessao: 60,
     contratoId: 'EMP-2026-50077',
+    createdAt: '2026-06-01T00:00:00.000Z',
   },
 ];
 
@@ -114,6 +119,7 @@ export function createEmprestimo(opts: {
     parcelasPagas: 0,
     status: 'analise',
     contratoId: `EMP-${new Date().getFullYear()}-${String(newId).padStart(5, '0')}`,
+    createdAt: new Date().toISOString(),
   });
   return newId;
 }

@@ -24,6 +24,10 @@ args = "artifacts/mobile: expo"
 task = "workflow.run"
 args = "artifacts/api-server: API Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/mockup-sandbox: Component Preview Server"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true

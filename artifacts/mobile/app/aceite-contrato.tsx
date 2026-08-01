@@ -134,7 +134,7 @@ export default function AceiteContratoScreen() {
                   value: `R$ ${fmtBRL(valorParcela)}/${ciclo.unidade}`,
                 },
                 {
-                  label: ({ diario: 'Vencimentos diários', semanal: 'Vencimentos semanais', mensal: 'Vencimentos mensais' } as const)[cicloKey],
+                  label: (({ diario: 'Vencimentos diários', semanal: 'Vencimentos semanais', mensal: 'Vencimentos mensais' } as Record<string, string>)[cicloKey] ?? 'Vencimentos'),
                   value: `${numPeriodos}`,
                 },
                 {
