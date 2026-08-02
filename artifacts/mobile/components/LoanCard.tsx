@@ -48,6 +48,7 @@ export function LoanCard({ loan }: Props) {
     >
       <View style={st.topRow}>
         <View>
+          <Text style={st.eyebrow}>Valor do empréstimo</Text>
           <Text style={st.value}>R$ {formatBRL(loan.valor)}</Text>
           <Text style={st.label}>
             R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade} · {loan.parcelasTotal}{' '}
@@ -99,6 +100,7 @@ const st = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
+  eyebrow: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.6 },
   value: { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4 },
   label: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginTop: 2 },
 });
