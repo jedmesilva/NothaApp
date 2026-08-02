@@ -145,6 +145,7 @@ export default function OfertasScreen() {
             {filtersActive && <View style={s.filterBadge} />}
           </TouchableOpacity>
         </View>
+        <View style={s.cardsList}>
         {filtered.length === 0 && (
           <Text style={s.emptyState}>Nenhuma oferta encontrada.</Text>
         )}
@@ -217,6 +218,7 @@ export default function OfertasScreen() {
             </TouchableOpacity>
           );
         })}
+        </View>{/* /cardsList */}
       </ScrollView>
 
       {/* Modal: Filtros */}
@@ -291,7 +293,8 @@ const s = StyleSheet.create({
   filterBadge:    { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.card },
 
   // List
-  list:      { gap: 12, paddingHorizontal: spacing[4], paddingBottom: 120 },
+  list:      { paddingHorizontal: spacing[4], paddingBottom: 120 },
+  cardsList: { gap: 12 },
   emptyState:{ textAlign: 'center', paddingVertical: 60, color: C.inkFaint, fontFamily: fonts.regular, fontSize: fontSize.base },
 
   // Card
