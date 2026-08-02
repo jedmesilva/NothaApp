@@ -114,38 +114,37 @@ export default function OfertasScreen() {
 
   return (
     <View style={s.screen}>
-      {/* Header */}
-      <View style={s.header}>
-        <Text style={s.title}>Ofertas</Text>
-        <Text style={s.subtitle}>{offersLoading ? '…' : `${apiOfertas.length} ofertas disponíveis`}</Text>
-      </View>
-
-      {/* Busca + filtro */}
-      <View style={s.searchRow}>
-        <View style={s.searchWrap}>
-          <Feather name="search" size={17} color={C.inkFaint} />
-          <TextInput
-            style={s.searchInput}
-            placeholder="Buscar por número da oferta"
-            placeholderTextColor={C.inkFaint}
-            value={busca}
-            onChangeText={setBusca}
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
-        </View>
-        <TouchableOpacity
-          style={[s.filterBtn, filtersActive && s.filterBtnActive]}
-          onPress={openModal}
-          activeOpacity={0.85}
-        >
-          <Feather name="sliders" size={18} color={filtersActive ? '#fff' : C.ink} />
-          {filtersActive && <View style={s.filterBadge} />}
-        </TouchableOpacity>
-      </View>
-
-      {/* Lista */}
+      {/* Lista — header e busca rolam junto com o conteúdo */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.list}>
+        {/* Header */}
+        <View style={s.header}>
+          <Text style={s.title}>Ofertas</Text>
+          <Text style={s.subtitle}>{offersLoading ? '…' : `${apiOfertas.length} ofertas disponíveis`}</Text>
+        </View>
+
+        {/* Busca + filtro */}
+        <View style={s.searchRow}>
+          <View style={s.searchWrap}>
+            <Feather name="search" size={17} color={C.inkFaint} />
+            <TextInput
+              style={s.searchInput}
+              placeholder="Buscar por número da oferta"
+              placeholderTextColor={C.inkFaint}
+              value={busca}
+              onChangeText={setBusca}
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+          </View>
+          <TouchableOpacity
+            style={[s.filterBtn, filtersActive && s.filterBtnActive]}
+            onPress={openModal}
+            activeOpacity={0.85}
+          >
+            <Feather name="sliders" size={18} color={filtersActive ? '#fff' : C.ink} />
+            {filtersActive && <View style={s.filterBadge} />}
+          </TouchableOpacity>
+        </View>
         {filtered.length === 0 && (
           <Text style={s.emptyState}>Nenhuma oferta encontrada.</Text>
         )}
@@ -284,7 +283,7 @@ const s = StyleSheet.create({
   subtitle: { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular },
 
   // Search + filter
-  searchRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: spacing[5] - 2 },
+  searchRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: spacing[4] },
   searchWrap:     { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: spacing[4], paddingVertical: 13, borderRadius: radii.lg, backgroundColor: C.card },
   searchInput:    { flex: 1, fontSize: fontSize.base, color: C.ink, fontFamily: fonts.regular, padding: 0 },
   filterBtn:      { width: 46, height: 46, borderRadius: radii.lg, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },

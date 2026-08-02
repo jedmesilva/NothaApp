@@ -93,38 +93,42 @@ export default function AtivosScreen() {
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
-      {/* Header */}
-      <View style={s.header}>
+      {/* Barra fixa: apenas o botão de voltar */}
+      <View style={s.navBar}>
         <BackButton onPress={() => router.back()} />
-        <Text style={s.title}>Ativos</Text>
-      </View>
-
-      {/* Search + filter */}
-      <View style={s.searchRow}>
-        <View style={s.searchWrap}>
-          <Feather name="search" size={17} color={C.inkFaint} />
-          <TextInput
-            style={s.searchInput}
-            placeholder="Buscar por número do contrato"
-            placeholderTextColor={C.inkFaint}
-            value={busca}
-            onChangeText={setBusca}
-          />
-        </View>
-        <TouchableOpacity
-          style={[s.filterBtn, filtersActive && s.filterBtnActive]}
-          onPress={openModal}
-          activeOpacity={0.8}
-        >
-          <Feather name="sliders" size={18} color={filtersActive ? '#fff' : C.ink} />
-          {filtersActive && <View style={s.filterBadge} />}
-        </TouchableOpacity>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: spacing[4], gap: 12, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
+        {/* Título — rola junto com o conteúdo */}
+        <Text style={s.title}>Ativos</Text>
+
+        {/* Busca + filtro — rolam com o conteúdo */}
+        <View style={s.searchRow}>
+          <View style={s.searchWrap}>
+            <Feather name="search" size={17} color={C.inkFaint} />
+            <TextInput
+              style={s.searchInput}
+              placeholder="Buscar por número do contrato"
+              placeholderTextColor={C.inkFaint}
+              value={busca}
+              onChangeText={setBusca}
+            />
+          </View>
+          <TouchableOpacity
+            style={[s.filterBtn, filtersActive && s.filterBtnActive]}
+            onPress={openModal}
+            activeOpacity={0.8}
+          >
+            <Feather name="sliders" size={18} color={filtersActive ? '#fff' : C.ink} />
+            {filtersActive && <View style={s.filterBadge} />}
+          </TouchableOpacity>
+        </View>
+
+        {/* Cards */}
+        <View style={s.cardsList}>
         {isLoading && (
           <ActivityIndicator
             color={C.ink}
@@ -215,6 +219,7 @@ export default function AtivosScreen() {
             </TouchableOpacity>
           );
         })}
+        </View>{/* /cardsList */}
       </ScrollView>
 
       {/* Filter modal */}
@@ -266,10 +271,11 @@ export default function AtivosScreen() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingBottom: spacing[3] },
-  title:  { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: spacing[4], marginTop: spacing[4], marginBottom: 4 },
+  screen:  { flex: 1, backgroundColor: C.bg },
+  navBar:  { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
+  title:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, paddingHorizontal: spacing[5], paddingBottom: spacing[3] },
+  cardsList: { paddingHorizontal: spacing[4], gap: 12 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginBottom: spacing[4] },
   searchWrap:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 13, borderRadius: radii.lg, backgroundColor: C.card },
   searchInput:  { flex: 1, fontSize: fontSize['md+'], color: C.ink, fontFamily: fonts.regular, padding: 0 },
   filterBtn:       { width: 46, height: 46, borderRadius: radii.lg, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
