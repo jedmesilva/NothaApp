@@ -99,9 +99,16 @@ export async function runDistribution(loanId: string): Promise<DistributionResul
 
   const offers = investors
     .map((inv) => {
-      const amountCents = Math.floor(inv.balanceCents * 0.2);
+      // Cap: investidor nunca recebe oferta maior que o valor total do empréstimo
+      const amountCents = Math.min(
+        Math.floor(inv.balanceCents * 0.2),
+        loan.amountCents,
+      );
       // Mínimo aceitável = 25% do valor ofertado, com piso de R$ 10,00 (1000 centavos)
-      const minAmountCents = Math.max(1_000, Math.round(amountCents * 0.25 / 100) * 100);
+      const minAmountCents = Math.min(
+        Math.max(1_000, Math.round(amountCents * 0.25 / 100) * 100),
+        amountCents, // garante que o mínimo nunca exceda o máximo
+      );
       return {
         loanId,
         investorId: inv.investorId,
