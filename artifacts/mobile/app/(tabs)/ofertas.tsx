@@ -57,7 +57,7 @@ export default function OfertasScreen() {
   const apiOfertas: Oferta[] = (offersData?.offers ?? []).map((o) => ({
     id:                    o.id,
     ofertaId:              o.loan.contractId,
-    valor:                 o.amountCents / 100,
+    valor:                 o.maxAmountCents / 100,
     taxaRetorno:           o.ratePct / 100,
     prazoDias:             o.loan.termDays,
     ciclo:                 CICLO_API[o.loan.cycle] ?? 'Mensal',

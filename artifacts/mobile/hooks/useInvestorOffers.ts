@@ -17,15 +17,18 @@ export type InvestorOffer = {
   id: string;
   loanId: string;
   investorId: string;
-  amountCents: number;
+  /** Valor máximo oferecido pelo engine para este credor */
+  maxAmountCents: number;
+  /** Valor mínimo aceitável (piso do range) */
   minAmountCents: number;
+  /** Preenchido no aceite com o valor escolhido pelo credor dentro de [min, max] */
+  acceptedAmountCents: number | null;
   ratePct: number;
   status: 'pending' | 'accepted' | 'rejected' | 'expired';
   sentAt: string;
   expiresAt: string;
   respondedAt: string | null;
   escalationRound: number;
-  walletTransactionId: string | null;
   loan: OfferLoan;
 };
 

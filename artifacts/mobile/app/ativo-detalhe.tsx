@@ -88,8 +88,8 @@ export default function AtivoDetalheScreen() {
       if (offer) {
         posicao = {
           contratoId:            offer.loan.contractId,
-          valorInvestido:        offer.amountCents / 100,
-          originalInvestido:     offer.amountCents / 100,
+          valorInvestido:        offer.maxAmountCents / 100,
+          originalInvestido:     offer.maxAmountCents / 100,
           totalRetornado:        0,
           taxaJurosTotal:        offer.ratePct / 100,
           prazoDias:             offer.loan.termDays,
@@ -97,7 +97,8 @@ export default function AtivoDetalheScreen() {
           status:                'captacao',
           parcelasTotal:         offer.loan.installmentsTotal,
           parcelasRecebidas:     0,
-          jaCaptado:             Math.max(0, offer.loan.fundedAmountCents - offer.amountCents) / 100,
+          // Quanto já foi captado sem contar esta oferta — evita dupla-contagem
+          jaCaptado:             Math.max(0, offer.loan.fundedAmountCents - offer.maxAmountCents) / 100,
           valorTotalPedido:      offer.loan.amountCents / 100,
           tomadorScore:          '—',
           emprestimosAnteriores: 0,

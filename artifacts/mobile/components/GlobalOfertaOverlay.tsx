@@ -55,7 +55,7 @@ export default function GlobalOfertaOverlay() {
     if (!activeOffer) return;
 
     setSecondsLeft(COUNTDOWN);
-    setAdjustedCents(activeOffer.amountCents);
+    setAdjustedCents(activeOffer.maxAmountCents);
 
     Animated.parallel([
       Animated.timing(scrimOpacity, { toValue: 1, duration: 260, useNativeDriver: true }),
@@ -84,7 +84,7 @@ export default function GlobalOfertaOverlay() {
   const handleAccept = async () => {
     if (!activeOffer) return;
     clearInterval(intervalRef.current!);
-    const safeCents = adjustedCents > 0 ? adjustedCents : activeOffer.amountCents;
+    const safeCents = adjustedCents > 0 ? adjustedCents : activeOffer.maxAmountCents;
     try {
       await respond({ offerId: activeOffer.id, action: 'accepted', amountCents: safeCents });
     } catch (_) {}
@@ -112,13 +112,14 @@ export default function GlobalOfertaOverlay() {
 
   // ── Derived values (same formulas as ofertas.tsx) ─────────────────────────
   const ratePct       = activeOffer.ratePct / 100;                        // e.g. 12.50
-  const maxCents      = activeOffer.amountCents;
+  const maxCents      = activeOffer.maxAmountCents;
   const minCents      = activeOffer.minAmountCents > 0 ? activeOffer.minAmountCents : Math.max(1_000, Math.round(maxCents * 0.25 / 100) * 100);
   const safeCents     = adjustedCents > 0 ? adjustedCents : maxCents;
   const valorR$       = safeCents / 100;
   const retornoValor  = Math.round(valorR$ * (ratePct / 100));
   const totalPedidoR$ = activeOffer.loan.amountCents / 100;
-  const jaCaptadoR$   = Math.max(0, activeOffer.loan.fundedAmountCents - activeOffer.amountCents) / 100;
+  // Quanto já foi captado sem contar esta oferta — evita dupla-contagem
+  const jaCaptadoR$   = Math.max(0, activeOffer.loan.fundedAmountCents - maxCents) / 100;
   const pctCaptado    = Math.round((jaCaptadoR$ / totalPedidoR$) * 100);
   const pctTotal      = Math.round(((jaCaptadoR$ + valorR$) / totalPedidoR$) * 100);
   const pctOferta     = Math.max(0, pctTotal - pctCaptado);
