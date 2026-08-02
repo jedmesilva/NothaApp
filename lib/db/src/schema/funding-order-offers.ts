@@ -1,7 +1,6 @@
 import { pgTable, text, integer, timestamp, foreignKey } from "drizzle-orm/pg-core";
 import { loansTable } from "./loans";
 import { investorProfilesTable } from "./investor-profiles";
-import { walletTransactionsTable } from "./wallet-transactions";
 
 export const fundingOrderOfferStatusEnum = [
   "pending",
@@ -19,10 +18,14 @@ export const fundingOrderOffersTable = pgTable(
     loanId:     text("loan_id").notNull(),
     investorId: text("investor_id").notNull(),
 
-    // Valor e taxa decididos pelo engine para este credor especificamente
-    amountCents:    integer("amount_cents").notNull(),
-    minAmountCents: integer("min_amount_cents").notNull().default(0), // mínimo aceitável pelo investidor
-    ratePct:        integer("rate_pct").notNull(),
+    // Range de valor decidido pelo engine para este credor especificamente
+    minAmountCents:      integer("min_amount_cents").notNull(),  // mínimo aceitável
+    maxAmountCents:      integer("max_amount_cents").notNull(),  // máximo oferecido pelo engine
+    // Preenchido no aceite com o valor escolhido pelo credor dentro de [min, max]
+    acceptedAmountCents: integer("accepted_amount_cents"),
+
+    // Taxa oferecida a este credor especificamente
+    ratePct: integer("rate_pct").notNull(),
 
     status: text("status").$type<FundingOrderOfferStatus>().notNull().default("pending"),
 
@@ -35,16 +38,11 @@ export const fundingOrderOffersTable = pgTable(
     // 1 = primeira oferta, 2+ = reoferta com taxa maior
     escalationRound: integer("escalation_round").notNull().default(1),
 
-    // ── Rastreabilidade financeira ───────────────────────────────────────────
-    // Transação de reserva criada no aceite (reserved → completed no fechamento)
-    walletTransactionId: text("wallet_transaction_id"),
-
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [
     foreignKey({ columns: [t.loanId],     foreignColumns: [loansTable.id] }).onDelete("cascade"),
     foreignKey({ columns: [t.investorId], foreignColumns: [investorProfilesTable.id] }).onDelete("cascade"),
-    foreignKey({ columns: [t.walletTransactionId], foreignColumns: [walletTransactionsTable.id] }).onDelete("set null"),
   ],
 );
 

@@ -91,7 +91,7 @@ router.get("/offers/:loanId", async (req, res) => {
     .select({
       id: fundingOrderOffersTable.id,
       investorId: fundingOrderOffersTable.investorId,
-      amountCents: fundingOrderOffersTable.amountCents,
+      maxAmountCents: fundingOrderOffersTable.maxAmountCents,
       ratePct: fundingOrderOffersTable.ratePct,
       status: fundingOrderOffersTable.status,
       sentAt: fundingOrderOffersTable.sentAt,

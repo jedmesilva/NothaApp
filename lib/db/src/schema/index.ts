@@ -7,7 +7,6 @@ export * from "./borrower-profiles";
 export * from "./investor-profiles";
 export * from "./loans";
 export * from "./funding-order-offers";
-export * from "./investment-orders";
 export * from "./loan-installments";
 export * from "./installment-payments";
 export * from "./positions";

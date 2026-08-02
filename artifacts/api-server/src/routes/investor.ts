@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { eq, and, inArray, sql, lt } from "drizzle-orm";
+import type { PositionStatus } from "@workspace/db";
 import {
   db,
   investorProfilesTable,
   positionsTable,
-  investmentOrdersTable,
   loansTable,
   loanInstallmentsTable,
   fundingOrderOffersTable,
@@ -77,14 +77,19 @@ router.get("/positions", requireAuth, async (req, res) => {
     installmentsByLoan.get(inst.loanId)!.push(inst);
   }
 
-  // Total captado por empréstimo (soma de principalBalanceCents de todos os investidores)
+  // Total captado por empréstimo — soma das positions em reserved ou active
   const fundedRows = await db
     .select({
       loanId: positionsTable.loanId,
       fundedCents: sql<number>`COALESCE(SUM(${positionsTable.principalBalanceCents}), 0)`,
     })
     .from(positionsTable)
-    .where(inArray(positionsTable.loanId, loanIds))
+    .where(
+      and(
+        inArray(positionsTable.loanId, loanIds),
+        inArray(positionsTable.status, ["reserved", "active"] as PositionStatus[]),
+      ),
+    )
     .groupBy(positionsTable.loanId);
 
   const fundedByLoan = new Map(
@@ -190,21 +195,21 @@ router.get("/offers", requireAuth, async (req, res) => {
     return;
   }
 
-  // Para cada loan, calcula quanto já foi captado (soma das ofertas aceitas)
+  // Para cada loan, calcula quanto já foi captado via positions (reserved + active)
   const loanIds = [...new Set(offerRows.map((r) => r.loan.id))];
   const fundedRows = await db
     .select({
-      loanId: fundingOrderOffersTable.loanId,
-      fundedCents: sql<number>`COALESCE(SUM(${fundingOrderOffersTable.amountCents}), 0)`,
+      loanId: positionsTable.loanId,
+      fundedCents: sql<number>`COALESCE(SUM(${positionsTable.principalBalanceCents}), 0)`,
     })
-    .from(fundingOrderOffersTable)
+    .from(positionsTable)
     .where(
       and(
-        inArray(fundingOrderOffersTable.loanId, loanIds),
-        eq(fundingOrderOffersTable.status, "accepted"),
+        inArray(positionsTable.loanId, loanIds),
+        inArray(positionsTable.status, ["reserved", "active"] as PositionStatus[]),
       ),
     )
-    .groupBy(fundingOrderOffersTable.loanId);
+    .groupBy(positionsTable.loanId);
 
   const fundedByLoan = new Map(
     fundedRows.map((r) => [r.loanId, Number(r.fundedCents)]),
@@ -225,11 +230,19 @@ router.get("/offers", requireAuth, async (req, res) => {
 // POST /api/investor/offers/:id/respond
 //
 // Aceita ou recusa uma oferta pendente.
-// body: { action: "accepted" | "rejected" }
+// body: { action: "accepted" | "rejected", amountCents?: number }
+//
+// No aceite, o credor pode informar qualquer valor dentro de
+// [minAmountCents, maxAmountCents]. Esse valor é gravado em
+// acceptedAmountCents na oferta e define o tamanho da position criada.
+//
+// A position nasce com status "reserved" (saldo bloqueado na wallet,
+// aguardando fechamento da captação do loan). O fechamento da captação
+// transiciona reserved → active — não cria nada novo.
 // ─────────────────────────────────────────────────────────────────────────────
 router.post("/offers/:id/respond", requireAuth, async (req, res) => {
   const { userId } = (req as AuthRequest).user;
-  const { id }     = req.params;
+  const { id }     = req.params as { id: string };
   const { action, amountCents } = req.body as { action: string; amountCents?: number };
 
   if (action !== "accepted" && action !== "rejected") {
@@ -259,50 +272,33 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
     return;
   }
 
-  // If investor chose a partial amount, clamp it within valid bounds
-  const finalAmountCents = (action === "accepted" && amountCents != null)
-    ? Math.min(Math.max(amountCents, offer.minAmountCents), offer.amountCents)
-    : offer.amountCents;
+  // Valor aceito: dentro de [minAmountCents, maxAmountCents]; default = maxAmountCents
+  const acceptedAmountCents = (action === "accepted" && amountCents != null)
+    ? Math.min(Math.max(amountCents, offer.minAmountCents), offer.maxAmountCents)
+    : offer.maxAmountCents;
 
   await db
     .update(fundingOrderOffersTable)
     .set({
-      status: action as "accepted" | "rejected",
-      respondedAt: new Date(),
-      amountCents: action === "accepted" ? finalAmountCents : offer.amountCents,
+      status:              action as "accepted" | "rejected",
+      respondedAt:         new Date(),
+      acceptedAmountCents: action === "accepted" ? acceptedAmountCents : null,
     })
     .where(eq(fundingOrderOffersTable.id, id));
 
-  // Ao aceitar: cria (ou soma a) posição do investidor no empréstimo,
-  // e registra a investment_order como histórico imutável do aporte.
+  // Ao aceitar: cria uma position individual com status "reserved".
+  // Múltiplas posições por (investorId, loanId) são esperadas e corretas —
+  // sem upsert, sem consolidação.
   if (action === "accepted") {
-    const [position] = await db
-      .insert(positionsTable)
-      .values({
-        loanId:                 offer.loanId,
-        investorId:             offer.investorId,
-        principalBalanceCents:  finalAmountCents,
-        originalPrincipalCents: finalAmountCents,
-        totalReturnedCents:     0,
-        ratePct:                offer.ratePct,
-        status:                 "active",
-      })
-      .onConflictDoUpdate({
-        target: [positionsTable.loanId, positionsTable.investorId],
-        set: {
-          principalBalanceCents:  sql`${positionsTable.principalBalanceCents} + ${finalAmountCents}`,
-          originalPrincipalCents: sql`${positionsTable.originalPrincipalCents} + ${finalAmountCents}`,
-        },
-      })
-      .returning({ id: positionsTable.id });
-
-    await db.insert(investmentOrdersTable).values({
-      fundingOrderOfferId:     offer.id,
-      positionId:              position.id,
-      loanId:                  offer.loanId,
-      investorId:              offer.investorId,
-      ratePct:                 offer.ratePct,
-      originalPrincipalCents:  finalAmountCents,
+    await db.insert(positionsTable).values({
+      fundingOrderOfferId:    offer.id,
+      loanId:                 offer.loanId,
+      investorId:             offer.investorId,
+      principalBalanceCents:  acceptedAmountCents,
+      originalPrincipalCents: acceptedAmountCents,
+      totalReturnedCents:     0,
+      ratePct:                offer.ratePct,
+      status:                 "reserved",
     });
   }
 

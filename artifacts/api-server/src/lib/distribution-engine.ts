@@ -100,19 +100,19 @@ export async function runDistribution(loanId: string): Promise<DistributionResul
   const offers = investors
     .map((inv) => {
       // Cap: investidor nunca recebe oferta maior que o valor total do empréstimo
-      const amountCents = Math.min(
+      const maxAmountCents = Math.min(
         Math.floor(inv.balanceCents * 0.2),
         loan.amountCents,
       );
       // Mínimo aceitável = 25% do valor ofertado, com piso de R$ 10,00 (1000 centavos)
       const minAmountCents = Math.min(
-        Math.max(1_000, Math.round(amountCents * 0.25 / 100) * 100),
-        amountCents, // garante que o mínimo nunca exceda o máximo
+        Math.max(1_000, Math.round(maxAmountCents * 0.25 / 100) * 100),
+        maxAmountCents, // garante que o mínimo nunca exceda o máximo
       );
       return {
         loanId,
         investorId: inv.investorId,
-        amountCents,
+        maxAmountCents,
         minAmountCents,
         ratePct: loan.interestRatePct,
         status: "pending" as const,
@@ -121,7 +121,7 @@ export async function runDistribution(loanId: string): Promise<DistributionResul
         escalationRound: 1,
       };
     })
-    .filter((o) => o.amountCents > 0); // ignora quem teria oferta de R$ 0,00
+    .filter((o) => o.maxAmountCents > 0); // ignora quem teria oferta de R$ 0,00
 
   if (offers.length === 0) {
     return {
@@ -136,7 +136,7 @@ export async function runDistribution(loanId: string): Promise<DistributionResul
   // ── 5. Persiste as ofertas em batch ──────────────────────────────────────
   await db.insert(fundingOrderOffersTable).values(offers);
 
-  const totalOfferedCents = offers.reduce((s, o) => s + o.amountCents, 0);
+  const totalOfferedCents = offers.reduce((s, o) => s + o.maxAmountCents, 0);
 
   await db.insert(loanEventsTable).values({
     loanId,
@@ -156,7 +156,7 @@ export async function runDistribution(loanId: string): Promise<DistributionResul
     totalOfferedCents,
     investors: offers.map((o) => ({
       investorId: o.investorId,
-      amountCents: o.amountCents,
+      amountCents: o.maxAmountCents,
     })),
   };
 }
