@@ -316,7 +316,7 @@ export default function AtivoDetalheScreen() {
             <Text style={s.heroSign}>+</Text>{taxaJurosTotal}%
           </Text>
           <Text style={s.heroCaption}>
-            Rendimento estimado de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
+            Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
           </Text>
 
           <View style={s.splitRow}>
@@ -325,7 +325,7 @@ export default function AtivoDetalheScreen() {
               <Text style={s.splitValue}>R$ {formatBRL(valorInvestido)}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.splitLabel}>Retorno estimado</Text>
+              <Text style={s.splitLabel}>Retorno</Text>
               <Text style={s.splitValue}>R$ {formatBRL(Math.round(totalComRetorno))}</Text>
             </View>
           </View>

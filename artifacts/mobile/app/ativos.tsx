@@ -180,7 +180,7 @@ export default function AtivosScreen() {
 
               <SplitRow
                 left={{ label: 'Valor investido', value: `R$ ${formatBRL(investido)}` }}
-                right={{ label: 'Retorno estimado', value: `R$ ${formatBRL(Math.round(totalComRetorno))}` }}
+                right={{ label: 'Retorno', value: `R$ ${formatBRL(Math.round(totalComRetorno))}` }}
               />
 
               {isCaptacao ? (
