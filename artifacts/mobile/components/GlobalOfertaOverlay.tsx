@@ -148,9 +148,6 @@ export default function GlobalOfertaOverlay() {
       <Animated.View
         style={[s.sheet, { paddingBottom: bottomPad }, { transform: [{ translateY: sheetY }] }]}
       >
-        {/* Grabber */}
-        <View style={s.grabber} />
-
         <ScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
