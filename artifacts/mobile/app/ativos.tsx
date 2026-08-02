@@ -273,7 +273,7 @@ export default function AtivosScreen() {
 const s = StyleSheet.create({
   screen:  { flex: 1, backgroundColor: C.bg },
   navBar:  { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
-  title:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, paddingHorizontal: spacing[5], paddingBottom: spacing[3] },
+  title:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[3] },
   cardsList: { paddingHorizontal: spacing[4], gap: 12 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginBottom: spacing[4] },
   searchWrap:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 13, borderRadius: radii.lg, backgroundColor: C.card },
