@@ -98,16 +98,22 @@ export async function runDistribution(loanId: string): Promise<DistributionResul
   const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 horas
 
   const offers = investors
-    .map((inv) => ({
-      loanId,
-      investorId: inv.investorId,
-      amountCents: Math.floor(inv.balanceCents * 0.2),
-      ratePct: loan.interestRatePct,
-      status: "pending" as const,
-      sentAt: now,
-      expiresAt,
-      escalationRound: 1,
-    }))
+    .map((inv) => {
+      const amountCents = Math.floor(inv.balanceCents * 0.2);
+      // Mínimo aceitável = 25% do valor ofertado, com piso de R$ 10,00 (1000 centavos)
+      const minAmountCents = Math.max(1_000, Math.round(amountCents * 0.25 / 100) * 100);
+      return {
+        loanId,
+        investorId: inv.investorId,
+        amountCents,
+        minAmountCents,
+        ratePct: loan.interestRatePct,
+        status: "pending" as const,
+        sentAt: now,
+        expiresAt,
+        escalationRound: 1,
+      };
+    })
     .filter((o) => o.amountCents > 0); // ignora quem teria oferta de R$ 0,00
 
   if (offers.length === 0) {

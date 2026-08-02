@@ -261,7 +261,7 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
 
   // If investor chose a partial amount, clamp it within valid bounds
   const finalAmountCents = (action === "accepted" && amountCents != null)
-    ? Math.min(Math.max(amountCents, 1), offer.amountCents)
+    ? Math.min(Math.max(amountCents, offer.minAmountCents), offer.amountCents)
     : offer.amountCents;
 
   await db

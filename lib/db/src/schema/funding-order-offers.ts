@@ -20,8 +20,9 @@ export const fundingOrderOffersTable = pgTable(
     investorId: text("investor_id").notNull(),
 
     // Valor e taxa decididos pelo engine para este credor especificamente
-    amountCents: integer("amount_cents").notNull(),
-    ratePct:     integer("rate_pct").notNull(),
+    amountCents:    integer("amount_cents").notNull(),
+    minAmountCents: integer("min_amount_cents").notNull().default(0), // mínimo aceitável pelo investidor
+    ratePct:        integer("rate_pct").notNull(),
 
     status: text("status").$type<FundingOrderOfferStatus>().notNull().default("pending"),
 

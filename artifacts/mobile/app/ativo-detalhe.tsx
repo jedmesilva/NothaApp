@@ -180,7 +180,10 @@ export default function AtivoDetalheScreen() {
   // ── Slider (oferta) ───────────────────────────────────────────────────────
   const offerMaxCents = isOferta ? Math.round(_valorBase * 100) : 0;
   const offerMinCents = isOferta
-    ? Math.max(1_000, Math.round(offerMaxCents * 0.25 / 100) * 100)
+    ? (() => {
+        const offer = offersData?.offers.find((o) => o.id === id);
+        return offer?.minAmountCents ?? Math.max(1_000, Math.round(offerMaxCents * 0.25 / 100) * 100);
+      })()
     : 0;
   const sliderCents = isOferta
     ? (adjustedCents > 0 ? adjustedCents : offerMaxCents)

@@ -18,6 +18,7 @@ export type InvestorOffer = {
   loanId: string;
   investorId: string;
   amountCents: number;
+  minAmountCents: number;
   ratePct: number;
   status: 'pending' | 'accepted' | 'rejected' | 'expired';
   sentAt: string;

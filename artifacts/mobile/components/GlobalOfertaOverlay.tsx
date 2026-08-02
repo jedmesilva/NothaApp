@@ -113,7 +113,7 @@ export default function GlobalOfertaOverlay() {
   // ── Derived values (same formulas as ofertas.tsx) ─────────────────────────
   const ratePct       = activeOffer.ratePct / 100;                        // e.g. 12.50
   const maxCents      = activeOffer.amountCents;
-  const minCents      = Math.max(1_000, Math.round(maxCents * 0.25 / 100) * 100);
+  const minCents      = activeOffer.minAmountCents > 0 ? activeOffer.minAmountCents : Math.max(1_000, Math.round(maxCents * 0.25 / 100) * 100);
   const safeCents     = adjustedCents > 0 ? adjustedCents : maxCents;
   const valorR$       = safeCents / 100;
   const retornoValor  = Math.round(valorR$ * (ratePct / 100));
