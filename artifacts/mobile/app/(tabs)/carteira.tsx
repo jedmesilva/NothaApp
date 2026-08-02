@@ -249,7 +249,7 @@ export default function CarteiraScreen() {
         </Text>
 
         {/* Hero card */}
-        <DarkCard style={{ marginTop: spacing[4] }}>
+        <DarkCard>
           <Eyebrow context="dark">Investido</Eyebrow>
           <BigValue context="dark">R$ {formatBRL(investido)}</BigValue>
 
@@ -403,7 +403,7 @@ const g = StyleSheet.create({
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  greeting:     { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[2], fontSize: fontSize.lg, color: C.inkSoft, fontFamily: fonts.regular },
+  greeting:     { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[4], fontSize: fontSize.lg, color: C.inkSoft, fontFamily: fonts.regular },
   greetingName: { color: C.ink, fontFamily: fonts.bold },
   sectionTitle: { marginHorizontal: spacing[4], marginTop: 4, marginBottom: 10 },
   retornoValue:   { fontFamily: fonts.display, fontSize: fontSize.display, color: '#fff', letterSpacing: -0.8, lineHeight: 38 },
