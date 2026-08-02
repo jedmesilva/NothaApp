@@ -1,0 +1,1 @@
+- [Offer delivery architecture](offer-delivery-architecture.md) — SSE (foreground) + Push (background) substituem polling de 20s no overlay de ofertas.

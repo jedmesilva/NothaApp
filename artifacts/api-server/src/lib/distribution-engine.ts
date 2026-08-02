@@ -9,7 +9,7 @@
  *  5. Pode enviar múltiplas ofertas ao mesmo credor sem restrições
  */
 
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, inArray } from "drizzle-orm";
 import {
   db,
   loansTable,
@@ -17,7 +17,10 @@ import {
   walletsTable,
   fundingOrderOffersTable,
   loanEventsTable,
+  pushTokensTable,
 } from "@workspace/db";
+import * as sseManager from "./sse-manager.js";
+import { sendExpoPush } from "./expo-push.js";
 
 export interface DistributionResult {
   loanId: string;
@@ -133,10 +136,55 @@ export async function runDistribution(loanId: string): Promise<DistributionResul
     };
   }
 
-  // ── 5. Persiste as ofertas em batch ──────────────────────────────────────
-  await db.insert(fundingOrderOffersTable).values(offers);
+  // ── 5. Persiste as ofertas em batch (returning para obter os IDs) ────────
+  const insertedOffers = await db
+    .insert(fundingOrderOffersTable)
+    .values(offers)
+    .returning();
 
-  const totalOfferedCents = offers.reduce((s, o) => s + o.maxAmountCents, 0);
+  const totalOfferedCents = insertedOffers.reduce((s, o) => s + o.maxAmountCents, 0);
+
+  // ── 6. Notifica os credores em tempo real ─────────────────────────────────
+  //   a) SSE  — credores com o app aberto recebem o evento na hora
+  //   b) Push — credores sem SSE ativa recebem notificação push (app fechado)
+  const offlineInvestorIds: string[] = [];
+
+  for (const offer of insertedOffers) {
+    const delivered = sseManager.emit(offer.investorId, "offer_created", {
+      offerId:        offer.id,
+      loanContractId: loan.contractId,
+      maxAmountCents: offer.maxAmountCents,
+      minAmountCents: offer.minAmountCents,
+      ratePct:        offer.ratePct,
+    });
+    if (!delivered) offlineInvestorIds.push(offer.investorId);
+  }
+
+  if (offlineInvestorIds.length > 0) {
+    const tokenRows = await db
+      .select({ investorId: pushTokensTable.investorId, token: pushTokensTable.token })
+      .from(pushTokensTable)
+      .where(inArray(pushTokensTable.investorId, offlineInvestorIds));
+
+    if (tokenRows.length > 0) {
+      const offerByInvestor = new Map(insertedOffers.map((o) => [o.investorId, o]));
+      await sendExpoPush(
+        tokenRows.map(({ investorId, token }) => {
+          const o = offerByInvestor.get(investorId)!;
+          const valorR = (o.maxAmountCents / 100).toFixed(2).replace(".", ",");
+          const taxaPct = (o.ratePct / 100).toFixed(2).replace(".", ",");
+          return {
+            to: token,
+            title: "Nova oferta de investimento 💰",
+            body: `R$ ${valorR} a ${taxaPct}% ao mês — toque para ver`,
+            data: { type: "offer", offerId: o.id },
+            sound: "default" as const,
+            channelId: "offers",
+          };
+        }),
+      );
+    }
+  }
 
   await db.insert(loanEventsTable).values({
     loanId,

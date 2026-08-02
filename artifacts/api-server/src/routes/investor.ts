@@ -8,8 +8,10 @@ import {
   loansTable,
   loanInstallmentsTable,
   fundingOrderOffersTable,
+  pushTokensTable,
 } from "@workspace/db";
 import { requireAuth, type AuthRequest } from "../middlewares/auth.js";
+import * as sseManager from "../lib/sse-manager.js";
 
 const router = Router();
 
@@ -303,6 +305,88 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
   }
 
   res.json({ ok: true, status: action });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/investor/events
+//
+// SSE — conexão persistente. O servidor empurra eventos em tempo real:
+//   event: offer_created  → nova oferta criada pelo motor de distribuição
+//   event: connected      → confirmação inicial de conexão
+//   ": ping"              → heartbeat a cada 25 s (evita timeout do proxy)
+//
+// O cliente invalida o cache de ofertas ao receber "offer_created" e faz
+// um refetch imediato — sem polling desnecessário.
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/events", requireAuth, async (req, res) => {
+  const { userId } = (req as AuthRequest).user;
+
+  const investorId = await getInvestorId(userId);
+  if (!investorId) {
+    res.status(404).json({ error: "Investor not found" });
+    return;
+  }
+
+  // Cabeçalhos SSE
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no"); // desativa buffer do nginx/proxy
+  res.flushHeaders();
+
+  // Registra conexão no manager
+  sseManager.addConnection(investorId, res);
+
+  // Confirmação inicial
+  res.write("event: connected\ndata: {}\n\n");
+
+  // Heartbeat a cada 25 s para não deixar a conexão morrer no proxy
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(": ping\n\n");
+    } catch {
+      clearInterval(heartbeat);
+    }
+  }, 25_000);
+
+  // Limpa ao desconectar
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    sseManager.removeConnection(investorId, res);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/investor/push-token
+//
+// Registra (ou atualiza) o Expo Push Token do dispositivo do credor.
+// body: { token: "ExponentPushToken[xxx]" }
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/push-token", requireAuth, async (req, res) => {
+  const { userId } = (req as AuthRequest).user;
+  const { token } = req.body as { token?: string };
+
+  if (!token || !token.startsWith("ExponentPushToken[")) {
+    res.status(400).json({ error: "Token Expo inválido" });
+    return;
+  }
+
+  const investorId = await getInvestorId(userId);
+  if (!investorId) {
+    res.status(404).json({ error: "Investor not found" });
+    return;
+  }
+
+  // Upsert: um token pode mudar de investidor (troca de conta no mesmo device)
+  await db
+    .insert(pushTokensTable)
+    .values({ id: crypto.randomUUID(), investorId, token })
+    .onConflictDoUpdate({
+      target: pushTokensTable.token,
+      set: { investorId, updatedAt: new Date() },
+    });
+
+  res.json({ ok: true });
 });
 
 function emptySummary() {

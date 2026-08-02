@@ -12,6 +12,7 @@ import type { ToastState } from '@/contexts/ToastContext';
 import GlobalToast from '@/components/GlobalToast';
 import GlobalOfertaOverlay from '@/components/GlobalOfertaOverlay';
 import { OfertaOverlayProvider } from '@/contexts/OfertaOverlayContext';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -35,6 +36,9 @@ function RootLayoutNav() {
   const segments = useSegments();
   const [toast, setToast] = useState<ToastState>(null);
   const handleToast = useCallback((t: ToastState) => setToast(t), []);
+
+  // Registra token de push assim que o usuário estiver autenticado
+  usePushNotifications(!!user);
 
   useEffect(() => {
     if (loading) return;

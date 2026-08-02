@@ -1,8 +1,16 @@
 /**
  * OfertaOverlayContext
  *
- * Polls /api/investor/offers every 20 s and surfaces the first unseen
- * pending offer so the global overlay can display it Uber-style.
+ * Superfície o overlay de oferta estilo Uber quando chega uma nova oferta.
+ *
+ * Estratégia de recebimento (duas camadas):
+ *  1. SSE (primária) — conexão persistente em /api/investor/events.
+ *     Latência ≈ 0 quando o app está aberto.
+ *     Em caso de falha/queda, reconecta automaticamente em 5 s.
+ *  2. Poll de fallback (60 s) — cobre o intervalo de reconexão SSE e
+ *     o caso raro de evento perdido.
+ *
+ * Para app em background: Push Notification via Expo (ver usePushNotifications).
  */
 import React, {
   createContext,
@@ -12,7 +20,9 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useInvestorOffers } from '@/hooks/useInvestorOffers';
+import { useSSEOffers } from '@/lib/useSSEOffers';
 import type { InvestorOffer } from '@/hooks/useInvestorOffers';
 
 interface OfertaOverlayContextValue {
@@ -30,16 +40,27 @@ export function useOfertaOverlay() {
 }
 
 export function OfertaOverlayProvider({ children }: { children: React.ReactNode }) {
-  const seenIds = useRef<Set<string>>(new Set());
+  const seenIds   = useRef<Set<string>>(new Set());
+  const queryClient = useQueryClient();
   const [activeOffer, setActiveOffer] = useState<InvestorOffer | null>(null);
 
-  // Poll every 20 s for new pending offers
-  const { data } = useInvestorOffers(20_000);
+  // ── Fallback poll (60 s) ────────────────────────────────────────────────────
+  // Cobre o gap de reconexão SSE e eventos ocasionalmente perdidos.
+  const { data } = useInvestorOffers(60_000);
 
+  // ── SSE primária ─────────────────────────────────────────────────────────────
+  // Ao receber "offer_created", invalida a query para refetch imediato.
+  useSSEOffers(
+    useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: ['investor-offers'] });
+    }, [queryClient]),
+    true, // sempre ativa enquanto o app estiver aberto
+  );
+
+  // ── Processa as ofertas chegadas (SSE → refetch → useEffect) ─────────────────
   useEffect(() => {
     if (!data?.offers) return;
-    // Already showing one — don't stack
-    if (activeOffer) return;
+    if (activeOffer) return; // já mostrando uma — não empilha
 
     const newOffer = data.offers.find(
       (o) => o.status === 'pending' && !seenIds.current.has(o.id),
