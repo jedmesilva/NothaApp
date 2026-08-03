@@ -27,6 +27,7 @@ interface Props {
   valueCents: number;
   onChange:   (cents: number) => void;
   showValue?: boolean;
+  context?:   'light' | 'dark';
 }
 
 function formatBRL(cents: number) {
@@ -42,7 +43,9 @@ export default function InvestmentSlider({
   valueCents,
   onChange,
   showValue = true,
+  context = 'light',
 }: Props) {
+  const isDark = context === 'dark';
   // ── Refs (sempre atuais dentro dos closures do PanResponder) ─────────────────
   const trackWidth    = useRef(0);
   const currentCents  = useRef(valueCents);
@@ -116,13 +119,21 @@ export default function InvestmentSlider({
   const isMin = valueCents <= minCents;
   const isMax = valueCents >= maxCents;
 
+  // ── Cores dinâmicas por contexto ─────────────────────────────────────────────
+  const trackBgColor  = isDark ? 'rgba(255,255,255,0.22)' : C.line;
+  const fillColor     = isDark ? '#fff'                   : C.dark;
+  const thumbBgColor  = isDark ? '#fff'                   : C.dark;
+  const thumbBdColor  = isDark ? C.dark                   : '#fff';
+  const valueTxtColor = isDark ? '#fff'                   : C.ink;
+  const rangeTxtColor = isDark ? 'rgba(255,255,255,0.45)' : C.inkFaint;
+
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <View style={s.wrap}>
       {/* Valor atual */}
       {showValue && (
         <View style={s.labelRow}>
-          <Text style={s.valueLabel}>R$ {formatBRL(valueCents)}</Text>
+          <Text style={[s.valueLabel, { color: valueTxtColor }]}>R$ {formatBRL(valueCents)}</Text>
           {isMax && <Text style={s.maxTag}>valor cheio</Text>}
           {isMin && <Text style={s.minTag}>mínimo</Text>}
         </View>
@@ -135,8 +146,8 @@ export default function InvestmentSlider({
         {...panResponder.panHandlers}
       >
         {/* Trilha */}
-        <View style={s.track}>
-          <View style={[s.fill, { width: `${fillPct}%` as any }]} />
+        <View style={[s.track, { backgroundColor: trackBgColor }]}>
+          <View style={[s.fill, { width: `${fillPct}%` as any, backgroundColor: fillColor }]} />
         </View>
 
         {/* Thumb — posicionado com left dentro do trackWrap */}
@@ -144,8 +155,10 @@ export default function InvestmentSlider({
           style={[
             s.thumb,
             {
-              left: thumbPx,
-              top:  (THUMB_SIZE + HIT_SLOP * 2 - THUMB_SIZE) / 2,  // centrado verticalmente
+              left:            thumbPx,
+              top:             (THUMB_SIZE + HIT_SLOP * 2 - THUMB_SIZE) / 2,
+              backgroundColor: thumbBgColor,
+              borderColor:     thumbBdColor,
             },
           ]}
         />
@@ -153,8 +166,8 @@ export default function InvestmentSlider({
 
       {/* Rótulos de extremos */}
       <View style={s.rangeRow}>
-        <Text style={s.rangeLabel}>R$ {formatBRL(minCents)}</Text>
-        <Text style={s.rangeLabel}>R$ {formatBRL(maxCents)}</Text>
+        <Text style={[s.rangeLabel, { color: rangeTxtColor }]}>R$ {formatBRL(minCents)}</Text>
+        <Text style={[s.rangeLabel, { color: rangeTxtColor }]}>R$ {formatBRL(maxCents)}</Text>
       </View>
     </View>
   );

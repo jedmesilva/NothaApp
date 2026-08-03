@@ -345,6 +345,8 @@ export default function AtivoDetalheScreen() {
                 maxCents={offerMaxCents}
                 valueCents={sliderCents}
                 onChange={setAdjustedCents}
+                showValue={false}
+                context="dark"
               />
             </View>
           )}
@@ -606,7 +608,7 @@ const s = StyleSheet.create({
   splitValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: '#fff', letterSpacing: -0.3 },
 
   sliderCard:   { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5], paddingBottom: spacing[4] },
-  sliderInCard: { borderTopWidth: 1, borderTopColor: C.onDarkBorder, paddingTop: spacing[4], marginBottom: spacing[2] },
+  sliderInCard: { marginTop: spacing[1], marginBottom: spacing[2] },
   barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   barFooterText: { fontSize: fontSize.xs, color: C.onDarkFaint, fontFamily: fonts.regular },
 
