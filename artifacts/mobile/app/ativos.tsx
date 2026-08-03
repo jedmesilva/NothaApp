@@ -183,6 +183,8 @@ export default function AtivosScreen() {
                 right={{ label: 'Retorno', value: `R$ ${formatBRL(Math.round(totalComRetorno))}` }}
               />
 
+              {isCaptacao && <View style={s.divider} />}
+
               {isCaptacao && (
                 <PoolBar
                   label="Captação"
