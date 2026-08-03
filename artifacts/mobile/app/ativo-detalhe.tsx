@@ -20,7 +20,7 @@ import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno } from '@/
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid,
-  InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
+  InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline, ThinBar,
 } from '@/components/ds';
 import ValueSlider from '@/components/ValueSlider';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
@@ -383,27 +383,33 @@ export default function AtivoDetalheScreen() {
         {/* ── Previsão de vencimentos (captação) ── */}
         {!jaConcedido && parcelasPrevisao.length > 0 && (
           <View style={s.vencimentosCard}>
+            {/* Header row: título + chevron */}
             <TouchableOpacity
               style={s.paymentToggle}
               onPress={() => setShowPrevisao((v) => !v)}
               activeOpacity={0.8}
             >
-              <View style={{ flex: 1 }}>
-                <PoolBar
-                  label="Pagamento"
-                  headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
-                  headRight={`${pctPago}% pago`}
-                  segments={[{ pct: pctPago, variant: 'primary' }]}
-                  footer={
-                    <View style={s.barFooter}>
-                      <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
-                      <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
-                    </View>
-                  }
-                />
-              </View>
-              <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} style={{ marginTop: 2 }} />
+              <Text style={s.paymentToggleTitle}>Pagamento</Text>
+              <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
             </TouchableOpacity>
+
+            {/* Bar section: sempre visível */}
+            <View style={s.paymentBarContainer}>
+              {/* Row 1: info textual */}
+              <View style={s.paymentBarHead}>
+                <Text style={s.paymentBarHeadLeft}>
+                  {parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
+                </Text>
+                <Text style={s.paymentBarHeadRight}>{pctPago}% pago</Text>
+              </View>
+              {/* Row 2: barra de progresso */}
+              <ThinBar pct={pctPago} style={s.paymentBarTrack} />
+              {/* Row 3: labels */}
+              <View style={s.paymentBarFooter}>
+                <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
+                <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
+              </View>
+            </View>
 
             {showPrevisao && (
               <View style={s.expandedContent}>
@@ -433,27 +439,33 @@ export default function AtivoDetalheScreen() {
         {/* ── Vencimentos reais (colapsável) ── */}
         {jaConcedido && parcelas.length > 0 && (
           <View style={s.vencimentosCard}>
+            {/* Header row: título + chevron */}
             <TouchableOpacity
               style={s.paymentToggle}
               onPress={() => setShowVencimentos((v) => !v)}
               activeOpacity={0.8}
             >
-              <View style={{ flex: 1 }}>
-                <PoolBar
-                  label="Pagamento"
-                  headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
-                  headRight={`${pctPago}% pago`}
-                  segments={[{ pct: pctPago, variant: 'primary' }]}
-                  footer={
-                    <View style={s.barFooter}>
-                      <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
-                      <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
-                    </View>
-                  }
-                />
-              </View>
-              <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} style={{ marginTop: 2 }} />
+              <Text style={s.paymentToggleTitle}>Pagamento</Text>
+              <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
             </TouchableOpacity>
+
+            {/* Bar section: sempre visível */}
+            <View style={s.paymentBarContainer}>
+              {/* Row 1: info textual */}
+              <View style={s.paymentBarHead}>
+                <Text style={s.paymentBarHeadLeft}>
+                  {parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
+                </Text>
+                <Text style={s.paymentBarHeadRight}>{pctPago}% pago</Text>
+              </View>
+              {/* Row 2: barra de progresso */}
+              <ThinBar pct={pctPago} style={s.paymentBarTrack} />
+              {/* Row 3: labels */}
+              <View style={s.paymentBarFooter}>
+                <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
+                <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
+              </View>
+            </View>
 
             {showVencimentos && (
               <View style={s.expandedContent}>
@@ -619,7 +631,14 @@ const s = StyleSheet.create({
   dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
 
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
-  paymentToggle:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing[4] + 2, gap: spacing[3] },
+  paymentToggle:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing[4] + 2, paddingVertical: spacing[3] + 2 },
+  paymentToggleTitle:   { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: C.ink },
+  paymentBarContainer:  { paddingHorizontal: spacing[4] + 2, paddingBottom: spacing[4] },
+  paymentBarHead:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
+  paymentBarHeadLeft:   { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
+  paymentBarHeadRight:  { fontFamily: fonts.display, fontSize: fontSize.base, color: C.inkSoft },
+  paymentBarTrack:      { marginBottom: 9 },
+  paymentBarFooter:     { flexDirection: 'row', justifyContent: 'space-between' },
   expandedContent:      {},
   barFooterLightText:   { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
   parcelaCard:          { flexDirection: 'row', alignItems: 'center', gap: 14, padding: spacing[4], borderTopWidth: 1, borderTopColor: C.line },
