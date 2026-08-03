@@ -376,44 +376,35 @@ export default function AtivoDetalheScreen() {
             />
           )}
 
-          {/* ── Pagamento: sempre visível, igual ao card ── */}
-          <View style={s.heroDivider} />
-          <PoolBar
-            label="Pagamento"
-            headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
-            headRight={`${pctPago}% pago`}
-            segments={[{ pct: pctPago, variant: 'primary' }]}
-            context="dark"
-            style={{ marginBottom: 20 }}
-            footer={
-              <View style={s.barFooter}>
-                <Text style={s.barFooterText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
-                <Text style={s.barFooterText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
-              </View>
-            }
-          />
-
         </View>
 
         {/* ── Previsão de vencimentos (captação) ── */}
         {!jaConcedido && parcelasPrevisao.length > 0 && (
           <View style={s.vencimentosCard}>
             <TouchableOpacity
-              style={s.sectionToggle}
+              style={s.paymentToggle}
               onPress={() => setShowPrevisao((v) => !v)}
               activeOpacity={0.8}
             >
               <View style={{ flex: 1 }}>
-                <Text style={s.sectionToggleTitle}>Vencimentos</Text>
-                <Text style={s.sectionToggleSummary}>
-                  R$ {formatBRL(Math.round(valorRecebimento))}/{CICLO_UNIT[ciclo]} · {parcelasPrevistas} {parcelasPrevistas === 1 ? CICLO_UNIT[ciclo] : CICLO_UNIT_PLURAL[ciclo]}
-                </Text>
+                <PoolBar
+                  label="Pagamento"
+                  headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
+                  headRight={`${pctPago}% pago`}
+                  segments={[{ pct: pctPago, variant: 'primary' }]}
+                  footer={
+                    <View style={s.barFooter}>
+                      <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
+                      <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
+                    </View>
+                  }
+                />
               </View>
-              <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
+              <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} style={{ marginTop: 2 }} />
             </TouchableOpacity>
 
             {showPrevisao && (
-              <View>
+              <View style={s.expandedContent}>
                 <View style={s.previsaoAviso}>
                   <Feather name="info" size={13} color={C.inkFaint} style={{ marginTop: 1 }} />
                   <Text style={s.previsaoAvisoText}>
@@ -441,21 +432,29 @@ export default function AtivoDetalheScreen() {
         {jaConcedido && parcelas.length > 0 && (
           <View style={s.vencimentosCard}>
             <TouchableOpacity
-              style={s.sectionToggle}
+              style={s.paymentToggle}
               onPress={() => setShowVencimentos((v) => !v)}
               activeOpacity={0.8}
             >
-              <View>
-                <Text style={s.sectionToggleTitle}>Vencimentos</Text>
-                <Text style={s.sectionToggleSummary}>
-                  {parcelasRecebidas}/{parcelasTotal} recebidos · R$ {formatBRL(Math.round(saldoRestante))} restantes
-                </Text>
+              <View style={{ flex: 1 }}>
+                <PoolBar
+                  label="Pagamento"
+                  headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
+                  headRight={`${pctPago}% pago`}
+                  segments={[{ pct: pctPago, variant: 'primary' }]}
+                  footer={
+                    <View style={s.barFooter}>
+                      <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
+                      <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
+                    </View>
+                  }
+                />
               </View>
-              <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
+              <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} style={{ marginTop: 2 }} />
             </TouchableOpacity>
 
             {showVencimentos && (
-              <View>
+              <View style={s.expandedContent}>
                 {parcelas.map((p) => {
                   const isRecebida = p.status === 'recebida';
                   const isAtrasada = p.status === 'atrasada';
@@ -618,9 +617,9 @@ const s = StyleSheet.create({
   dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
 
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
-  sectionToggle:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing[4] + 2 },
-  sectionToggleTitle:   { fontFamily: fonts.display, fontSize: fontSize['md+'], color: C.ink, marginBottom: 3 },
-  sectionToggleSummary: { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular },
+  paymentToggle:        { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: spacing[4] + 2, gap: spacing[3] },
+  expandedContent:      { borderTopWidth: 1, borderTopColor: C.line },
+  barFooterLightText:   { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
   parcelaCard:          { flexDirection: 'row', alignItems: 'center', gap: 14, padding: spacing[4], borderTopWidth: 1, borderTopColor: C.line },
   parcelaCardAtrasada:  { backgroundColor: C.redBg },
   parcelaCardRecebida:  { opacity: 0.55 },
