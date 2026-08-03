@@ -197,14 +197,17 @@ export default function GlobalOfertaOverlay() {
             </View>
           </View>
 
-          {/* ── Slider — abaixo das métricas, fora do tap area ── */}
-          <InvestmentSlider
-            minCents={minCents}
-            maxCents={maxCents}
-            valueCents={safeCents}
-            onChange={setAdjustedCents}
-            showValue={false}
-          />
+          {/* ── Slider — seção própria com divisor e label ── */}
+          <View style={s.sliderSection}>
+            <Text style={s.sliderLabel}>Ajustar valor</Text>
+            <InvestmentSlider
+              minCents={minCents}
+              maxCents={maxCents}
+              valueCents={safeCents}
+              onChange={setAdjustedCents}
+              showValue={true}
+            />
+          </View>
 
           {/* ── Divisor + Captação ── */}
           <View style={s.divider} />
@@ -339,7 +342,7 @@ const s = StyleSheet.create({
 
   // Seções — mesma estrutura do card de ativos
   divider:     { height: 1, backgroundColor: C.line, marginBottom: 18 },
-  metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
+  metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },

@@ -4,8 +4,11 @@
  * A custom track-and-thumb slider built with PanResponder (no extra deps).
  * Lets the investor pick any amount between `minCents` and `maxCents`,
  * snapping to 100-cent (R$ 1) increments.
+ *
+ * Uses refs throughout so PanResponder callbacks are never stale, and
+ * captures gestures before the parent ScrollView can claim them.
  */
-import React, { useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -15,7 +18,8 @@ import {
 } from 'react-native';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 
-const THUMB_SIZE = 28;
+const THUMB_SIZE = 32;
+const HIT_SLOP   = 20;            // extra touch area above / below the track
 const TRACK_HEIGHT = 6;
 
 interface Props {
@@ -33,73 +37,78 @@ function formatBRL(cents: number) {
   });
 }
 
-export default function InvestmentSlider({ minCents, maxCents, valueCents, onChange, showValue = true }: Props) {
-  const trackWidth = useRef(0);
+export default function InvestmentSlider({
+  minCents,
+  maxCents,
+  valueCents,
+  onChange,
+  showValue = true,
+}: Props) {
+  // ── Refs (always current — safe to read inside PanResponder closures) ───────
+  const trackWidth   = useRef(0);
   const currentCents = useRef(valueCents);
+  const minRef       = useRef(minCents);
+  const maxRef       = useRef(maxCents);
+  const onChangeRef  = useRef(onChange);
+  const startX       = useRef(0);
 
-  // Keep ref in sync for use inside PanResponder callbacks
+  // Keep refs in sync on every render
   currentCents.current = valueCents;
+  minRef.current       = minCents;
+  maxRef.current       = maxCents;
+  onChangeRef.current  = onChange;
 
-  const centsToX = useCallback(
-    (cents: number) => {
-      if (trackWidth.current === 0) return 0;
-      const ratio = (cents - minCents) / (maxCents - minCents);
-      return ratio * trackWidth.current;
-    },
-    [minCents, maxCents],
-  );
-
-  const xToCents = useCallback(
-    (x: number) => {
-      if (trackWidth.current === 0) return minCents;
-      const ratio = Math.max(0, Math.min(1, x / trackWidth.current));
-      const raw = minCents + ratio * (maxCents - minCents);
-      // Snap to R$ 1 increments
-      return Math.round(raw / 100) * 100;
-    },
-    [minCents, maxCents],
-  );
-
-  const startX = useRef(0);
-  const startCents = useRef(valueCents);
-
+  // ── PanResponder ────────────────────────────────────────────────────────────
   const panResponder = useRef(
     PanResponder.create({
+      // Capture phase — claim the touch BEFORE the parent ScrollView does
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponderCapture:  () => true,
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (_, gs) => {
-        startX.current = centsToX(currentCents.current);
-        startCents.current = currentCents.current;
+      onMoveShouldSetPanResponder:  () => true,
+
+      onPanResponderGrant: () => {
+        // Record the pixel position of the thumb at touch start
+        const range = maxRef.current - minRef.current;
+        startX.current = range > 0
+          ? ((currentCents.current - minRef.current) / range) * trackWidth.current
+          : 0;
       },
+
       onPanResponderMove: (_, gs) => {
-        const newX = startX.current + gs.dx;
-        const newCents = xToCents(newX);
-        if (newCents !== currentCents.current) {
-          onChange(newCents);
+        if (trackWidth.current === 0) return;
+        const newX   = startX.current + gs.dx;
+        const ratio  = Math.max(0, Math.min(1, newX / trackWidth.current));
+        const raw    = minRef.current + ratio * (maxRef.current - minRef.current);
+        const snapped = Math.round(raw / 100) * 100;
+        if (snapped !== currentCents.current) {
+          onChangeRef.current(snapped);
         }
       },
+
       onPanResponderRelease: () => {},
     }),
   ).current;
 
+  // ── Layout ──────────────────────────────────────────────────────────────────
   const onLayout = (e: LayoutChangeEvent) => {
     trackWidth.current = e.nativeEvent.layout.width;
   };
 
-  const thumbX = trackWidth.current > 0
-    ? centsToX(valueCents)
-    : 0;
-
-  const fillPct = maxCents > minCents
-    ? ((valueCents - minCents) / (maxCents - minCents)) * 100
+  // ── Derived display values ──────────────────────────────────────────────────
+  const range   = maxCents - minCents;
+  const fillPct = range > 0 ? ((valueCents - minCents) / range) * 100 : 0;
+  const thumbX  = trackWidth.current > 0
+    ? (range > 0 ? ((valueCents - minCents) / range) * trackWidth.current : 0)
     : 0;
 
   const isMin = valueCents <= minCents;
   const isMax = valueCents >= maxCents;
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <View style={s.wrap}>
-      {/* Value label above thumb — opcional */}
+      {/* Value label */}
       {showValue && (
         <View style={s.labelRow}>
           <Text style={s.valueLabel}>R$ {formatBRL(valueCents)}</Text>
@@ -108,24 +117,19 @@ export default function InvestmentSlider({ minCents, maxCents, valueCents, onCha
         </View>
       )}
 
-      {/* Track + thumb hit area */}
-      <View style={s.trackWrap} onLayout={onLayout} {...panResponder.panHandlers}>
-        {/* Track background */}
+      {/* Gesture-capturing hit area + track */}
+      <View
+        style={s.trackWrap}
+        onLayout={onLayout}
+        {...panResponder.panHandlers}
+      >
         <View style={s.track}>
-          {/* Filled portion */}
           <View style={[s.fill, { width: `${fillPct}%` as any }]} />
         </View>
-
-        {/* Thumb */}
-        <View
-          style={[
-            s.thumb,
-            { left: thumbX - THUMB_SIZE / 2 },
-          ]}
-        />
+        <View style={[s.thumb, { left: thumbX - THUMB_SIZE / 2 }]} />
       </View>
 
-      {/* Min / Max labels */}
+      {/* Min / Max labels — same side margins as trackWrap so they align */}
       <View style={s.rangeRow}>
         <Text style={s.rangeLabel}>R$ {formatBRL(minCents)}</Text>
         <Text style={s.rangeLabel}>R$ {formatBRL(maxCents)}</Text>
@@ -134,12 +138,15 @@ export default function InvestmentSlider({ minCents, maxCents, valueCents, onCha
   );
 }
 
+const SIDE = THUMB_SIZE / 2;   // margin that keeps thumb inside parent bounds
+
 const s = StyleSheet.create({
   wrap: {
     width: '100%',
-    paddingBottom: spacing[2],
+    paddingBottom: spacing[1],
   },
 
+  // ── Value label ─────────────────────────────────────────────────────────────
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -171,13 +178,12 @@ const s = StyleSheet.create({
     paddingVertical: 3,
   },
 
-  // Outer area that captures gestures (tall for easy touch).
-  // marginHorizontal: THUMB_SIZE / 2 shrinks the measured width so the thumb
-  // never overflows: at min thumbX=0 → left=-14 sits inside the margin;
-  // at max thumbX=trackWidth → right edge sits inside the opposite margin.
+  // ── Track area ──────────────────────────────────────────────────────────────
+  // marginHorizontal = THUMB_SIZE/2 so the measured width excludes the thumb
+  // overflow zones; the thumb sits flush with track ends at min/max.
   trackWrap: {
-    marginHorizontal: THUMB_SIZE / 2,
-    height: THUMB_SIZE + 16,
+    marginHorizontal: SIDE,
+    height: THUMB_SIZE + HIT_SLOP * 2,
     justifyContent: 'center',
     position: 'relative',
   },
@@ -199,7 +205,6 @@ const s = StyleSheet.create({
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
     backgroundColor: C.dark,
-    // White inner dot
     borderWidth: 4,
     borderColor: '#fff',
     shadowColor: '#000',
@@ -207,13 +212,15 @@ const s = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 6,
     elevation: 4,
-    top: (THUMB_SIZE + 16 - THUMB_SIZE) / 2,
+    top: HIT_SLOP,   // vertically centred within the hit area
   },
 
+  // ── Range labels — same side margin as trackWrap so they align with track ──
   rangeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 6,
+    marginHorizontal: SIDE,
+    marginTop: 4,
   },
   rangeLabel: {
     fontSize: fontSize.xs,
