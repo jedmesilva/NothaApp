@@ -116,11 +116,6 @@ export function ParaInvestir() {
         {/* Divider */}
         <div style={{ height: 1, backgroundColor: C.onDarkBorder, marginBottom: 20 }} />
 
-        {/* Section label */}
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.3px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 16, fontFamily: "Inter, sans-serif" }}>
-          Investimento
-        </div>
-
         {/* Three-column metrics */}
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
