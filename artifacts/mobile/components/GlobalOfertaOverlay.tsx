@@ -181,7 +181,6 @@ export default function GlobalOfertaOverlay() {
           </TouchableOpacity>
 
           {/* ── Divisor + 3 colunas: Investimento | Retorno | Prazo ── */}
-          <View style={s.divider} />
           <View style={s.metricRow}>
             <View>
               <Text style={s.metricLabel}>Investimento</Text>
@@ -197,7 +196,7 @@ export default function GlobalOfertaOverlay() {
             </View>
           </View>
 
-          {/* ── Slider — seção própria com divisor ── */}
+          {/* ── Slider — mesma seção das métricas ── */}
           <View style={s.sliderSection}>
             <InvestmentSlider
               minCents={minCents}
@@ -349,9 +348,6 @@ const s = StyleSheet.create({
 
   // Slider
   sliderSection: {
-    borderTopWidth: 1,
-    borderTopColor: C.line,
-    paddingTop: spacing[5],
     marginBottom: spacing[2],
   },
   sliderLabel: {
