@@ -10,8 +10,9 @@ import { formatBRL } from '@/data/loans';
 import type { Oferta } from '@/data/ofertas';
 import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { PoolBar, PoolLegend, DetailGrid, Chip, ModalSheet } from '@/components/ds';
+import { PoolBar, PoolLegend, Chip, ModalSheet } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
+import InvestmentSlider from '@/components/InvestmentSlider';
 
 const CLASSIFICACOES = [
   { key: 'todos', label: 'Todas' },
@@ -44,6 +45,7 @@ export default function OfertasScreen() {
   const [busca,               setBusca]               = useState('');
   const [modalOpen,           setModalOpen]           = useState(false);
   const [aceitas,             setAceitas]             = useState<string[]>([]);
+  const [adjustedCents,       setAdjustedCents]       = useState<Record<string, number>>({});
 
   const { mutateAsync: respond, isPending: isResponding } = useRespondToOffer();
 
@@ -86,13 +88,14 @@ export default function OfertasScreen() {
   });
 
   const handleAceitar = async (oferta: Oferta) => {
+    const safeCents = adjustedCents[oferta.ofertaId] ?? Math.round(oferta.valor * 100);
     try {
-      await respond({ offerId: String(oferta.id), action: 'accepted', amountCents: Math.round(oferta.valor * 100) });
+      await respond({ offerId: String(oferta.id), action: 'accepted', amountCents: safeCents });
     } catch (_) { /* continua mesmo com erro de rede */ }
     setAceitas((prev) => prev.includes(oferta.ofertaId) ? prev : [...prev, oferta.ofertaId]);
     showToast({
-      title: 'Oferta aceita',
-      subtitle: `R$ ${formatBRL(oferta.valor)} investidos em ${oferta.ofertaId}`,
+      title: 'Oferta aceita!',
+      subtitle: `R$ ${formatBRL(safeCents / 100)} reservados em ${oferta.ofertaId}`,
       actionLabel: 'Ver meus ativos',
       onAction: () => router.push('/ativos' as any),
       duration: 6000,
@@ -155,9 +158,15 @@ export default function OfertasScreen() {
         )}
 
         {filtered.map((o) => {
-          const retornoValor     = Math.round(o.valor * (o.taxaRetorno / 100));
-          const pctCaptado       = Math.round((o.jaCaptado / o.valorTotalPedido) * 100);
-          const pctTotal         = Math.round(((o.jaCaptado + o.valor) / o.valorTotalPedido) * 100);
+          const maxCents         = Math.round(o.valor * 100);
+          const minCents         = Math.max(1_000, Math.round(maxCents * 0.25 / 100) * 100);
+          const safeCents        = adjustedCents[o.ofertaId] ?? maxCents;
+          const valorR$          = safeCents / 100;
+          const retornoValor     = Math.round(valorR$ * (o.taxaRetorno / 100));
+          // Subtrai a contribuição desta oferta para evitar dupla-contagem
+          const jaCaptadoR$      = Math.max(0, o.jaCaptado - o.valor);
+          const pctCaptado       = Math.round((jaCaptadoR$ / o.valorTotalPedido) * 100);
+          const pctTotal         = Math.round(((jaCaptadoR$ + valorR$) / o.valorTotalPedido) * 100);
           const pctOfertaClamped = Math.max(0, pctTotal - pctCaptado);
 
           return (
@@ -180,11 +189,11 @@ export default function OfertasScreen() {
               <View style={s.metricRow}>
                 <View>
                   <Text style={s.metricLabel}>Investimento</Text>
-                  <Text style={s.metricValue}>R$ {formatBRL(o.valor)}</Text>
+                  <Text style={s.metricValue}>R$ {formatBRL(valorR$)}</Text>
                 </View>
                 <View style={{ alignItems: 'center' }}>
                   <Text style={s.metricLabel}>Retorno</Text>
-                  <Text style={s.metricValue}>R$ {formatBRL(o.valor + retornoValor)}</Text>
+                  <Text style={s.metricValue}>R$ {formatBRL(valorR$ + retornoValor)}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={s.metricLabel}>Prazo</Text>
@@ -192,11 +201,24 @@ export default function OfertasScreen() {
                 </View>
               </View>
 
-              {/* Pool */}
+              {/* Slider de valor */}
+              <View style={s.sliderSection}>
+                <InvestmentSlider
+                  minCents={minCents}
+                  maxCents={maxCents}
+                  valueCents={safeCents}
+                  onChange={(v) => setAdjustedCents((prev) => ({ ...prev, [o.ofertaId]: v }))}
+                  showValue={false}
+                />
+              </View>
+
+              <View style={s.metricDivider} />
+
+              {/* Captação */}
               <PoolBar
                 label="Captação"
                 headLeft={`${pctCaptado}% captado`}
-                headRight={`R$ ${formatBRL(o.jaCaptado)} de R$ ${formatBRL(o.valorTotalPedido)}`}
+                headRight={`R$ ${formatBRL(jaCaptadoR$)} de R$ ${formatBRL(o.valorTotalPedido)}`}
                 segments={[
                   { pct: pctCaptado,       variant: 'primary'   },
                   { pct: pctOfertaClamped, variant: 'secondary' },
@@ -211,15 +233,21 @@ export default function OfertasScreen() {
                 }
               />
 
-              {/* Grid */}
-              <DetailGrid
-                items={[
-                  { label: 'Pagamento',     value: o.parcelasTotal > 0 ? `${o.parcelasTotal} ${o.parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${o.parcelasTotal === 1 ? (CICLO_SINGULAR[o.ciclo] ?? '') : (CICLO_PLURAL[o.ciclo] ?? '')}` : `${o.prazoDias} dias` },
-                  { label: 'Classificação', value: o.tomadorScore },
-                  { label: 'Histórico',     value: o.emprestimosAnteriores === 0 ? 'Primeiro' : `${o.emprestimosAnteriores + 1}º empréstimo` },
-                  { label: 'Já tomado',     value: o.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(o.valorTotalTomado)}` },
-                ]}
-                style={{ marginBottom: 14 }}
+              <View style={s.metricDivider} />
+
+              {/* Pagamento */}
+              <PoolBar
+                label="Pagamento"
+                headLeft={o.parcelasTotal > 0 ? `${o.parcelasTotal} ${o.parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[o.ciclo] ?? ''}` : '—'}
+                headRight="0% pago"
+                segments={[{ pct: 0, variant: 'primary' }]}
+                style={{ marginBottom: spacing[4] }}
+                footer={
+                  <View style={s.barFooter}>
+                    <Text style={s.barFooterText}>R$ 0,00 pago</Text>
+                    <Text style={s.barFooterText}>R$ {formatBRL(valorR$ + retornoValor)} total</Text>
+                  </View>
+                }
               />
 
               {/* Botão */}
@@ -229,6 +257,7 @@ export default function OfertasScreen() {
                 activeOpacity={0.85}
                 disabled={isResponding}
               >
+                <Feather name="check" size={18} color="#fff" />
                 <Text style={s.aceitarBtnText}>Aceitar oferta</Text>
               </TouchableOpacity>
             </TouchableOpacity>
@@ -327,12 +356,16 @@ const s = StyleSheet.create({
   metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
 
+  // Slider
+  sliderSection: { marginBottom: spacing[2] },
+
+  // Bar footer
+  barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  barFooterText: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
+
   // Buttons
-  btnRow:         { flexDirection: 'row', gap: 10 },
-  detalhesBtn:    { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: radii.lg, backgroundColor: C.bg },
-  detalhesBtnText:{ fontSize: fontSize.base, fontFamily: fonts.bold, color: C.ink },
-  aceitarBtn:     { flex: 2, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: radii.lg, backgroundColor: C.dark },
-  aceitarBtnText: { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
+  aceitarBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.dark },
+  aceitarBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: '#fff' },
 
   // Filter modal
   modalHeader:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[5] },
