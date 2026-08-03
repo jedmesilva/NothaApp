@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, InfoRows } from '@/components/ds';
 import ValueSlider from '@/components/ValueSlider';
+import StepSlider from '@/components/StepSlider';
 import { addDays, formatData } from '@/data/loans';
 import { useMarketRate } from '@/hooks/useMarketRate';
 import { useBorrowerProfile } from '@/hooks/useBorrowerProfile';
@@ -93,28 +94,6 @@ export default function NovoEmprestimoScreen() {
   const taxaTotal = Math.max(1, taxaPorPrazo(prazoDias) + ajusteMercado);
   const valorReais = valorCentavos / 100;
 
-  // Slider state
-  const prazoTrackWidthRef = useRef(1);
-  const prazoTrackXRef = useRef(0);
-
-  const updatePrazoRef = useRef((_x: number) => {});
-  updatePrazoRef.current = (offsetX: number) => {
-    const ratio = Math.max(0, Math.min(1, offsetX / prazoTrackWidthRef.current));
-    const raw = ciclo.min + ratio * (ciclo.max - ciclo.min);
-    const stepped = Math.max(ciclo.min, Math.min(ciclo.max, Math.round(raw)));
-    setNumPeriodos(stepped);
-    setPrazoDraft(String(stepped));
-  };
-
-  const prazoTrackRef = useRef<View>(null);
-
-  const onPrazoTrackLayout = useCallback(() => {
-    prazoTrackRef.current?.measure((_x, _y, w, _h, px) => {
-      prazoTrackWidthRef.current = w;
-      prazoTrackXRef.current = px;
-    });
-  }, []);
-
   const calc = useMemo(() => {
     const numParcelas = numPeriodos;
     const hoje = new Date();
@@ -134,9 +113,6 @@ export default function NovoEmprestimoScreen() {
       vencimentoFinal: datasParcelas[datasParcelas.length - 1],
     };
   }, [valorReais, prazoDias, numPeriodos, taxaTotal]);
-
-  const percentPrazo =
-    ((numPeriodos - ciclo.min) / (ciclo.max - ciclo.min)) * 100;
 
   // Steppers
   const stepValor = (delta: number) =>
@@ -311,22 +287,15 @@ export default function NovoEmprestimoScreen() {
             </View>
 
             {/* Prazo slider */}
-            <View
-              ref={prazoTrackRef}
-              style={[s.sliderTrack, s.sliderTrackLight, { marginBottom: 0, marginTop: 10 }]}
-              onLayout={onPrazoTrackLayout}
-              onStartShouldSetResponder={() => true}
-              onMoveShouldSetResponder={() => true}
-              onResponderGrant={(e) =>
-                updatePrazoRef.current(e.nativeEvent.pageX - prazoTrackXRef.current)
-              }
-              onResponderMove={(e) =>
-                updatePrazoRef.current(e.nativeEvent.pageX - prazoTrackXRef.current)
-              }
-            >
-              <View style={[s.sliderFill, s.sliderFillLight, { width: `${percentPrazo}%` }]} />
-              <View style={[s.sliderThumb, s.sliderThumbLight, { left: `${percentPrazo}%` as any }]} />
-            </View>
+            <StepSlider
+              min={ciclo.min}
+              max={ciclo.max}
+              value={numPeriodos}
+              onChange={setPrazo}
+              formatMin={(n) => `${n} ${unidadeLabel(ciclo, n)}`}
+              formatMax={(n) => `${n} ${unidadeLabel(ciclo, n)}`}
+              style={{ marginTop: 10 }}
+            />
 
             {/* Quick pills */}
             <ScrollView
@@ -489,46 +458,6 @@ const s = StyleSheet.create({
   },
   stepperBtnDisabled: { opacity: 0.3 },
 
-  // Slider (dark)
-  sliderTrack: {
-    height: 8,
-    borderRadius: radii.full,
-    backgroundColor: C.onDarkBorder,
-    marginBottom: 14,
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  sliderTrackLight: {
-    backgroundColor: C.line,
-  },
-  sliderFill: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    height: '100%',
-    borderRadius: radii.full,
-    backgroundColor: '#fff',
-  },
-  sliderFillLight: {
-    backgroundColor: C.ink,
-  },
-  sliderThumb: {
-    position: 'absolute',
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#fff',
-    marginTop: -5,
-    marginLeft: -9,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  sliderThumbLight: {
-    backgroundColor: C.ink,
-  },
   // Section
   section: { marginHorizontal: spacing[4], marginBottom: 14 },
   sectionLabel: {
