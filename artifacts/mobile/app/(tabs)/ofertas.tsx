@@ -6,7 +6,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { formatBRL } from '@/data/loans';
+import { formatBRL, parcelasLabel } from '@/data/loans';
 import type { Oferta } from '@/data/ofertas';
 import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
@@ -28,11 +28,9 @@ const CICLOS_FILTRO = [
   { key: 'Mensal',  label: 'Mensal'  },
 ];
 
-const CICLO_PLURAL: Record<string, string> = {
-  Diário: 'diárias', Semanal: 'semanais', Mensal: 'mensais',
-};
-const CICLO_SINGULAR: Record<string, string> = {
-  Diário: 'diária', Semanal: 'semanal', Mensal: 'mensal',
+/** Converte OfertaCiclo capitalizado para a chave de ciclo usada em parcelasLabel. */
+const CICLO_KEY: Record<string, string> = {
+  Diário: 'diario', Semanal: 'semanal', Mensal: 'mensal',
 };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -241,7 +239,7 @@ export default function OfertasScreen() {
                 <Text style={s.paymentHintLabel}>Pagamento</Text>
                 <Text style={s.paymentHintValue}>
                   {o.parcelasTotal > 0
-                    ? `${o.parcelasTotal} ${o.parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[o.ciclo] ?? ''}`
+                    ? parcelasLabel(CICLO_KEY[o.ciclo] ?? 'mensal', o.parcelasTotal)
                     : '—'}
                 </Text>
               </View>

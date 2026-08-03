@@ -213,6 +213,7 @@ export default function AtivosScreen() {
               <View style={s.divider} />
 
               <PaymentProgress
+                label="Pagamento"
                 ciclo={ciclo}
                 parcelasTotal={parcelasTotal}
                 pctPago={pctRecebido}

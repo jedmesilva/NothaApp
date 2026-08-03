@@ -20,6 +20,8 @@ type Props = {
   pctPago: number;    // 0–100
   valorPago: number;  // R$
   valorTotal: number; // R$
+  /** Título de seção exibido acima das 3 linhas (ex: "Pagamento"). */
+  label?: string;
   style?: ViewStyle;
 };
 
@@ -29,10 +31,12 @@ export function PaymentProgress({
   pctPago,
   valorPago,
   valorTotal,
+  label,
   style,
 }: Props) {
   return (
     <View style={style}>
+      {label != null && <Text style={st.sectionLabel}>{label}</Text>}
       {/* Linha 1: rótulo de parcelas + percentual */}
       <View style={st.head}>
         <Text style={st.headLeft}>
@@ -54,6 +58,7 @@ export function PaymentProgress({
 }
 
 const st = StyleSheet.create({
+  sectionLabel: { fontFamily: fonts.bold, fontSize: fontSize['base+'], color: C.ink, marginBottom: 14 },
   head:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
   headLeft:   { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
   headRight:  { fontFamily: fonts.display, fontSize: fontSize.base, color: C.inkSoft },

@@ -23,14 +23,12 @@ import { useOfertaOverlay } from '@/contexts/OfertaOverlayContext';
 import { useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { useToast } from '@/contexts/ToastContext';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { parcelasLabel } from '@/data/loans';
 import { PoolBar, PoolLegend } from '@/components/ds';
 import ValueSlider from '@/components/ValueSlider';
 
 const COUNTDOWN = 30;
 
-const CICLO_PLURAL: Record<string, string> = {
-  diario: 'diários', semanal: 'semanais', mensal: 'mensais',
-};
 const CICLO_LABEL: Record<string, string> = {
   diario: 'Diário', semanal: 'Semanal', mensal: 'Mensal',
 };
@@ -234,7 +232,7 @@ export default function GlobalOfertaOverlay() {
             <Text style={s.paymentHintLabel}>Pagamento</Text>
             <Text style={s.paymentHintValue}>
               {activeOffer.loan.installmentsTotal > 0
-                ? `${activeOffer.loan.installmentsTotal} ${activeOffer.loan.installmentsTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[ciclo] ?? ''}`
+                ? parcelasLabel(ciclo, activeOffer.loan.installmentsTotal)
                 : '—'}
             </Text>
           </View>
