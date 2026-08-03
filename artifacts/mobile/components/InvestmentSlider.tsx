@@ -19,7 +19,7 @@ import {
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 
 const THUMB_SIZE = 32;
-const HIT_SLOP   = 20;            // extra touch area above / below the track
+const HIT_SLOP   = 8;             // extra touch area above / below the track
 const TRACK_HEIGHT = 6;
 
 interface Props {
