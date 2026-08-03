@@ -23,6 +23,7 @@ interface Props {
   maxCents: number;
   valueCents: number;
   onChange: (cents: number) => void;
+  showValue?: boolean;
 }
 
 function formatBRL(cents: number) {
@@ -32,7 +33,7 @@ function formatBRL(cents: number) {
   });
 }
 
-export default function InvestmentSlider({ minCents, maxCents, valueCents, onChange }: Props) {
+export default function InvestmentSlider({ minCents, maxCents, valueCents, onChange, showValue = true }: Props) {
   const trackWidth = useRef(0);
   const currentCents = useRef(valueCents);
 
@@ -98,12 +99,14 @@ export default function InvestmentSlider({ minCents, maxCents, valueCents, onCha
 
   return (
     <View style={s.wrap}>
-      {/* Value label above thumb */}
-      <View style={s.labelRow}>
-        <Text style={s.valueLabel}>R$ {formatBRL(valueCents)}</Text>
-        {isMax && <Text style={s.maxTag}>valor cheio</Text>}
-        {isMin && <Text style={s.minTag}>mínimo</Text>}
-      </View>
+      {/* Value label above thumb — opcional */}
+      {showValue && (
+        <View style={s.labelRow}>
+          <Text style={s.valueLabel}>R$ {formatBRL(valueCents)}</Text>
+          {isMax && <Text style={s.maxTag}>valor cheio</Text>}
+          {isMin && <Text style={s.minTag}>mínimo</Text>}
+        </View>
+      )}
 
       {/* Track + thumb hit area */}
       <View style={s.trackWrap} onLayout={onLayout} {...panResponder.panHandlers}>

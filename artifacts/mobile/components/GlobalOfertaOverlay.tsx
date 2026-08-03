@@ -203,6 +203,7 @@ export default function GlobalOfertaOverlay() {
             maxCents={maxCents}
             valueCents={safeCents}
             onChange={setAdjustedCents}
+            showValue={false}
           />
 
           {/* ── Divisor + Captação ── */}
