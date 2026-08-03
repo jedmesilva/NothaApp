@@ -395,12 +395,6 @@ export default function AtivoDetalheScreen() {
             </>
           )}
 
-          <DetailGrid
-            context="dark"
-            items={[
-              { label: 'Ciclo', value: cicloMeta.label, sub: `vencimentos ${PAGAMENTOS_LABEL[ciclo]}` },
-            ]}
-          />
         </View>
 
         {/* ── Previsão de vencimentos (captação) ── */}
