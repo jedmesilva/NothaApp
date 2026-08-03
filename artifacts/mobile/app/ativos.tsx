@@ -202,6 +202,8 @@ export default function AtivosScreen() {
                 />
               )}
 
+              {isCaptacao && <View style={s.divider} />}
+
               <PoolBar
                 label="Pagamento"
                 headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${parcelasTotal === 1 ? (cicloDisplay?.singular ?? '') : (cicloDisplay?.plural ?? '')}` : '—'}
@@ -288,6 +290,7 @@ const s = StyleSheet.create({
   heroValue:  { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:   { fontSize: 24, fontFamily: fonts.display },
   heroCaption:{ fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 18 },
+  divider:       { height: 1, backgroundColor: C.line, marginBottom: 18 },
   barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   barFooterText: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
   legend:     { flexDirection: 'row', gap: 16, marginTop: 4 },
