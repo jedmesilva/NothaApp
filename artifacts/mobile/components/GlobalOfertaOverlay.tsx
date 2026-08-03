@@ -180,7 +180,8 @@ export default function GlobalOfertaOverlay() {
 
           </TouchableOpacity>
 
-          {/* ── Divisor + 3 colunas: Investimento | Retorno | Prazo ── */}
+          {/* ── Divisor + 3 colunas: Investimento | Retorno | Prazo + Slider ── */}
+          <View style={s.divider} />
           <View style={s.metricRow}>
             <View>
               <Text style={s.metricLabel}>Investimento</Text>
