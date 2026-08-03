@@ -403,7 +403,7 @@ export default function AtivoDetalheScreen() {
                 <Text style={s.paymentBarHeadRight}>{pctPago}% pago</Text>
               </View>
               {/* Row 2: barra de progresso */}
-              <ThinBar pct={pctPago} style={s.paymentBarTrack} />
+              <ThinBar pct={pctPago} context="light" style={s.paymentBarTrack} />
               {/* Row 3: labels */}
               <View style={s.paymentBarFooter}>
                 <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
@@ -459,7 +459,7 @@ export default function AtivoDetalheScreen() {
                 <Text style={s.paymentBarHeadRight}>{pctPago}% pago</Text>
               </View>
               {/* Row 2: barra de progresso */}
-              <ThinBar pct={pctPago} style={s.paymentBarTrack} />
+              <ThinBar pct={pctPago} context="light" style={s.paymentBarTrack} />
               {/* Row 3: labels */}
               <View style={s.paymentBarFooter}>
                 <Text style={s.barFooterLightText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
