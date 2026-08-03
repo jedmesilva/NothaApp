@@ -320,6 +320,8 @@ export default function AtivoDetalheScreen() {
             Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
           </Text>
 
+          <View style={s.heroDivider} />
+
           <View style={s.splitRow}>
             <View>
               <Text style={s.splitLabel}>Investimento</Text>
@@ -592,7 +594,8 @@ const s = StyleSheet.create({
   heroEyebrow:  { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.onDarkSoft },
   heroValue:    { fontFamily: fonts.display, fontSize: fontSize.mega, color: '#fff', letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:     { fontSize: 24, fontFamily: fonts.display },
-  heroCaption:  { fontSize: fontSize['base+'], color: C.onDarkFaint, fontFamily: fonts.regular, marginBottom: 20 },
+  heroCaption:  { fontSize: fontSize['base+'], color: C.onDarkFaint, fontFamily: fonts.regular, marginBottom: 16 },
+  heroDivider:  { height: 1, backgroundColor: C.onDarkBorder, marginBottom: 20 },
   splitRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
   splitLabel:   { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.onDarkFaint, textTransform: 'uppercase', marginBottom: 4 },
   splitValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: '#fff', letterSpacing: -0.3 },

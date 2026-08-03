@@ -174,6 +174,8 @@ export default function OfertasScreen() {
               <Text style={s.heroValue}><Text style={s.heroSign}>+</Text>{o.taxaRetorno}%</Text>
               <Text style={s.heroCaption}>Rendimento de R$ {formatBRL(retornoValor)} em {o.prazoDias} dias</Text>
 
+              <View style={s.metricDivider} />
+
               {/* Investimento / Retorno / Prazo */}
               <View style={s.metricRow}>
                 <View>
@@ -319,8 +321,9 @@ const s = StyleSheet.create({
   scoreBadgeText: { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
   heroValue:   { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:    { fontSize: 24, fontFamily: fonts.display },
-  heroCaption: { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 20 },
-  metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
+  heroCaption:  { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 14 },
+  metricDivider:{ height: 1, backgroundColor: C.line, marginBottom: 20 },
+  metricRow:    { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
   metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
 
