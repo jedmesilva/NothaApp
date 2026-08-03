@@ -6,6 +6,26 @@ export const CICLO_META: Record<string, { label: string; dias: number; unidade: 
   mensal: { label: 'Mensal', dias: 30, unidade: 'mês', unidadePlural: 'meses' },
 };
 
+/** Adjetivo de frequência concordando em número com `n`. */
+const CICLO_ADJETIVO: Record<string, { singular: string; plural: string }> = {
+  diario:  { singular: 'diária',  plural: 'diárias'  },
+  semanal: { singular: 'semanal', plural: 'semanais' },
+  mensal:  { singular: 'mensal',  plural: 'mensais'  },
+};
+
+/**
+ * Retorna o rótulo completo de parcelas com pluralização correta.
+ * Exemplos: parcelasLabel('mensal', 1) → "1 parcela mensal"
+ *           parcelasLabel('mensal', 2) → "2 parcelas mensais"
+ *           parcelasLabel('semanal', 3) → "3 parcelas semanais"
+ */
+export function parcelasLabel(ciclo: string, n: number): string {
+  const adj = CICLO_ADJETIVO[ciclo];
+  const parcela = n === 1 ? 'parcela' : 'parcelas';
+  const adjetivo = adj ? (n === 1 ? adj.singular : adj.plural) : '';
+  return `${n} ${parcela}${adjetivo ? ` ${adjetivo}` : ''}`;
+}
+
 export const STATUS_META: Record<string, { label: string; iconName: string; iconSet: string }> = {
   analise: { label: 'Em análise', iconName: 'clock', iconSet: 'Feather' },
   captacao: { label: 'Em captação', iconName: 'users', iconSet: 'Feather' },

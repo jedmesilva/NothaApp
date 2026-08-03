@@ -16,14 +16,9 @@ import { formatBRL } from '@/data/loans';
 import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions';
 import type { InvestorPosition } from '@/hooks/useInvestorPositions';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, PoolBar, ThinBar, DetailGrid, Chip, ModalSheet } from '@/components/ds';
+import { BackButton, StatusBadge, PoolBar, DetailGrid, Chip, ModalSheet } from '@/components/ds';
+import { PaymentProgress } from '@/components/PaymentProgress';
 import type { LoanStatus } from '@/components/ds';
-
-const CICLO_META: Record<string, { singular: string; plural: string }> = {
-  diario:  { singular: 'diária',  plural: 'diárias'  },
-  semanal: { singular: 'semanal', plural: 'semanais' },
-  mensal:  { singular: 'mensal',  plural: 'mensais'  },
-};
 
 const FILTERS = [
   { key: 'todas',    label: 'Todos' },
@@ -153,7 +148,6 @@ export default function AtivosScreen() {
           } = buildCardData(pos);
 
           const isAtrasado = posStatus === 'atrasado';
-          const cicloDisplay = CICLO_META[ciclo];
 
           return (
             <TouchableOpacity
@@ -218,22 +212,13 @@ export default function AtivosScreen() {
 
               <View style={s.divider} />
 
-              <View>
-                {/* Row 1: info textual */}
-                <View style={s.paymentHead}>
-                  <Text style={s.paymentHeadLeft}>
-                    {parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${parcelasTotal === 1 ? (cicloDisplay?.singular ?? '') : (cicloDisplay?.plural ?? '')}` : '—'}
-                  </Text>
-                  <Text style={s.paymentHeadRight}>{pctRecebido}% pago</Text>
-                </View>
-                {/* Row 2: barra */}
-                <ThinBar pct={pctRecebido} context="light" style={s.paymentTrack} />
-                {/* Row 3: labels */}
-                <View style={s.barFooter}>
-                  <Text style={s.barFooterText}>R$ {formatBRL(Math.round(recebido))} pago</Text>
-                  <Text style={s.barFooterText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
-                </View>
-              </View>
+              <PaymentProgress
+                ciclo={ciclo}
+                parcelasTotal={parcelasTotal}
+                pctPago={pctRecebido}
+                valorPago={recebido}
+                valorTotal={totalComRetorno}
+              />
             </TouchableOpacity>
           );
         })}
@@ -312,12 +297,6 @@ const s = StyleSheet.create({
   heroSign:   { fontSize: 24, fontFamily: fonts.display },
   heroCaption:{ fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 14 },
   divider:       { height: 1, backgroundColor: C.line, marginBottom: 18 },
-  paymentHead:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
-  paymentHeadLeft:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
-  paymentHeadRight: { fontFamily: fonts.display, fontSize: fontSize.base, color: C.inkSoft },
-  paymentTrack:     { marginBottom: 9 },
-  barFooter:     { flexDirection: 'row', justifyContent: 'space-between' },
-  barFooterText: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
   legend:     { flexDirection: 'row', gap: 16, marginTop: 4 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot:  { width: 8, height: 8, borderRadius: 2 },

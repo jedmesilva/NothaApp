@@ -8,7 +8,8 @@ import { router } from 'expo-router';
 import { CICLO_META, formatBRL, addDays, formatDataShort } from '@/data/loans';
 import type { Emprestimo } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii } from '@/constants/theme';
-import { PoolBar, ThinBar, DetailGrid, StatusBadge } from '@/components/ds';
+import { PoolBar, DetailGrid, StatusBadge } from '@/components/ds';
+import { PaymentProgress } from '@/components/PaymentProgress';
 import type { LoanStatus } from '@/components/ds';
 
 type Props = {
@@ -69,22 +70,14 @@ export function LoanCard({ loan }: Props) {
       )}
 
       {(loan.status === 'ativo' || isAtrasado) && (
-        <View style={st.paymentSection}>
-          {/* Row 1: info textual */}
-          <View style={st.paymentHead}>
-            <Text style={st.paymentHeadLeft}>
-              {loan.parcelasTotal} {loan.parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
-            </Text>
-            <Text style={st.paymentHeadRight}>{percentPago}% pago</Text>
-          </View>
-          {/* Row 2: barra */}
-          <ThinBar pct={percentPago} context="light" style={st.paymentTrack} />
-          {/* Row 3: labels */}
-          <View style={st.paymentFooter}>
-            <Text style={st.paymentFooterText}>R$ {formatBRL(Math.round(valorPago))} pago</Text>
-            <Text style={st.paymentFooterText}>R$ {formatBRL(Math.round(totalAPagar))} total</Text>
-          </View>
-        </View>
+        <PaymentProgress
+          ciclo={loan.ciclo}
+          parcelasTotal={loan.parcelasTotal}
+          pctPago={percentPago}
+          valorPago={valorPago}
+          valorTotal={totalAPagar}
+          style={st.paymentSection}
+        />
       )}
 
       <DetailGrid
@@ -114,10 +107,4 @@ const st = StyleSheet.create({
   label: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginTop: 2 },
 
   paymentSection: { marginBottom: 18 },
-  paymentHead:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
-  paymentHeadLeft:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
-  paymentHeadRight: { fontFamily: fonts.display, fontSize: fontSize.base, color: C.inkSoft },
-  paymentTrack:   { marginBottom: 9 },
-  paymentFooter:  { flexDirection: 'row', justifyContent: 'space-between' },
-  paymentFooterText: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
 });
