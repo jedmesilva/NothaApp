@@ -203,18 +203,11 @@ export default function AtivosScreen() {
               ) : (
                 <PoolBar
                   label="Pagamento"
-                  headLeft={`${pctRecebido}% pago`}
-                  headRight={`R$ ${formatBRL(Math.round(recebido))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
+                  headLeft={parcelasTotal > 0 ? `${parcelasTotal} parcelas ${cicloDisplay?.pagamentosLabel ?? ''}` : '—'}
+                  headRight={`${pctRecebido}% pago`}
                   segments={[{ pct: pctRecebido, variant: 'primary' }]}
-                  style={{ marginBottom: 18 }}
                 />
               )}
-
-              <DetailGrid
-                items={[
-                  { label: 'Pagamento', value: parcelasTotal > 0 ? `${parcelasTotal} parcelas ${cicloDisplay?.pagamentosLabel ?? ''}` : '—' },
-                ]}
-              />
             </TouchableOpacity>
           );
         })}
