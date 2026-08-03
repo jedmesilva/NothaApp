@@ -339,9 +339,9 @@ const s = StyleSheet.create({
   metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
-  paymentHint:       { paddingHorizontal: spacing[4], paddingBottom: spacing[6], gap: 4 },
-  paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.onDarkMid },
-  paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: '#fff' },
+  paymentHint:       { paddingBottom: spacing[6], gap: 4 },
+  paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
+  paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
 
   // Slider
   sliderSection: {

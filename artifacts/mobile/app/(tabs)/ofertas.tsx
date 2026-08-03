@@ -355,7 +355,7 @@ const s = StyleSheet.create({
   sliderSection: { marginBottom: spacing[2] },
 
   // Bar footer
-  paymentHint:       { paddingHorizontal: spacing[4], paddingBottom: spacing[4], gap: 4 },
+  paymentHint:       { paddingBottom: spacing[4], gap: 4 },
   paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
   paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
 
