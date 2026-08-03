@@ -20,7 +20,7 @@ import { BackButton, StatusBadge, PoolBar, DetailGrid, SplitRow, Chip, ModalShee
 import type { LoanStatus } from '@/components/ds';
 
 const CICLO_META: Record<string, { pagamentosLabel: string }> = {
-  diario:  { pagamentosLabel: 'diários' },
+  diario:  { pagamentosLabel: 'diárias' },
   semanal: { pagamentosLabel: 'semanais' },
   mensal:  { pagamentosLabel: 'mensais' },
 };

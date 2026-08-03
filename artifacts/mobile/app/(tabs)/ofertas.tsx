@@ -27,7 +27,7 @@ const CICLOS_FILTRO = [
 ];
 
 const CICLO_PLURAL: Record<string, string> = {
-  Diário: 'diários', Semanal: 'semanais', Mensal: 'mensais',
+  Diário: 'diárias', Semanal: 'semanais', Mensal: 'mensais',
 };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
