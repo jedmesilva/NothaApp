@@ -212,8 +212,8 @@ export default function AtivosScreen() {
 
               <DetailGrid
                 items={[
-                  { label: 'Prazo',    value: `${prazoDias} dias`, sub: `pagamentos ${cicloDisplay?.pagamentosLabel ?? ''}` },
-                  { label: 'Parcelas', value: parcelasTotal > 0 ? `${parcelasTotal}x` : '—' },
+                  { label: 'Parcelas', value: parcelasTotal > 0 ? `${parcelasTotal} ${cicloDisplay?.pagamentosLabel ?? ''}` : '—' },
+                  { label: 'Contrato', value: pos.loan.contractId },
                 ]}
               />
             </TouchableOpacity>

@@ -60,6 +60,7 @@ export default function OfertasScreen() {
     valor:                 o.maxAmountCents / 100,
     taxaRetorno:           o.ratePct / 100,
     prazoDias:             o.loan.termDays,
+    parcelasTotal:         o.loan.installmentsTotal,
     ciclo:                 CICLO_API[o.loan.cycle] ?? 'Mensal',
     risco:                 'N/D',
     tomadorScore:          'N/D',
@@ -198,7 +199,7 @@ export default function OfertasScreen() {
               {/* Grid */}
               <DetailGrid
                 items={[
-                  { label: 'Prazo',         value: `${o.prazoDias} dias`, sub: `vencimentos ${CICLO_PLURAL[o.ciclo]}` },
+                  { label: 'Parcelas',      value: o.parcelasTotal > 0 ? `${o.parcelasTotal} ${CICLO_PLURAL[o.ciclo]}` : `${o.prazoDias} dias` },
                   { label: 'Classificação', value: o.tomadorScore },
                   { label: 'Histórico',     value: o.emprestimosAnteriores === 0 ? 'Primeiro' : `${o.emprestimosAnteriores + 1}º empréstimo` },
                   { label: 'Já tomado',     value: o.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(o.valorTotalTomado)}` },
