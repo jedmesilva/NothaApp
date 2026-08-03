@@ -437,17 +437,23 @@ export default function AtivoDetalheScreen() {
         )}
 
         {/* ── Vencimentos reais (colapsável) ── */}
-        {jaConcedido && parcelas.length > 0 && (
+        {jaConcedido && (
           <View style={s.vencimentosCard}>
-            {/* Header row: título + chevron */}
-            <TouchableOpacity
-              style={s.paymentToggle}
-              onPress={() => setShowVencimentos((v) => !v)}
-              activeOpacity={0.8}
-            >
-              <Text style={s.paymentToggleTitle}>Pagamento</Text>
-              <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
-            </TouchableOpacity>
+            {/* Header row: título + chevron (chevron só aparece se há parcelas para expandir) */}
+            {parcelas.length > 0 ? (
+              <TouchableOpacity
+                style={s.paymentToggle}
+                onPress={() => setShowVencimentos((v) => !v)}
+                activeOpacity={0.8}
+              >
+                <Text style={s.paymentToggleTitle}>Pagamento</Text>
+                <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
+              </TouchableOpacity>
+            ) : (
+              <View style={s.paymentToggle}>
+                <Text style={s.paymentToggleTitle}>Pagamento</Text>
+              </View>
+            )}
 
             {/* Bar section: sempre visível */}
             <View style={s.paymentBarContainer}>
@@ -467,7 +473,7 @@ export default function AtivoDetalheScreen() {
               </View>
             </View>
 
-            {showVencimentos && (
+            {parcelas.length > 0 && showVencimentos && (
               <View style={s.expandedContent}>
                 {parcelas.map((p) => {
                   const isRecebida = p.status === 'recebida';
