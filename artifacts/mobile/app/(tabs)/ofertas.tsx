@@ -199,7 +199,7 @@ export default function OfertasScreen() {
               {/* Grid */}
               <DetailGrid
                 items={[
-                  { label: 'Parcelas',      value: o.parcelasTotal > 0 ? `${o.parcelasTotal} ${CICLO_PLURAL[o.ciclo]}` : `${o.prazoDias} dias` },
+                  { label: 'Pagamento',     value: o.parcelasTotal > 0 ? `${o.parcelasTotal} parcelas ${CICLO_PLURAL[o.ciclo]}` : `${o.prazoDias} dias` },
                   { label: 'Classificação', value: o.tomadorScore },
                   { label: 'Histórico',     value: o.emprestimosAnteriores === 0 ? 'Primeiro' : `${o.emprestimosAnteriores + 1}º empréstimo` },
                   { label: 'Já tomado',     value: o.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(o.valorTotalTomado)}` },
