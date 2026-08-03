@@ -349,7 +349,9 @@ export default function AtivoDetalheScreen() {
             </View>
           )}
 
-          {!jaConcedido ? (
+          {/* ── Seção captação — só enquanto não concedido ── */}
+          {!jaConcedido && !isOferta && <View style={s.heroDivider} />}
+          {!jaConcedido && (
             <PoolBar
               label="Captação"
               headLeft={`${pctCaptadoOutros}% captado`}
@@ -359,7 +361,7 @@ export default function AtivoDetalheScreen() {
                 { pct: pctPosClamped,    variant: 'secondary' },
               ]}
               context="dark"
-              style={{ marginBottom: 20 }}
+              style={{ marginBottom: 0 }}
               footer={
                 <PoolLegend
                   context="dark"
@@ -370,17 +372,21 @@ export default function AtivoDetalheScreen() {
                 />
               }
             />
-          ) : (
-            <PoolBar
-              label="Pagamento"
-              headLeft={`${pctPago}% pago`}
-              headRight={`R$ ${formatBRL(Math.round(recebidoValor))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
-              segments={[{ pct: pctPago, variant: 'primary' }]}
-              context="dark"
-              style={{ marginBottom: 20 }}
-            />
           )}
 
+          {/* ── Seção pagamento — sempre visível ── */}
+          <View style={s.heroDivider} />
+          <PoolBar
+            label="Pagamento"
+            headLeft={`${pctPago}% pago`}
+            headRight={`R$ ${formatBRL(Math.round(recebidoValor))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
+            segments={[{ pct: pctPago, variant: 'primary' }]}
+            context="dark"
+            style={{ marginBottom: 0 }}
+          />
+
+          {/* ── Seção ciclo ── */}
+          <View style={s.heroDivider} />
           <DetailGrid
             context="dark"
             items={[
