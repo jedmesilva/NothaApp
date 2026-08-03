@@ -16,7 +16,7 @@ import { formatBRL } from '@/data/loans';
 import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions';
 import type { InvestorPosition } from '@/hooks/useInvestorPositions';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, PoolBar, DetailGrid, SplitRow, Chip, ModalSheet } from '@/components/ds';
+import { BackButton, StatusBadge, PoolBar, DetailGrid, Chip, ModalSheet } from '@/components/ds';
 import type { LoanStatus } from '@/components/ds';
 
 const CICLO_META: Record<string, { singular: string; plural: string }> = {
@@ -178,10 +178,20 @@ export default function AtivosScreen() {
                 Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
               </Text>
 
-              <SplitRow
-                left={{ label: 'Valor investido', value: `R$ ${formatBRL(investido)}` }}
-                right={{ label: 'Retorno', value: `R$ ${formatBRL(Math.round(totalComRetorno))}` }}
-              />
+              <View style={s.metricRow}>
+                <View>
+                  <Text style={s.metricLabel}>Investimento</Text>
+                  <Text style={s.metricValue}>R$ {formatBRL(investido)}</Text>
+                </View>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={s.metricLabel}>Retorno</Text>
+                  <Text style={s.metricValue}>R$ {formatBRL(Math.round(totalComRetorno))}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={s.metricLabel}>Prazo</Text>
+                  <Text style={s.metricValue}>{prazoDias} dias</Text>
+                </View>
+              </View>
 
               {isCaptacao && <View style={s.divider} />}
 
@@ -285,6 +295,9 @@ const s = StyleSheet.create({
   filterBadge:     { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: C.ink, borderWidth: 2, borderColor: C.card },
   emptyState: { textAlign: 'center', paddingVertical: 60, color: C.inkFaint, fontSize: fontSize.md, fontFamily: fonts.regular },
   posCard:         { borderRadius: radii.card, backgroundColor: C.card, padding: 22 },
+  metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
+  metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
+  metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   posCardAtrasado: { borderWidth: 1.5, borderColor: C.red },
   posCardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
   posTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },

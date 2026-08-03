@@ -10,7 +10,7 @@ import { formatBRL } from '@/data/loans';
 import type { Oferta } from '@/data/ofertas';
 import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { PoolBar, PoolLegend, SplitRow, DetailGrid, Chip, ModalSheet } from '@/components/ds';
+import { PoolBar, PoolLegend, DetailGrid, Chip, ModalSheet } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
 
 const CLASSIFICACOES = [
@@ -174,11 +174,21 @@ export default function OfertasScreen() {
               <Text style={s.heroValue}><Text style={s.heroSign}>+</Text>{o.taxaRetorno}%</Text>
               <Text style={s.heroCaption}>Rendimento de R$ {formatBRL(retornoValor)} em {o.prazoDias} dias</Text>
 
-              {/* Split */}
-              <SplitRow
-                left={{ label: 'Investimento', value: `R$ ${formatBRL(o.valor)}` }}
-                right={{ label: 'Retorno', value: `R$ ${formatBRL(o.valor + retornoValor)}` }}
-              />
+              {/* Investimento / Retorno / Prazo */}
+              <View style={s.metricRow}>
+                <View>
+                  <Text style={s.metricLabel}>Investimento</Text>
+                  <Text style={s.metricValue}>R$ {formatBRL(o.valor)}</Text>
+                </View>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={s.metricLabel}>Retorno</Text>
+                  <Text style={s.metricValue}>R$ {formatBRL(o.valor + retornoValor)}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={s.metricLabel}>Prazo</Text>
+                  <Text style={s.metricValue}>{o.prazoDias} dias</Text>
+                </View>
+              </View>
 
               {/* Pool */}
               <PoolBar
@@ -310,6 +320,9 @@ const s = StyleSheet.create({
   heroValue:   { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:    { fontSize: 24, fontFamily: fonts.display },
   heroCaption: { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 20 },
+  metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
+  metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
+  metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
 
   // Buttons
   btnRow:         { flexDirection: 'row', gap: 10 },

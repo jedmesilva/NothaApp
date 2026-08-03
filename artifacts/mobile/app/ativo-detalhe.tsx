@@ -322,14 +322,30 @@ export default function AtivoDetalheScreen() {
 
           <View style={s.splitRow}>
             <View>
-              <Text style={s.splitLabel}>Valor investido</Text>
+              <Text style={s.splitLabel}>Investimento</Text>
               <Text style={s.splitValue}>R$ {formatBRL(valorInvestido)}</Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
+            <View style={{ alignItems: 'center' }}>
               <Text style={s.splitLabel}>Retorno</Text>
               <Text style={s.splitValue}>R$ {formatBRL(Math.round(totalComRetorno))}</Text>
             </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={s.splitLabel}>Prazo</Text>
+              <Text style={s.splitValue}>{prazoDias} dias</Text>
+            </View>
           </View>
+
+          {/* ── Slider — dentro do card, abaixo das métricas ── */}
+          {isOferta && !aceitou && (
+            <View style={s.sliderInCard}>
+              <InvestmentSlider
+                minCents={offerMinCents}
+                maxCents={offerMaxCents}
+                valueCents={sliderCents}
+                onChange={setAdjustedCents}
+              />
+            </View>
+          )}
 
           {!jaConcedido ? (
             <PoolBar
@@ -366,23 +382,10 @@ export default function AtivoDetalheScreen() {
           <DetailGrid
             context="dark"
             items={[
-              { label: 'Prazo', value: `${prazoDias} dias` },
               { label: 'Ciclo', value: cicloMeta.label, sub: `vencimentos ${PAGAMENTOS_LABEL[ciclo]}` },
             ]}
           />
         </View>
-
-        {/* ── Slider de valor (oferta) ── */}
-        {isOferta && !aceitou && (
-          <View style={s.sliderCard}>
-            <InvestmentSlider
-              minCents={offerMinCents}
-              maxCents={offerMaxCents}
-              valueCents={sliderCents}
-              onChange={setAdjustedCents}
-            />
-          </View>
-        )}
 
         {/* ── Previsão de vencimentos (captação) ── */}
         {!jaConcedido && parcelasPrevisao.length > 0 && (
@@ -595,6 +598,7 @@ const s = StyleSheet.create({
   splitValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: '#fff', letterSpacing: -0.3 },
 
   sliderCard: { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5], paddingBottom: spacing[4] },
+  sliderInCard: { borderTopWidth: 1, borderTopColor: C.onDarkBorder, paddingTop: spacing[4], marginBottom: spacing[2] },
 
   datesRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: spacing[4], marginBottom: spacing[4], padding: 14, borderRadius: radii.lg, backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
