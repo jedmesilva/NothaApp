@@ -206,6 +206,12 @@ export default function AtivosScreen() {
                   headLeft={parcelasTotal > 0 ? `${parcelasTotal} parcelas ${cicloDisplay?.pagamentosLabel ?? ''}` : '—'}
                   headRight={`${pctRecebido}% pago`}
                   segments={[{ pct: pctRecebido, variant: 'primary' }]}
+                  footer={
+                    <View style={s.barFooter}>
+                      <Text style={s.barFooterText}>R$ {formatBRL(Math.round(recebido))} pago</Text>
+                      <Text style={s.barFooterText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
+                    </View>
+                  }
                 />
               )}
             </TouchableOpacity>
@@ -282,6 +288,8 @@ const s = StyleSheet.create({
   heroValue:  { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:   { fontSize: 24, fontFamily: fonts.display },
   heroCaption:{ fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 18 },
+  barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  barFooterText: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
   legend:     { flexDirection: 'row', gap: 16, marginTop: 4 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot:  { width: 8, height: 8, borderRadius: 2 },
