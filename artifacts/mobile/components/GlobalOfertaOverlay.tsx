@@ -262,7 +262,7 @@ const s = StyleSheet.create({
     borderTopLeftRadius: radii.hero,
     borderTopRightRadius: radii.hero,
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[3],
+    paddingTop: spacing[6],
     maxHeight: '88%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -8 },
