@@ -129,7 +129,6 @@ export function ParaInvestir() {
             </div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3, display: "flex", alignItems: "center", gap: 6 }}>
               R$ {valorInvestido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              {isMax && <span style={{ fontSize: 10, fontFamily: "Inter, sans-serif", fontWeight: 600, color: "rgba(255,255,255,0.45)", backgroundColor: "rgba(255,255,255,0.10)", borderRadius: 999, padding: "2px 7px" }}>cheio</span>}
               {isMin && <span style={{ fontSize: 10, fontFamily: "Inter, sans-serif", fontWeight: 600, color: "#f5a623", backgroundColor: "rgba(245,166,35,0.15)", borderRadius: 999, padding: "2px 7px" }}>mín</span>}
             </div>
           </div>
