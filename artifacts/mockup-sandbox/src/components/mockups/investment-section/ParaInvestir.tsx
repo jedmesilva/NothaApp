@@ -120,7 +120,7 @@ export function ParaInvestir() {
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
-              Você investe
+              Investimento
             </div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3, display: "flex", alignItems: "center", gap: 6 }}>
               R$ {valorInvestido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -129,7 +129,7 @@ export function ParaInvestir() {
           </div>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
-              Você recebe
+              Retorno
             </div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3 }}>
               R$ {totalComRetorno.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}

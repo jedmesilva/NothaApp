@@ -112,7 +112,7 @@ export function JaInvestido() {
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 22 }}>
           <div>
             <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
-              Investido
+              Investimento
             </div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3 }}>
               R$ {formatBRL(VALOR_INVESTIDO)}
