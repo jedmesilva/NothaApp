@@ -204,7 +204,7 @@ export default function AtivosScreen() {
                 />
               )}
 
-              {isCaptacao && <View style={s.divider} />}
+              <View style={s.divider} />
 
               <PoolBar
                 label="Pagamento"
