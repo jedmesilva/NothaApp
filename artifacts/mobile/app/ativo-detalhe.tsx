@@ -15,6 +15,7 @@ import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions
 import type { InstallmentSummary } from '@/hooks/useInvestorPositions';
 import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { useToast } from '@/contexts/ToastContext';
+import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
@@ -75,7 +76,8 @@ export default function AtivoDetalheScreen() {
   const [showVencimentos, setShowVencimentos] = useState(false);
   const [showPrevisao,    setShowPrevisao]    = useState(false);
   const [aceitou,         setAceitou]         = useState(false);
-  const [adjustedCents,   setAdjustedCents]   = useState(0); // 0 = use offer max
+  const { getAmount, setAmount } = useAdjustedAmounts();
+  const adjustedCents = isOferta ? getAmount(id) : 0;
 
   const isLoading = isOferta ? offersLoading : posLoading;
 
@@ -344,7 +346,7 @@ export default function AtivoDetalheScreen() {
                 minCents={offerMinCents}
                 maxCents={offerMaxCents}
                 valueCents={sliderCents}
-                onChange={setAdjustedCents}
+                onChange={(cents) => setAmount(id, cents)}
                 showValue={false}
                 context="dark"
               />

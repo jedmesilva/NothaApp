@@ -12,6 +12,7 @@ import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers'
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend, Chip, ModalSheet } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
+import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import ValueSlider from '@/components/ValueSlider';
 
 const CLASSIFICACOES = [
@@ -45,7 +46,7 @@ export default function OfertasScreen() {
   const [busca,               setBusca]               = useState('');
   const [modalOpen,           setModalOpen]           = useState(false);
   const [aceitas,             setAceitas]             = useState<string[]>([]);
-  const [adjustedCents,       setAdjustedCents]       = useState<Record<string, number>>({});
+  const { getAmount, setAmount } = useAdjustedAmounts();
 
   const { mutateAsync: respond, isPending: isResponding } = useRespondToOffer();
 
@@ -88,7 +89,7 @@ export default function OfertasScreen() {
   });
 
   const handleAceitar = async (oferta: Oferta) => {
-    const safeCents = adjustedCents[oferta.ofertaId] ?? Math.round(oferta.valor * 100);
+    const safeCents = getAmount(String(oferta.id)) || Math.round(oferta.valor * 100);
     try {
       await respond({ offerId: String(oferta.id), action: 'accepted', amountCents: safeCents });
     } catch (_) { /* continua mesmo com erro de rede */ }
@@ -160,7 +161,7 @@ export default function OfertasScreen() {
         {filtered.map((o) => {
           const maxCents         = Math.round(o.valor * 100);
           const minCents         = Math.max(1_000, Math.round(maxCents * 0.25 / 100) * 100);
-          const safeCents        = adjustedCents[o.ofertaId] ?? maxCents;
+          const safeCents        = getAmount(String(o.id)) || maxCents;
           const valorR$          = safeCents / 100;
           const retornoValor     = Math.round(valorR$ * (o.taxaRetorno / 100));
           // Subtrai a contribuição desta oferta para evitar dupla-contagem
@@ -207,7 +208,7 @@ export default function OfertasScreen() {
                   minCents={minCents}
                   maxCents={maxCents}
                   valueCents={safeCents}
-                  onChange={(v) => setAdjustedCents((prev) => ({ ...prev, [o.ofertaId]: v }))}
+                  onChange={(v) => setAmount(String(o.id), v)}
                   showValue={false}
                 />
               </View>

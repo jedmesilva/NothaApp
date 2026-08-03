@@ -12,6 +12,7 @@ import type { ToastState } from '@/contexts/ToastContext';
 import GlobalToast from '@/components/GlobalToast';
 import GlobalOfertaOverlay from '@/components/GlobalOfertaOverlay';
 import { OfertaOverlayProvider } from '@/contexts/OfertaOverlayContext';
+import { AdjustedAmountsProvider } from '@/contexts/AdjustedAmountsContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {
   Inter_400Regular,
@@ -52,6 +53,7 @@ function RootLayoutNav() {
 
   return (
     <ToastProvider onToast={handleToast}>
+      <AdjustedAmountsProvider>
       <OfertaOverlayProvider>
         <AreaProvider>
           <View style={{ flex: 1 }}>
@@ -82,6 +84,7 @@ function RootLayoutNav() {
           </View>
         </AreaProvider>
       </OfertaOverlayProvider>
+      </AdjustedAmountsProvider>
     </ToastProvider>
   );
 }
