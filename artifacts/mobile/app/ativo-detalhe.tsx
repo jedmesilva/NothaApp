@@ -385,8 +385,6 @@ export default function AtivoDetalheScreen() {
             style={{ marginBottom: 20 }}
           />
 
-          {/* ── Seção ciclo ── */}
-          <View style={s.heroDivider} />
           <DetailGrid
             context="dark"
             items={[
