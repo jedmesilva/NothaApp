@@ -19,10 +19,10 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import { BackButton, StatusBadge, PoolBar, DetailGrid, SplitRow, Chip, ModalSheet } from '@/components/ds';
 import type { LoanStatus } from '@/components/ds';
 
-const CICLO_META: Record<string, { pagamentosLabel: string }> = {
-  diario:  { pagamentosLabel: 'diárias' },
-  semanal: { pagamentosLabel: 'semanais' },
-  mensal:  { pagamentosLabel: 'mensais' },
+const CICLO_META: Record<string, { singular: string; plural: string }> = {
+  diario:  { singular: 'diária',  plural: 'diárias'  },
+  semanal: { singular: 'semanal', plural: 'semanais' },
+  mensal:  { singular: 'mensal',  plural: 'mensais'  },
 };
 
 const FILTERS = [
@@ -203,7 +203,7 @@ export default function AtivosScreen() {
               ) : (
                 <PoolBar
                   label="Pagamento"
-                  headLeft={parcelasTotal > 0 ? `${parcelasTotal} parcelas ${cicloDisplay?.pagamentosLabel ?? ''}` : '—'}
+                  headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${parcelasTotal === 1 ? (cicloDisplay?.singular ?? '') : (cicloDisplay?.plural ?? '')}` : '—'}
                   headRight={`${pctRecebido}% pago`}
                   segments={[{ pct: pctRecebido, variant: 'primary' }]}
                   footer={

@@ -29,6 +29,9 @@ const CICLOS_FILTRO = [
 const CICLO_PLURAL: Record<string, string> = {
   Diário: 'diárias', Semanal: 'semanais', Mensal: 'mensais',
 };
+const CICLO_SINGULAR: Record<string, string> = {
+  Diário: 'diária', Semanal: 'semanal', Mensal: 'mensal',
+};
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -199,7 +202,7 @@ export default function OfertasScreen() {
               {/* Grid */}
               <DetailGrid
                 items={[
-                  { label: 'Pagamento',     value: o.parcelasTotal > 0 ? `${o.parcelasTotal} parcelas ${CICLO_PLURAL[o.ciclo]}` : `${o.prazoDias} dias` },
+                  { label: 'Pagamento',     value: o.parcelasTotal > 0 ? `${o.parcelasTotal} ${o.parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${o.parcelasTotal === 1 ? (CICLO_SINGULAR[o.ciclo] ?? '') : (CICLO_PLURAL[o.ciclo] ?? '')}` : `${o.prazoDias} dias` },
                   { label: 'Classificação', value: o.tomadorScore },
                   { label: 'Histórico',     value: o.emprestimosAnteriores === 0 ? 'Primeiro' : `${o.emprestimosAnteriores + 1}º empréstimo` },
                   { label: 'Já tomado',     value: o.emprestimosAnteriores === 0 ? '—' : `R$ ${formatBRL(o.valorTotalTomado)}` },
