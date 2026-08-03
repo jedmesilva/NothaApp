@@ -183,7 +183,7 @@ export default function AtivosScreen() {
                 right={{ label: 'Retorno', value: `R$ ${formatBRL(Math.round(totalComRetorno))}` }}
               />
 
-              {isCaptacao ? (
+              {isCaptacao && (
                 <PoolBar
                   label="Captação"
                   headLeft={`${pctCaptado + (valorTotalPedido > 0 ? Math.round((investido / valorTotalPedido) * 100) : 0)}% captado`}
@@ -200,20 +200,20 @@ export default function AtivosScreen() {
                     </View>
                   }
                 />
-              ) : (
-                <PoolBar
-                  label="Pagamento"
-                  headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${parcelasTotal === 1 ? (cicloDisplay?.singular ?? '') : (cicloDisplay?.plural ?? '')}` : '—'}
-                  headRight={`${pctRecebido}% pago`}
-                  segments={[{ pct: pctRecebido, variant: 'primary' }]}
-                  footer={
-                    <View style={s.barFooter}>
-                      <Text style={s.barFooterText}>R$ {formatBRL(Math.round(recebido))} pago</Text>
-                      <Text style={s.barFooterText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
-                    </View>
-                  }
-                />
               )}
+
+              <PoolBar
+                label="Pagamento"
+                headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${parcelasTotal === 1 ? (cicloDisplay?.singular ?? '') : (cicloDisplay?.plural ?? '')}` : '—'}
+                headRight={`${pctRecebido}% pago`}
+                segments={[{ pct: pctRecebido, variant: 'primary' }]}
+                footer={
+                  <View style={s.barFooter}>
+                    <Text style={s.barFooterText}>R$ {formatBRL(Math.round(recebido))} pago</Text>
+                    <Text style={s.barFooterText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
+                  </View>
+                }
+              />
             </TouchableOpacity>
           );
         })}
