@@ -361,7 +361,7 @@ export default function AtivoDetalheScreen() {
                 { pct: pctPosClamped,    variant: 'secondary' },
               ]}
               context="dark"
-              style={{ marginBottom: 0 }}
+              style={{ marginBottom: 20 }}
               footer={
                 <PoolLegend
                   context="dark"
@@ -382,7 +382,7 @@ export default function AtivoDetalheScreen() {
             headRight={`R$ ${formatBRL(Math.round(recebidoValor))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
             segments={[{ pct: pctPago, variant: 'primary' }]}
             context="dark"
-            style={{ marginBottom: 0 }}
+            style={{ marginBottom: 20 }}
           />
 
           {/* ── Seção ciclo ── */}
