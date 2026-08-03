@@ -178,70 +178,68 @@ export default function GlobalOfertaOverlay() {
               Rendimento de R$ {formatBRL(retornoValor)} em {activeOffer.loan.termDays} dias
             </Text>
 
-            {/* Divisor + 3 colunas: Investimento | Retorno | Prazo */}
-            <View style={s.divider} />
-            <View style={s.metricRow}>
-              <View>
-                <Text style={s.metricLabel}>Investimento</Text>
-                <Text style={s.metricValue}>R$ {formatBRL(valorR$)}</Text>
-              </View>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={s.metricLabel}>Retorno</Text>
-                <Text style={s.metricValue}>R$ {formatBRL(valorR$ + retornoValor)}</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={s.metricLabel}>Prazo</Text>
-                <Text style={s.metricValue}>{activeOffer.loan.termDays} dias</Text>
-              </View>
-            </View>
-
-            {/* Divisor + Captação */}
-            <View style={s.divider} />
-            <PoolBar
-              label="Captação"
-              headLeft={`${pctCaptado}% captado`}
-              headRight={`R$ ${formatBRL(jaCaptadoR$)} de R$ ${formatBRL(totalPedidoR$)}`}
-              segments={[
-                { pct: pctCaptado, variant: 'primary'   },
-                { pct: pctOferta,  variant: 'secondary' },
-              ]}
-              style={{ marginBottom: 20 }}
-              footer={
-                <PoolLegend items={[
-                  { color: C.ink,      label: 'captado'     },
-                  { color: C.inkFaint, label: 'esta oferta' },
-                  { color: C.line,     label: 'captando'    },
-                ]} />
-              }
-            />
-
-            {/* Divisor + Pagamento — sempre visível, igual ao card */}
-            <View style={s.divider} />
-            <PoolBar
-              label="Pagamento"
-              headLeft={activeOffer.loan.installmentsTotal > 0 ? `${activeOffer.loan.installmentsTotal} ${activeOffer.loan.installmentsTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[ciclo] ?? ''}` : '—'}
-              headRight="0% pago"
-              segments={[{ pct: 0, variant: 'primary' }]}
-              style={{ marginBottom: spacing[6] }}
-              footer={
-                <View style={s.barFooter}>
-                  <Text style={s.barFooterText}>R$ 0,00 pago</Text>
-                  <Text style={s.barFooterText}>R$ {formatBRL(valorR$ + retornoValor)} total</Text>
-                </View>
-              }
-            />
           </TouchableOpacity>
 
-          {/* ── Slider — outside tap area so drag works ── */}
-          <View style={s.sliderSection}>
-            <Text style={s.sliderLabel}>Valor a investir</Text>
-            <InvestmentSlider
-              minCents={minCents}
-              maxCents={maxCents}
-              valueCents={safeCents}
-              onChange={setAdjustedCents}
-            />
+          {/* ── Divisor + 3 colunas: Investimento | Retorno | Prazo ── */}
+          <View style={s.divider} />
+          <View style={s.metricRow}>
+            <View>
+              <Text style={s.metricLabel}>Investimento</Text>
+              <Text style={s.metricValue}>R$ {formatBRL(valorR$)}</Text>
+            </View>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={s.metricLabel}>Retorno</Text>
+              <Text style={s.metricValue}>R$ {formatBRL(valorR$ + retornoValor)}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={s.metricLabel}>Prazo</Text>
+              <Text style={s.metricValue}>{activeOffer.loan.termDays} dias</Text>
+            </View>
           </View>
+
+          {/* ── Slider — abaixo das métricas, fora do tap area ── */}
+          <InvestmentSlider
+            minCents={minCents}
+            maxCents={maxCents}
+            valueCents={safeCents}
+            onChange={setAdjustedCents}
+          />
+
+          {/* ── Divisor + Captação ── */}
+          <View style={s.divider} />
+          <PoolBar
+            label="Captação"
+            headLeft={`${pctCaptado}% captado`}
+            headRight={`R$ ${formatBRL(jaCaptadoR$)} de R$ ${formatBRL(totalPedidoR$)}`}
+            segments={[
+              { pct: pctCaptado, variant: 'primary'   },
+              { pct: pctOferta,  variant: 'secondary' },
+            ]}
+            style={{ marginBottom: 20 }}
+            footer={
+              <PoolLegend items={[
+                { color: C.ink,      label: 'captado'     },
+                { color: C.inkFaint, label: 'esta oferta' },
+                { color: C.line,     label: 'captando'    },
+              ]} />
+            }
+          />
+
+          {/* ── Divisor + Pagamento — sempre visível, igual ao card ── */}
+          <View style={s.divider} />
+          <PoolBar
+            label="Pagamento"
+            headLeft={activeOffer.loan.installmentsTotal > 0 ? `${activeOffer.loan.installmentsTotal} ${activeOffer.loan.installmentsTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[ciclo] ?? ''}` : '—'}
+            headRight="0% pago"
+            segments={[{ pct: 0, variant: 'primary' }]}
+            style={{ marginBottom: spacing[6] }}
+            footer={
+              <View style={s.barFooter}>
+                <Text style={s.barFooterText}>R$ 0,00 pago</Text>
+                <Text style={s.barFooterText}>R$ {formatBRL(valorR$ + retornoValor)} total</Text>
+              </View>
+            }
+          />
         </ScrollView>
 
         {/* Accept button — pinned at bottom */}
