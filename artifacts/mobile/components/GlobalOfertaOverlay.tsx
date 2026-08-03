@@ -280,7 +280,7 @@ const s = StyleSheet.create({
   },
 
   scrollContent: {
-    paddingBottom: spacing[5],
+    paddingBottom: spacing[2],
   },
 
   // Eyebrow + countdown row
@@ -339,7 +339,7 @@ const s = StyleSheet.create({
   metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
-  paymentHint:       { paddingBottom: spacing[6], gap: 4 },
+  paymentHint:       { paddingBottom: spacing[4], gap: 4 },
   paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
   paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
 
@@ -378,7 +378,7 @@ const s = StyleSheet.create({
     paddingVertical: 18,
     borderRadius: radii.lg,
     backgroundColor: C.dark,
-    marginTop: spacing[4],
+    marginTop: spacing[2],
   },
   acceptBtnText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: '#fff' },
 });
