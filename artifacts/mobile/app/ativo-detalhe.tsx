@@ -349,51 +349,47 @@ export default function AtivoDetalheScreen() {
             </View>
           )}
 
-          {!jaConcedido ? (
-            <>
-              {/* ── Captação: divisor só se não há slider acima ── */}
-              {!isOferta && <View style={s.heroDivider} />}
-              <PoolBar
-                label="Captação"
-                headLeft={`${pctCaptadoOutros}% captado`}
-                headRight={`R$ ${formatBRL(posicao.jaCaptado)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
-                segments={[
-                  { pct: pctCaptadoOutros, variant: 'primary' },
-                  { pct: pctPosClamped,    variant: 'secondary' },
-                ]}
-                context="dark"
-                style={{ marginBottom: 20 }}
-                footer={
-                  <PoolLegend
-                    context="dark"
-                    items={[
-                      { color: '#fff',        label: 'outros credores' },
-                      { color: C.onDarkFaint, label: isOferta ? 'esta oferta' : 'minha participação' },
-                    ]}
-                  />
-                }
-              />
-            </>
-          ) : (
-            <>
-              {/* ── Pagamento: sempre precedido de divisor ── */}
-              <View style={s.heroDivider} />
-              <PoolBar
-                label="Pagamento"
-                headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
-                headRight={`${pctPago}% pago`}
-                segments={[{ pct: pctPago, variant: 'primary' }]}
-                context="dark"
-                style={{ marginBottom: 20 }}
-                footer={
-                  <View style={s.barFooter}>
-                    <Text style={s.barFooterText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
-                    <Text style={s.barFooterText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
-                  </View>
-                }
-              />
-            </>
+          {/* ── Captação: só enquanto não concedido, divisor omitido se há slider ── */}
+          {!jaConcedido && !isOferta && <View style={s.heroDivider} />}
+          {!jaConcedido && (
+            <PoolBar
+              label="Captação"
+              headLeft={`${pctCaptadoOutros}% captado`}
+              headRight={`R$ ${formatBRL(posicao.jaCaptado)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
+              segments={[
+                { pct: pctCaptadoOutros, variant: 'primary' },
+                { pct: pctPosClamped,    variant: 'secondary' },
+              ]}
+              context="dark"
+              style={{ marginBottom: 20 }}
+              footer={
+                <PoolLegend
+                  context="dark"
+                  items={[
+                    { color: '#fff',        label: 'outros credores' },
+                    { color: C.onDarkFaint, label: isOferta ? 'esta oferta' : 'minha participação' },
+                  ]}
+                />
+              }
+            />
           )}
+
+          {/* ── Pagamento: sempre visível, igual ao card ── */}
+          <View style={s.heroDivider} />
+          <PoolBar
+            label="Pagamento"
+            headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
+            headRight={`${pctPago}% pago`}
+            segments={[{ pct: pctPago, variant: 'primary' }]}
+            context="dark"
+            style={{ marginBottom: 20 }}
+            footer={
+              <View style={s.barFooter}>
+                <Text style={s.barFooterText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
+                <Text style={s.barFooterText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
+              </View>
+            }
+          />
 
         </View>
 
