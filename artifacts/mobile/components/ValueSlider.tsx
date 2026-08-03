@@ -7,7 +7,7 @@
  * - PanResponder captura o gesto antes do ScrollView pai.
  * - Thumb nunca é clipado: sua posição é calculada dentro dos limites [0, trackWidth - THUMB_SIZE].
  */
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -48,6 +48,7 @@ export default function ValueSlider({
   const isDark = context === 'dark';
   // ── Refs (sempre atuais dentro dos closures do PanResponder) ─────────────────
   const trackWidth    = useRef(0);
+  const [trackWidthState, setTrackWidthState] = useState(0);
   const currentCents  = useRef(valueCents);
   const minRef        = useRef(minCents);
   const maxRef        = useRef(maxCents);
@@ -104,7 +105,9 @@ export default function ValueSlider({
 
   // ── Layout ────────────────────────────────────────────────────────────────────
   const onLayout = (e: LayoutChangeEvent) => {
-    trackWidth.current = e.nativeEvent.layout.width;
+    const w = e.nativeEvent.layout.width;
+    trackWidth.current = w;
+    setTrackWidthState(w);
   };
 
   // ── Posição do thumb ──────────────────────────────────────────────────────────
@@ -112,8 +115,8 @@ export default function ValueSlider({
   // dos limites visuais da trilha.
   const range    = maxCents - minCents;
   const fillPct  = range > 0 ? ((valueCents - minCents) / range) * 100 : 0;
-  const thumbPx  = trackWidth.current > 0 && range > 0
-    ? ((valueCents - minCents) / range) * (trackWidth.current - THUMB_SIZE)
+  const thumbPx  = trackWidthState > 0 && range > 0
+    ? ((valueCents - minCents) / range) * (trackWidthState - THUMB_SIZE)
     : 0;
 
   const isMin = valueCents <= minCents;
