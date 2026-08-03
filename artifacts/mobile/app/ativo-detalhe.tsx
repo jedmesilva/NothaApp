@@ -349,41 +349,45 @@ export default function AtivoDetalheScreen() {
             </View>
           )}
 
-          {/* ── Seção captação — só enquanto não concedido ── */}
-          {!jaConcedido && !isOferta && <View style={s.heroDivider} />}
-          {!jaConcedido && (
-            <PoolBar
-              label="Captação"
-              headLeft={`${pctCaptadoOutros}% captado`}
-              headRight={`R$ ${formatBRL(posicao.jaCaptado)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
-              segments={[
-                { pct: pctCaptadoOutros, variant: 'primary' },
-                { pct: pctPosClamped,    variant: 'secondary' },
-              ]}
-              context="dark"
-              style={{ marginBottom: 20 }}
-              footer={
-                <PoolLegend
-                  context="dark"
-                  items={[
-                    { color: '#fff',        label: 'outros credores' },
-                    { color: C.onDarkFaint, label: isOferta ? 'esta oferta' : 'minha participação' },
-                  ]}
-                />
-              }
-            />
+          {!jaConcedido ? (
+            <>
+              {/* ── Captação: divisor só se não há slider acima ── */}
+              {!isOferta && <View style={s.heroDivider} />}
+              <PoolBar
+                label="Captação"
+                headLeft={`${pctCaptadoOutros}% captado`}
+                headRight={`R$ ${formatBRL(posicao.jaCaptado)} de R$ ${formatBRL(posicao.valorTotalPedido)}`}
+                segments={[
+                  { pct: pctCaptadoOutros, variant: 'primary' },
+                  { pct: pctPosClamped,    variant: 'secondary' },
+                ]}
+                context="dark"
+                style={{ marginBottom: 20 }}
+                footer={
+                  <PoolLegend
+                    context="dark"
+                    items={[
+                      { color: '#fff',        label: 'outros credores' },
+                      { color: C.onDarkFaint, label: isOferta ? 'esta oferta' : 'minha participação' },
+                    ]}
+                  />
+                }
+              />
+            </>
+          ) : (
+            <>
+              {/* ── Pagamento: sempre precedido de divisor ── */}
+              <View style={s.heroDivider} />
+              <PoolBar
+                label="Pagamento"
+                headLeft={`${pctPago}% pago`}
+                headRight={`R$ ${formatBRL(Math.round(recebidoValor))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
+                segments={[{ pct: pctPago, variant: 'primary' }]}
+                context="dark"
+                style={{ marginBottom: 20 }}
+              />
+            </>
           )}
-
-          {/* ── Seção pagamento — sempre visível ── */}
-          <View style={s.heroDivider} />
-          <PoolBar
-            label="Pagamento"
-            headLeft={`${pctPago}% pago`}
-            headRight={`R$ ${formatBRL(Math.round(recebidoValor))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
-            segments={[{ pct: pctPago, variant: 'primary' }]}
-            context="dark"
-            style={{ marginBottom: 20 }}
-          />
 
           <DetailGrid
             context="dark"
