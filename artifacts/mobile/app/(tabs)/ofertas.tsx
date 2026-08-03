@@ -12,7 +12,7 @@ import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers'
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend, Chip, ModalSheet } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
-import InvestmentSlider from '@/components/InvestmentSlider';
+import ValueSlider from '@/components/ValueSlider';
 
 const CLASSIFICACOES = [
   { key: 'todos', label: 'Todas' },
@@ -203,7 +203,7 @@ export default function OfertasScreen() {
 
               {/* Slider de valor */}
               <View style={s.sliderSection}>
-                <InvestmentSlider
+                <ValueSlider
                   minCents={minCents}
                   maxCents={maxCents}
                   valueCents={safeCents}

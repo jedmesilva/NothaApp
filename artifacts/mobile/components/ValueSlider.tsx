@@ -1,5 +1,5 @@
 /**
- * InvestmentSlider — horizontal drag slider, correto e sem bugs.
+ * ValueSlider — horizontal drag slider, correto e sem bugs.
  *
  * Funcionamento:
  * - Toque em qualquer ponto da trilha: thumb pula para ali imediatamente.
@@ -37,7 +37,7 @@ function formatBRL(cents: number) {
   });
 }
 
-export default function InvestmentSlider({
+export default function ValueSlider({
   minCents,
   maxCents,
   valueCents,

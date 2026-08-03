@@ -21,7 +21,7 @@ import {
   BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid,
   InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
 } from '@/components/ds';
-import InvestmentSlider from '@/components/InvestmentSlider';
+import ValueSlider from '@/components/ValueSlider';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 const PAGAMENTOS_LABEL: Record<string, string> = {
@@ -340,7 +340,7 @@ export default function AtivoDetalheScreen() {
           {/* ── Slider — dentro do card, abaixo das métricas ── */}
           {isOferta && !aceitou && (
             <View style={s.sliderInCard}>
-              <InvestmentSlider
+              <ValueSlider
                 minCents={offerMinCents}
                 maxCents={offerMaxCents}
                 valueCents={sliderCents}

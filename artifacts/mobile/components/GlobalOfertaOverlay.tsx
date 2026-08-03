@@ -24,7 +24,7 @@ import { useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { useToast } from '@/contexts/ToastContext';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { PoolBar, PoolLegend } from '@/components/ds';
-import InvestmentSlider from '@/components/InvestmentSlider';
+import ValueSlider from '@/components/ValueSlider';
 
 const COUNTDOWN = 30;
 
@@ -199,7 +199,7 @@ export default function GlobalOfertaOverlay() {
 
           {/* ── Slider — mesma seção das métricas ── */}
           <View style={s.sliderSection}>
-            <InvestmentSlider
+            <ValueSlider
               minCents={minCents}
               maxCents={maxCents}
               valueCents={safeCents}

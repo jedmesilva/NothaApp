@@ -15,7 +15,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, InfoRows } from '@/components/ds';
-import InvestmentSlider from '@/components/InvestmentSlider';
+import ValueSlider from '@/components/ValueSlider';
 import { addDays, formatData } from '@/data/loans';
 import { useMarketRate } from '@/hooks/useMarketRate';
 import { useBorrowerProfile } from '@/hooks/useBorrowerProfile';
@@ -230,7 +230,7 @@ export default function NovoEmprestimoScreen() {
           </View>
 
           {/* Slider */}
-          <InvestmentSlider
+          <ValueSlider
             minCents={VALOR_MIN_CENTAVOS}
             maxCents={limiteCentavos}
             valueCents={valorCentavos}
