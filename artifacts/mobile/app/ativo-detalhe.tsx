@@ -309,7 +309,7 @@ export default function AtivoDetalheScreen() {
         {/* ── Hero dark card ── */}
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
-            <Text style={s.heroEyebrow}>Retorno do contrato</Text>
+            <Text style={s.heroEyebrow}>{isOferta ? 'Retorno oferecido' : 'Retorno do contrato'}</Text>
             <StatusBadge status={status as LoanStatus} context="dark" />
           </View>
 
@@ -349,8 +349,8 @@ export default function AtivoDetalheScreen() {
             </View>
           )}
 
-          {/* ── Captação: só enquanto não concedido, divisor omitido se há slider ── */}
-          {!jaConcedido && !isOferta && <View style={s.heroDivider} />}
+          {/* ── Captação: só enquanto não concedido ── */}
+          {!jaConcedido && <View style={s.heroDivider} />}
           {!jaConcedido && (
             <PoolBar
               label="Captação"
@@ -579,6 +579,7 @@ export default function AtivoDetalheScreen() {
             activeOpacity={0.85}
             disabled={isResponding}
           >
+            <Feather name="check" size={18} color="#fff" />
             <Text style={s.footerBtnText}>Aceitar oferta</Text>
           </TouchableOpacity>
         </View>
@@ -642,7 +643,7 @@ const s = StyleSheet.create({
   contratoId: { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', marginTop: spacing[3], marginBottom: spacing[1] },
 
   footer:      { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line, paddingHorizontal: spacing[4], paddingTop: spacing[4] },
-  footerBtn:   { alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: radii.lg, backgroundColor: C.dark },
+  footerBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: radii.lg, backgroundColor: C.dark },
   footerBtnText: { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: '#fff' },
 
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
