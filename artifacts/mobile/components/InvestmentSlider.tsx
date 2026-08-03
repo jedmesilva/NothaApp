@@ -144,6 +144,7 @@ const s = StyleSheet.create({
   wrap: {
     width: '100%',
     paddingBottom: spacing[1],
+    overflow: 'visible',
   },
 
   // ── Value label ─────────────────────────────────────────────────────────────
@@ -183,6 +184,7 @@ const s = StyleSheet.create({
     height: THUMB_SIZE + HIT_SLOP * 2,
     justifyContent: 'center',
     position: 'relative',
+    overflow: 'visible',
   },
   track: {
     width: '100%',
