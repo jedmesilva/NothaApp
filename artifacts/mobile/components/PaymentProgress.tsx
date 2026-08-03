@@ -58,7 +58,7 @@ export function PaymentProgress({
 }
 
 const st = StyleSheet.create({
-  sectionLabel: { fontFamily: fonts.bold, fontSize: fontSize['base+'], color: C.ink, marginBottom: 14 },
+  sectionLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
   head:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
   headLeft:   { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
   headRight:  { fontFamily: fonts.display, fontSize: fontSize.base, color: C.inkSoft },
