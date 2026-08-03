@@ -619,7 +619,7 @@ const s = StyleSheet.create({
   dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
 
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
-  paymentToggle:        { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: spacing[4] + 2, gap: spacing[3] },
+  paymentToggle:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing[4] + 2, gap: spacing[3] },
   expandedContent:      {},
   barFooterLightText:   { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
   parcelaCard:          { flexDirection: 'row', alignItems: 'center', gap: 14, padding: spacing[4], borderTopWidth: 1, borderTopColor: C.line },
