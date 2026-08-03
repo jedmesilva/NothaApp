@@ -121,36 +121,38 @@ export function ParaInvestir() {
           Investimento
         </div>
 
-        {/* Slider */}
-        <div style={{ marginBottom: 20 }}>
-          {/* Value + tag */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-            <span style={{
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontWeight: 700,
-              fontSize: 17,
-              color: "#fff",
-              letterSpacing: -0.4,
-            }}>
-              R$ {formatBRL(sliderCents)}
-            </span>
-            {isMax && (
-              <span style={{
-                fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600,
-                color: "rgba(255,255,255,0.5)", backgroundColor: "rgba(255,255,255,0.10)",
-                borderRadius: 999, padding: "3px 8px",
-              }}>valor cheio</span>
-            )}
-            {isMin && (
-              <span style={{
-                fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600,
-                color: "#f5a623", backgroundColor: "rgba(245,166,35,0.15)",
-                borderRadius: 999, padding: "3px 8px",
-              }}>mínimo</span>
-            )}
+        {/* Three-column metrics */}
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
+              Você investe
+            </div>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3, display: "flex", alignItems: "center", gap: 6 }}>
+              R$ {valorInvestido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              {isMax && <span style={{ fontSize: 10, fontFamily: "Inter, sans-serif", fontWeight: 600, color: "rgba(255,255,255,0.45)", backgroundColor: "rgba(255,255,255,0.10)", borderRadius: 999, padding: "2px 7px" }}>cheio</span>}
+              {isMin && <span style={{ fontSize: 10, fontFamily: "Inter, sans-serif", fontWeight: 600, color: "#f5a623", backgroundColor: "rgba(245,166,35,0.15)", borderRadius: 999, padding: "2px 7px" }}>mín</span>}
+            </div>
           </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
+              Você recebe
+            </div>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3 }}>
+              R$ {totalComRetorno.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
+              Prazo
+            </div>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3 }}>
+              {PRAZO} dias
+            </div>
+          </div>
+        </div>
 
-          {/* Custom slider */}
+        {/* Slider — abaixo da row, sem repetir o valor */}
+        <div style={{ marginBottom: 20 }}>
           <div style={{ position: "relative" }}>
             <input
               type="range"
@@ -173,34 +175,6 @@ export function ParaInvestir() {
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
             <span style={{ fontSize: 11, color: C.onDarkFaint, fontFamily: "Inter, sans-serif" }}>R$ {formatBRL(MIN_CENTS)}</span>
             <span style={{ fontSize: 11, color: C.onDarkFaint, fontFamily: "Inter, sans-serif" }}>R$ {formatBRL(MAX_CENTS)}</span>
-          </div>
-        </div>
-
-        {/* Three-column metrics */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 22 }}>
-          <div>
-            <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
-              Você investe
-            </div>
-            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3 }}>
-              R$ {valorInvestido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
-              Você recebe
-            </div>
-            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3 }}>
-              R$ {totalComRetorno.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, fontFamily: "Inter, sans-serif", fontWeight: 600, letterSpacing: "0.2px", color: C.onDarkFaint, textTransform: "uppercase", marginBottom: 4 }}>
-              Prazo
-            </div>
-            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17, color: "#fff", letterSpacing: -0.3 }}>
-              {PRAZO} dias
-            </div>
           </div>
         </div>
 
