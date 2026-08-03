@@ -179,10 +179,7 @@ const s = StyleSheet.create({
   },
 
   // ── Track area ──────────────────────────────────────────────────────────────
-  // marginHorizontal = THUMB_SIZE/2 so the measured width excludes the thumb
-  // overflow zones; the thumb sits flush with track ends at min/max.
   trackWrap: {
-    marginHorizontal: SIDE,
     height: THUMB_SIZE + HIT_SLOP * 2,
     justifyContent: 'center',
     position: 'relative',
