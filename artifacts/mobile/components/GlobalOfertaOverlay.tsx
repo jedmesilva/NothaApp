@@ -205,7 +205,7 @@ export default function GlobalOfertaOverlay() {
               maxCents={maxCents}
               valueCents={safeCents}
               onChange={setAdjustedCents}
-              showValue={true}
+              showValue={false}
             />
           </View>
 
