@@ -215,11 +215,9 @@ const s = StyleSheet.create({
     top: HIT_SLOP,   // vertically centred within the hit area
   },
 
-  // ── Range labels — same side margin as trackWrap so they align with track ──
   rangeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: SIDE,
     marginTop: 4,
   },
   rangeLabel: {

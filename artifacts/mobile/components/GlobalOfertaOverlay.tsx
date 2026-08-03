@@ -197,9 +197,8 @@ export default function GlobalOfertaOverlay() {
             </View>
           </View>
 
-          {/* ── Slider — seção própria com divisor e label ── */}
+          {/* ── Slider — seção própria com divisor ── */}
           <View style={s.sliderSection}>
-            <Text style={s.sliderLabel}>Ajustar valor</Text>
             <InvestmentSlider
               minCents={minCents}
               maxCents={maxCents}
