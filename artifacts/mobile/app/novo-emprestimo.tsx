@@ -15,6 +15,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, InfoRows } from '@/components/ds';
+import InvestmentSlider from '@/components/InvestmentSlider';
 import { addDays, formatData } from '@/data/loans';
 import { useMarketRate } from '@/hooks/useMarketRate';
 import { useBorrowerProfile } from '@/hooks/useBorrowerProfile';
@@ -93,19 +94,8 @@ export default function NovoEmprestimoScreen() {
   const valorReais = valorCentavos / 100;
 
   // Slider state
-  const valorTrackWidthRef = useRef(1);
-  const valorTrackXRef = useRef(0);
   const prazoTrackWidthRef = useRef(1);
   const prazoTrackXRef = useRef(0);
-
-  // Use refs so PanResponder closures always see current values
-  const updateValorRef = useRef((_x: number) => {});
-  updateValorRef.current = (offsetX: number) => {
-    const ratio = Math.max(0, Math.min(1, offsetX / valorTrackWidthRef.current));
-    const raw = VALOR_MIN_CENTAVOS + ratio * (limiteCentavos - VALOR_MIN_CENTAVOS);
-    const stepped = Math.round(raw / 100) * 100;
-    setValorCentavos(Math.max(VALOR_MIN_CENTAVOS, Math.min(limiteCentavos, stepped)));
-  };
 
   const updatePrazoRef = useRef((_x: number) => {});
   updatePrazoRef.current = (offsetX: number) => {
@@ -116,15 +106,7 @@ export default function NovoEmprestimoScreen() {
     setPrazoDraft(String(stepped));
   };
 
-  const valorTrackRef = useRef<View>(null);
   const prazoTrackRef = useRef<View>(null);
-
-  const onValorTrackLayout = useCallback(() => {
-    valorTrackRef.current?.measure((_x, _y, w, _h, px) => {
-      valorTrackWidthRef.current = w;
-      valorTrackXRef.current = px;
-    });
-  }, []);
 
   const onPrazoTrackLayout = useCallback(() => {
     prazoTrackRef.current?.measure((_x, _y, w, _h, px) => {
@@ -153,9 +135,6 @@ export default function NovoEmprestimoScreen() {
     };
   }, [valorReais, prazoDias, numPeriodos, taxaTotal]);
 
-  const percentValor = Math.min(100, Math.max(0,
-    ((valorCentavos - VALOR_MIN_CENTAVOS) / (limiteCentavos - VALOR_MIN_CENTAVOS)) * 100,
-  ));
   const percentPrazo =
     ((numPeriodos - ciclo.min) / (ciclo.max - ciclo.min)) * 100;
 
@@ -251,26 +230,14 @@ export default function NovoEmprestimoScreen() {
           </View>
 
           {/* Slider */}
-          <View
-            ref={valorTrackRef}
-            style={s.sliderTrack}
-            onLayout={onValorTrackLayout}
-            onStartShouldSetResponder={() => true}
-            onMoveShouldSetResponder={() => true}
-            onResponderGrant={(e) =>
-              updateValorRef.current(e.nativeEvent.pageX - valorTrackXRef.current)
-            }
-            onResponderMove={(e) =>
-              updateValorRef.current(e.nativeEvent.pageX - valorTrackXRef.current)
-            }
-          >
-            <View style={[s.sliderFill, { width: `${percentValor}%` }]} />
-            <View style={[s.sliderThumb, { left: `${percentValor}%` as any }]} />
-          </View>
-          <View style={s.sliderCaption}>
-            <Text style={s.sliderCaptionText}>R$ {fmtBRL(VALOR_MIN_CENTAVOS / 100)}</Text>
-            <Text style={s.sliderCaptionText}>Limite: R$ {fmtBRL(limiteCentavos / 100)}</Text>
-          </View>
+          <InvestmentSlider
+            minCents={VALOR_MIN_CENTAVOS}
+            maxCents={limiteCentavos}
+            valueCents={valorCentavos}
+            onChange={setValorCentavos}
+            showValue={false}
+            context="dark"
+          />
         </View>
 
         {/* ── Plano de pagamento ── */}
@@ -562,16 +529,6 @@ const s = StyleSheet.create({
   sliderThumbLight: {
     backgroundColor: C.ink,
   },
-  sliderCaption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  sliderCaptionText: {
-    fontSize: fontSize['sm+'],
-    color: C.onDarkFaint,
-    fontFamily: fonts.regular,
-  },
-
   // Section
   section: { marginHorizontal: spacing[4], marginBottom: 14 },
   sectionLabel: {
