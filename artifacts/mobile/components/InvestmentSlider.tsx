@@ -1,12 +1,11 @@
 /**
- * InvestmentSlider
+ * InvestmentSlider — horizontal drag slider, correto e sem bugs.
  *
- * A custom track-and-thumb slider built with PanResponder (no extra deps).
- * Lets the investor pick any amount between `minCents` and `maxCents`,
- * snapping to 100-cent (R$ 1) increments.
- *
- * Uses refs throughout so PanResponder callbacks are never stale, and
- * captures gestures before the parent ScrollView can claim them.
+ * Funcionamento:
+ * - Toque em qualquer ponto da trilha: thumb pula para ali imediatamente.
+ * - Arrastar: thumb segue o dedo a partir do ponto tocado.
+ * - PanResponder captura o gesto antes do ScrollView pai.
+ * - Thumb nunca é clipado: sua posição é calculada dentro dos limites [0, trackWidth - THUMB_SIZE].
  */
 import React, { useRef } from 'react';
 import {
@@ -18,15 +17,15 @@ import {
 } from 'react-native';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 
-const THUMB_SIZE = 32;
-const HIT_SLOP   = 8;             // extra touch area above / below the track
-const TRACK_HEIGHT = 6;
+const THUMB_SIZE   = 28;   // diâmetro do thumb
+const TRACK_HEIGHT = 5;
+const HIT_SLOP     = 10;   // área de toque extra acima/abaixo (total: THUMB_SIZE + 2*HIT_SLOP)
 
 interface Props {
-  minCents: number;
-  maxCents: number;
+  minCents:   number;
+  maxCents:   number;
   valueCents: number;
-  onChange: (cents: number) => void;
+  onChange:   (cents: number) => void;
   showValue?: boolean;
 }
 
@@ -44,45 +43,55 @@ export default function InvestmentSlider({
   onChange,
   showValue = true,
 }: Props) {
-  // ── Refs (always current — safe to read inside PanResponder closures) ───────
-  const trackWidth   = useRef(0);
-  const currentCents = useRef(valueCents);
-  const minRef       = useRef(minCents);
-  const maxRef       = useRef(maxCents);
-  const onChangeRef  = useRef(onChange);
-  const startX       = useRef(0);
+  // ── Refs (sempre atuais dentro dos closures do PanResponder) ─────────────────
+  const trackWidth    = useRef(0);
+  const currentCents  = useRef(valueCents);
+  const minRef        = useRef(minCents);
+  const maxRef        = useRef(maxCents);
+  const onChangeRef   = useRef(onChange);
+  const grantTouchX   = useRef(0);   // locationX do ponto de toque inicial
 
-  // Keep refs in sync on every render
   currentCents.current = valueCents;
   minRef.current       = minCents;
   maxRef.current       = maxCents;
   onChangeRef.current  = onChange;
 
-  // ── PanResponder ────────────────────────────────────────────────────────────
+  // ── Converte posição em pixels → cents (clampado e snappado) ─────────────────
+  function pixelToCents(px: number): number {
+    const w = trackWidth.current;
+    if (w <= 0) return currentCents.current;
+    const ratio   = Math.max(0, Math.min(1, px / w));
+    const raw     = minRef.current + ratio * (maxRef.current - minRef.current);
+    return Math.round(raw / 100) * 100;
+  }
+
+  // ── PanResponder ──────────────────────────────────────────────────────────────
   const panResponder = useRef(
     PanResponder.create({
-      // Capture phase — claim the touch BEFORE the parent ScrollView does
+      // Captura antes do ScrollView pai
       onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponderCapture:  () => true,
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder:  () => true,
+      onStartShouldSetPanResponder:        () => true,
+      onMoveShouldSetPanResponder:         () => true,
 
-      onPanResponderGrant: () => {
-        // Record the pixel position of the thumb at touch start
-        const range = maxRef.current - minRef.current;
-        startX.current = range > 0
-          ? ((currentCents.current - minRef.current) / range) * trackWidth.current
-          : 0;
+      onPanResponderGrant: (evt) => {
+        // locationX = posição do dedo dentro do trackWrap
+        const lx = evt.nativeEvent.locationX;
+        grantTouchX.current = lx;
+        // Thumb pula imediatamente para onde o usuário tocou
+        const newValue = pixelToCents(lx);
+        if (newValue !== currentCents.current) {
+          onChangeRef.current(newValue);
+        }
       },
 
       onPanResponderMove: (_, gs) => {
         if (trackWidth.current === 0) return;
-        const newX   = startX.current + gs.dx;
-        const ratio  = Math.max(0, Math.min(1, newX / trackWidth.current));
-        const raw    = minRef.current + ratio * (maxRef.current - minRef.current);
-        const snapped = Math.round(raw / 100) * 100;
-        if (snapped !== currentCents.current) {
-          onChangeRef.current(snapped);
+        // Posição atual = ponto do toque inicial + delta desde então
+        const newX     = grantTouchX.current + gs.dx;
+        const newValue = pixelToCents(newX);
+        if (newValue !== currentCents.current) {
+          onChangeRef.current(newValue);
         }
       },
 
@@ -90,25 +99,27 @@ export default function InvestmentSlider({
     }),
   ).current;
 
-  // ── Layout ──────────────────────────────────────────────────────────────────
+  // ── Layout ────────────────────────────────────────────────────────────────────
   const onLayout = (e: LayoutChangeEvent) => {
     trackWidth.current = e.nativeEvent.layout.width;
   };
 
-  // ── Derived display values ──────────────────────────────────────────────────
-  const range   = maxCents - minCents;
-  const fillPct = range > 0 ? ((valueCents - minCents) / range) * 100 : 0;
-  const thumbX  = trackWidth.current > 0
-    ? (range > 0 ? ((valueCents - minCents) / range) * trackWidth.current : 0)
+  // ── Posição do thumb ──────────────────────────────────────────────────────────
+  // O thumb viaja de 0 a (trackWidth - THUMB_SIZE), mantendo-se sempre dentro
+  // dos limites visuais da trilha.
+  const range    = maxCents - minCents;
+  const fillPct  = range > 0 ? ((valueCents - minCents) / range) * 100 : 0;
+  const thumbPx  = trackWidth.current > 0 && range > 0
+    ? ((valueCents - minCents) / range) * (trackWidth.current - THUMB_SIZE)
     : 0;
 
   const isMin = valueCents <= minCents;
   const isMax = valueCents >= maxCents;
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <View style={s.wrap}>
-      {/* Value label */}
+      {/* Valor atual */}
       {showValue && (
         <View style={s.labelRow}>
           <Text style={s.valueLabel}>R$ {formatBRL(valueCents)}</Text>
@@ -117,19 +128,30 @@ export default function InvestmentSlider({
         </View>
       )}
 
-      {/* Gesture-capturing hit area + track */}
+      {/* Área de toque — contém trilha + thumb */}
       <View
         style={s.trackWrap}
         onLayout={onLayout}
         {...panResponder.panHandlers}
       >
+        {/* Trilha */}
         <View style={s.track}>
           <View style={[s.fill, { width: `${fillPct}%` as any }]} />
         </View>
-        <View style={[s.thumb, { left: thumbX - THUMB_SIZE / 2 }]} />
+
+        {/* Thumb — posicionado com left dentro do trackWrap */}
+        <View
+          style={[
+            s.thumb,
+            {
+              left: thumbPx,
+              top:  (THUMB_SIZE + HIT_SLOP * 2 - THUMB_SIZE) / 2,  // centrado verticalmente
+            },
+          ]}
+        />
       </View>
 
-      {/* Min / Max labels — same side margins as trackWrap so they align */}
+      {/* Rótulos de extremos */}
       <View style={s.rangeRow}>
         <Text style={s.rangeLabel}>R$ {formatBRL(minCents)}</Text>
         <Text style={s.rangeLabel}>R$ {formatBRL(maxCents)}</Text>
@@ -138,16 +160,13 @@ export default function InvestmentSlider({
   );
 }
 
-const SIDE = THUMB_SIZE / 2;   // margin that keeps thumb inside parent bounds
-
 const s = StyleSheet.create({
   wrap: {
     width: '100%',
-    paddingBottom: spacing[1],
     overflow: 'visible',
   },
 
-  // ── Value label ─────────────────────────────────────────────────────────────
+  // ── Valor ─────────────────────────────────────────────────────────────────────
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -156,72 +175,74 @@ const s = StyleSheet.create({
   },
   valueLabel: {
     fontFamily: fonts.display,
-    fontSize: fontSize['2xl'],
-    color: C.ink,
+    fontSize:   fontSize['2xl'],
+    color:      C.ink,
     letterSpacing: -0.4,
   },
   maxTag: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.semibold,
-    color: C.inkSoft,
-    backgroundColor: C.chipMuted,
-    borderRadius: radii.full,
+    fontSize:         fontSize.xs,
+    fontFamily:       fonts.semibold,
+    color:            C.inkSoft,
+    backgroundColor:  C.chipMuted,
+    borderRadius:     radii.full,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical:   3,
   },
   minTag: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.semibold,
-    color: C.amber,
-    backgroundColor: C.amberBg,
-    borderRadius: radii.full,
+    fontSize:         fontSize.xs,
+    fontFamily:       fonts.semibold,
+    color:            C.amber,
+    backgroundColor:  C.amberBg,
+    borderRadius:     radii.full,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical:   3,
   },
 
-  // ── Track area ──────────────────────────────────────────────────────────────
+  // ── Trilha ────────────────────────────────────────────────────────────────────
   trackWrap: {
-    height: THUMB_SIZE + HIT_SLOP * 2,
+    height:         THUMB_SIZE + HIT_SLOP * 2,
     justifyContent: 'center',
-    position: 'relative',
-    overflow: 'visible',
+    position:       'relative',
+    overflow:       'visible',
   },
   track: {
-    width: '100%',
-    height: TRACK_HEIGHT,
+    width:        '100%',
+    height:       TRACK_HEIGHT,
     borderRadius: TRACK_HEIGHT / 2,
     backgroundColor: C.line,
-    overflow: 'hidden',
+    overflow:     'hidden',
   },
   fill: {
-    height: '100%',
+    height:          '100%',
     backgroundColor: C.dark,
-    borderRadius: TRACK_HEIGHT / 2,
-  },
-  thumb: {
-    position: 'absolute',
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: THUMB_SIZE / 2,
-    backgroundColor: C.dark,
-    borderWidth: 4,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 4,
-    top: HIT_SLOP,   // vertically centred within the hit area
+    borderRadius:    TRACK_HEIGHT / 2,
   },
 
+  // ── Thumb ─────────────────────────────────────────────────────────────────────
+  thumb: {
+    position:        'absolute',
+    width:           THUMB_SIZE,
+    height:          THUMB_SIZE,
+    borderRadius:    THUMB_SIZE / 2,
+    backgroundColor: C.dark,
+    borderWidth:     3,
+    borderColor:     '#fff',
+    shadowColor:     '#000',
+    shadowOffset:    { width: 0, height: 2 },
+    shadowOpacity:   0.20,
+    shadowRadius:    5,
+    elevation:       5,
+  },
+
+  // ── Rótulos ────────────────────────────────────────────────────────────────────
   rangeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
+    flexDirection:     'row',
+    justifyContent:    'space-between',
+    marginTop:         6,
   },
   rangeLabel: {
-    fontSize: fontSize.xs,
+    fontSize:   fontSize.xs,
     fontFamily: fonts.regular,
-    color: C.inkFaint,
+    color:      C.inkFaint,
   },
 });
