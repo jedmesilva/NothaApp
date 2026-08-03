@@ -100,7 +100,7 @@ const st = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  eyebrow: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.6 },
+  eyebrow: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 2 },
   value: { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4 },
   label: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginTop: 2 },
 });
