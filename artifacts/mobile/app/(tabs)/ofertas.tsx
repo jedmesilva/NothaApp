@@ -235,20 +235,15 @@ export default function OfertasScreen() {
 
               <View style={s.metricDivider} />
 
-              {/* Pagamento */}
-              <PoolBar
-                label="Pagamento"
-                headLeft={o.parcelasTotal > 0 ? `${o.parcelasTotal} ${o.parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[o.ciclo] ?? ''}` : '—'}
-                headRight="0% pago"
-                segments={[{ pct: 0, variant: 'primary' }]}
-                style={{ marginBottom: spacing[4] }}
-                footer={
-                  <View style={s.barFooter}>
-                    <Text style={s.barFooterText}>R$ 0,00 pago</Text>
-                    <Text style={s.barFooterText}>R$ {formatBRL(valorR$ + retornoValor)} total</Text>
-                  </View>
-                }
-              />
+              {/* Pagamento — só label + parcelas (oferta: nada foi pago ainda) */}
+              <View style={s.paymentHint}>
+                <Text style={s.paymentHintLabel}>Pagamento</Text>
+                <Text style={s.paymentHintValue}>
+                  {o.parcelasTotal > 0
+                    ? `${o.parcelasTotal} ${o.parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[o.ciclo] ?? ''}`
+                    : '—'}
+                </Text>
+              </View>
 
               {/* Botão */}
               <TouchableOpacity
@@ -360,8 +355,9 @@ const s = StyleSheet.create({
   sliderSection: { marginBottom: spacing[2] },
 
   // Bar footer
-  barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  barFooterText: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
+  paymentHint:       { paddingHorizontal: spacing[4], paddingBottom: spacing[4], gap: 4 },
+  paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
+  paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
 
   // Buttons
   aceitarBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.dark },

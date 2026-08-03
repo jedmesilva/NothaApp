@@ -228,21 +228,16 @@ export default function GlobalOfertaOverlay() {
             }
           />
 
-          {/* ── Divisor + Pagamento — sempre visível, igual ao card ── */}
+          {/* ── Divisor + Pagamento — só label + parcelas (oferta: nada pago ainda) ── */}
           <View style={s.divider} />
-          <PoolBar
-            label="Pagamento"
-            headLeft={activeOffer.loan.installmentsTotal > 0 ? `${activeOffer.loan.installmentsTotal} ${activeOffer.loan.installmentsTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[ciclo] ?? ''}` : '—'}
-            headRight="0% pago"
-            segments={[{ pct: 0, variant: 'primary' }]}
-            style={{ marginBottom: spacing[6] }}
-            footer={
-              <View style={s.barFooter}>
-                <Text style={s.barFooterText}>R$ 0,00 pago</Text>
-                <Text style={s.barFooterText}>R$ {formatBRL(valorR$ + retornoValor)} total</Text>
-              </View>
-            }
-          />
+          <View style={s.paymentHint}>
+            <Text style={s.paymentHintLabel}>Pagamento</Text>
+            <Text style={s.paymentHintValue}>
+              {activeOffer.loan.installmentsTotal > 0
+                ? `${activeOffer.loan.installmentsTotal} ${activeOffer.loan.installmentsTotal === 1 ? 'parcela' : 'parcelas'} ${CICLO_PLURAL[ciclo] ?? ''}`
+                : '—'}
+            </Text>
+          </View>
         </ScrollView>
 
         {/* Accept button — pinned at bottom */}
@@ -344,8 +339,9 @@ const s = StyleSheet.create({
   metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
   metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
-  barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  barFooterText: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
+  paymentHint:       { paddingHorizontal: spacing[4], paddingBottom: spacing[6], gap: 4 },
+  paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.onDarkMid },
+  paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: '#fff' },
 
   // Slider
   sliderSection: {
