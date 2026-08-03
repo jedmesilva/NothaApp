@@ -380,11 +380,17 @@ export default function AtivoDetalheScreen() {
               <View style={s.heroDivider} />
               <PoolBar
                 label="Pagamento"
-                headLeft={`${pctPago}% pago`}
-                headRight={`R$ ${formatBRL(Math.round(recebidoValor))} de R$ ${formatBRL(Math.round(totalComRetorno))}`}
+                headLeft={parcelasTotal > 0 ? `${parcelasTotal} ${parcelasTotal === 1 ? 'parcela' : 'parcelas'} ${PAGAMENTOS_LABEL[ciclo]}` : '—'}
+                headRight={`${pctPago}% pago`}
                 segments={[{ pct: pctPago, variant: 'primary' }]}
                 context="dark"
                 style={{ marginBottom: 20 }}
+                footer={
+                  <View style={s.barFooter}>
+                    <Text style={s.barFooterText}>R$ {formatBRL(Math.round(recebidoValor))} pago</Text>
+                    <Text style={s.barFooterText}>R$ {formatBRL(Math.round(totalComRetorno))} total</Text>
+                  </View>
+                }
               />
             </>
           )}
@@ -608,8 +614,10 @@ const s = StyleSheet.create({
   splitLabel:   { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.onDarkFaint, textTransform: 'uppercase', marginBottom: 4 },
   splitValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: '#fff', letterSpacing: -0.3 },
 
-  sliderCard: { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5], paddingBottom: spacing[4] },
+  sliderCard:   { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5], paddingBottom: spacing[4] },
   sliderInCard: { borderTopWidth: 1, borderTopColor: C.onDarkBorder, paddingTop: spacing[4], marginBottom: spacing[2] },
+  barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  barFooterText: { fontSize: fontSize.xs, color: C.onDarkFaint, fontFamily: fonts.regular },
 
   datesRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: spacing[4], marginBottom: spacing[4], padding: 14, borderRadius: radii.lg, backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
