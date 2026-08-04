@@ -47,20 +47,19 @@ export function LoanCard({ loan }: Props) {
       onPress={() => router.push({ pathname: '/emprestimo-detalhe', params: { id: String(loan.id) } })}
       activeOpacity={0.85}
     >
-      <View style={st.topRow}>
-        <View>
-          <Text style={st.eyebrow}>Valor do empréstimo</Text>
-          <Text style={st.value}>R$ {formatBRL(loan.valor)}</Text>
-          <Text style={st.label}>
-            R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade} · {loan.parcelasTotal}{' '}
-            {loan.parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
-          </Text>
-        </View>
+      <View style={st.eyebrowRow}>
+        <Text style={st.eyebrow}>Valor do empréstimo</Text>
         <StatusBadge
           status={loan.status as LoanStatus}
           createdAt={loan.status === 'captacao' ? (loan.fundingStartedAt ?? loan.createdAt) : loan.createdAt}
         />
       </View>
+      <Text style={st.value}>R$ {formatBRL(loan.valor)}</Text>
+      <Text style={st.label}>
+        R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade} · {loan.parcelasTotal}{' '}
+        {loan.parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
+      </Text>
+      <View style={st.valueSpacer} />
 
       {isCaptacao && (
         <PoolBar
@@ -99,15 +98,16 @@ const st = StyleSheet.create({
   card:         { borderRadius: radii.card, backgroundColor: C.card, padding: 20 },
   cardAtrasado: { borderWidth: 1.5, borderColor: C.red },
   cardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
-  topRow: {
+  eyebrowRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 6,
   },
-  eyebrow: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 2 },
-  value: { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4 },
-  label: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginTop: 2 },
+  eyebrow: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular },
+  value: { fontFamily: fonts.display, fontSize: fontSize['6xl'], color: C.ink, letterSpacing: -0.4, marginBottom: 2 },
+  label: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular },
+  valueSpacer: { marginBottom: 16 },
 
   paymentSection: { marginBottom: 18 },
 });
