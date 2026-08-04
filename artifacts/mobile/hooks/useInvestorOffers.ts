@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-export type OfferAction = 'accepted' | 'rejected';
+export type OfferAction = 'accepted' | 'rejected' | 'push_dismissed';
 import { apiFetch } from '@/lib/apiClient';
 
 export type OfferLoan = {
@@ -28,6 +28,9 @@ export type InvestorOffer = {
   sentAt: string;
   expiresAt: string;
   respondedAt: string | null;
+  /** Preenchido quando o push card foi fechado/ignorado. Oferta permanece
+   *  pending na lista; overlay não é re-exibido. */
+  pushDismissedAt: string | null;
   escalationRound: number;
   loan: OfferLoan;
 };

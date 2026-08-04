@@ -247,8 +247,8 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
   const { id }     = req.params as { id: string };
   const { action, amountCents } = req.body as { action: string; amountCents?: number };
 
-  if (action !== "accepted" && action !== "rejected") {
-    res.status(400).json({ error: "action must be 'accepted' or 'rejected'" });
+  if (action !== "accepted" && action !== "rejected" && action !== "push_dismissed") {
+    res.status(400).json({ error: "action must be 'accepted', 'rejected' or 'push_dismissed'" });
     return;
   }
 
@@ -271,6 +271,18 @@ router.post("/offers/:id/respond", requireAuth, async (req, res) => {
 
   if (!offer) {
     res.status(404).json({ error: "Oferta não encontrada ou já respondida" });
+    return;
+  }
+
+  // ── push_dismissed: registra rejeição do push card sem alterar status ──────
+  // A oferta permanece "pending" e continua visível na lista. Apenas o overlay
+  // não é re-exibido (o cliente filtra por pushDismissedAt).
+  if (action === "push_dismissed") {
+    await db
+      .update(fundingOrderOffersTable)
+      .set({ pushDismissedAt: new Date() })
+      .where(eq(fundingOrderOffersTable.id, id));
+    res.json({ ok: true, status: "pending" });
     return;
   }
 

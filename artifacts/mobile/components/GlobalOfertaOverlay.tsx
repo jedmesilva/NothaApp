@@ -100,11 +100,19 @@ export default function GlobalOfertaOverlay() {
   const handleDecline = useCallback(async () => {
     if (!activeOffer) return;
     clearInterval(intervalRef.current!);
-    try { await respond({ offerId: activeOffer.id, action: 'rejected' }); } catch (_) {}
+    // push_dismissed: registra que o push foi fechado, mas mantém oferta
+    // pending e visível na lista. Não é uma rejeição definitiva.
+    try { await respond({ offerId: activeOffer.id, action: 'push_dismissed' }); } catch (_) {}
     animateOut();
   }, [activeOffer, animateOut]);
 
-  const handleExpire = useCallback(() => { animateOut(); }, [animateOut]);
+  const handleExpire = useCallback(async () => {
+    if (!activeOffer) return;
+    // Timer esgotou sem ação — mesmo tratamento do X: registra no banco
+    // para que o overlay não reapareça, oferta permanece na lista.
+    try { await respond({ offerId: activeOffer.id, action: 'push_dismissed' }); } catch (_) {}
+    animateOut();
+  }, [activeOffer, animateOut]);
 
   if (!activeOffer) return null;
 

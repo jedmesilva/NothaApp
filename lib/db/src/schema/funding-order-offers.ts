@@ -30,9 +30,13 @@ export const fundingOrderOffersTable = pgTable(
     status: text("status").$type<FundingOrderOfferStatus>().notNull().default("pending"),
 
     // ── Timing ───────────────────────────────────────────────────────────────
-    sentAt:      timestamp("sent_at").notNull().defaultNow(),
-    expiresAt:   timestamp("expires_at").notNull(),
-    respondedAt: timestamp("responded_at"),
+    sentAt:           timestamp("sent_at").notNull().defaultNow(),
+    expiresAt:        timestamp("expires_at").notNull(),
+    respondedAt:      timestamp("responded_at"),
+    // Preenchido quando o usuário fecha/ignora o push card sem rejeitar
+    // a oferta de forma definitiva. Oferta permanece pending e visível
+    // na lista; apenas o overlay não é re-exibido.
+    pushDismissedAt:  timestamp("push_dismissed_at"),
 
     // ── Escalonamento ────────────────────────────────────────────────────────
     // 1 = primeira oferta, 2+ = reoferta com taxa maior

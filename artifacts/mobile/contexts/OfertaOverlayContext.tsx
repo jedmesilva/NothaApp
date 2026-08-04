@@ -63,7 +63,10 @@ export function OfertaOverlayProvider({ children }: { children: React.ReactNode 
     if (activeOffer) return; // já mostrando uma — não empilha
 
     const newOffer = data.offers.find(
-      (o) => o.status === 'pending' && !seenIds.current.has(o.id),
+      (o) =>
+        o.status === 'pending' &&
+        !o.pushDismissedAt &&          // já viu o push card — não re-exibe
+        !seenIds.current.has(o.id),    // guarda intra-sessão contra duplo show
     );
     if (newOffer) {
       seenIds.current.add(newOffer.id);
