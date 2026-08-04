@@ -56,7 +56,7 @@ export function LoanCard({ loan }: Props) {
             {loan.parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
           </Text>
         </View>
-        <StatusBadge status={loan.status as LoanStatus} />
+        <StatusBadge status={loan.status as LoanStatus} createdAt={loan.createdAt} />
       </View>
 
       {isCaptacao && (

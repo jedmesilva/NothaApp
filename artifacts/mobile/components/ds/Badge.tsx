@@ -6,23 +6,23 @@
  * context="light"  — shown on a white/light card (default)
  * context="dark"   — shown on the dark hero card (inverted colors)
  */
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { palette as C, radii, fontSize, fonts } from '@/constants/theme';
 
-function ContadorCaptacao({ color }: { color: string }) {
-  const [seg, setSeg] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setSeg((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const hh = Math.floor(seg / 3600);
-  const mm = Math.floor((seg % 3600) / 60);
-  const ss = seg % 60;
-  const texto = hh > 0 ? `${hh}:${pad(mm)}:${pad(ss)}` : mm > 0 ? `${mm}:${pad(ss)}min` : `${ss}s`;
-  return <Text style={[s.timer, { color }]}>{texto}</Text>;
+/** Retorna sufixo de tempo relativo a partir de um ISO string, ex: "há 3 dias" */
+function tempoRelativo(createdAt: string): string {
+  const diff = Date.now() - new Date(createdAt).getTime();
+  const mins  = Math.floor(diff / 60_000);
+  const hrs   = Math.floor(diff / 3_600_000);
+  const days  = Math.floor(diff / 86_400_000);
+  const weeks = Math.floor(days / 7);
+  if (mins  <  1) return 'agora';
+  if (mins  < 60) return `há ${mins}min`;
+  if (hrs   < 24) return `há ${hrs}h`;
+  if (days  <  7) return `há ${days} ${days === 1 ? 'dia' : 'dias'}`;
+  return `há ${weeks} ${weeks === 1 ? 'sem.' : 'sem.'}`;
 }
 
 export type LoanStatus = 'analise' | 'captacao' | 'ativo' | 'atrasado' | 'quitado' | 'cancelado';
@@ -32,6 +32,9 @@ type Props = {
   context?: 'light' | 'dark';
   /** Optional override for the label text */
   label?: string;
+  /** ISO string — quando fornecido, status analise/captacao exibem
+   *  "Em captação há 3 dias" em vez do label estático */
+  createdAt?: string;
 };
 
 type BadgeStyle = { bg: string; color: string; border?: string };
@@ -72,11 +75,16 @@ const STATUS_LABEL: Record<LoanStatus, string> = {
   cancelado: 'Cancelado',
 };
 
-export function StatusBadge({ status, context = 'light', label }: Props) {
-  const map = context === 'dark' ? DARK_STYLES : LIGHT_STYLES;
+export function StatusBadge({ status, context = 'light', label, createdAt }: Props) {
+  const map   = context === 'dark' ? DARK_STYLES : LIGHT_STYLES;
   const style = map[status] ?? map.analise;
-  const text = label ?? STATUS_LABEL[status] ?? status;
-  const icon = ICON_NAME[status] ?? 'clock';
+  const icon  = ICON_NAME[status] ?? 'clock';
+
+  // Para analise/captacao com createdAt: "Em captação há 3 dias"
+  const base = label ?? STATUS_LABEL[status] ?? status;
+  const text = createdAt && (status === 'analise' || status === 'captacao')
+    ? `${base} ${tempoRelativo(createdAt)}`
+    : base;
 
   return (
     <View
@@ -86,18 +94,8 @@ export function StatusBadge({ status, context = 'light', label }: Props) {
         style.border ? { borderWidth: 1, borderColor: style.border } : undefined,
       ]}
     >
-      {status === 'captacao' ? (
-        <>
-          <ContadorCaptacao color={style.color} />
-          <Text style={[s.sep, { color: style.color }]}>·</Text>
-          <Text style={[s.label, { color: style.color }]}>{text}</Text>
-        </>
-      ) : (
-        <>
-          <Feather name={icon as any} size={13} color={style.color} />
-          <Text style={[s.label, { color: style.color }]}>{text}</Text>
-        </>
-      )}
+      <Feather name={icon as any} size={13} color={style.color} />
+      <Text style={[s.label, { color: style.color }]}>{text}</Text>
     </View>
   );
 }
@@ -114,13 +112,5 @@ const s = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontFamily: fonts.bold,
-  },
-  timer: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.bold,
-  },
-  sep: {
-    fontSize: fontSize.sm,
-    opacity: 0.45,
   },
 });
