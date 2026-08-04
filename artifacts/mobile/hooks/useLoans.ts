@@ -20,6 +20,7 @@ export type LoanAPI = {
   updatedAt: string;
   fundedAmountCents: number;
   lendersCount: number;
+  fundingStartedAt: string | null;
 };
 
 export type InstallmentAPI = {
@@ -69,6 +70,7 @@ export function mapLoan(loan: LoanAPI): Emprestimo {
     numCredores: loan.lendersCount,
     contratoId: loan.contractId,
     createdAt: loan.createdAt,
+    fundingStartedAt: loan.fundingStartedAt ?? undefined,
   };
 }
 

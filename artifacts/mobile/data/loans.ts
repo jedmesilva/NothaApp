@@ -50,6 +50,7 @@ export interface Emprestimo {
   numCredores?: number;
   contratoId?: string;
   createdAt: string;
+  fundingStartedAt?: string;
 }
 
 export const EMPRESTIMOS: Emprestimo[] = [

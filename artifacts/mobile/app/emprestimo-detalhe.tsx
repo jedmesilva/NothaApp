@@ -34,7 +34,7 @@ export default function EmprestimoDetalheScreen() {
   }
 
   const emprestimo = mapLoan(data.loan);
-  const { valor, taxaJurosTotal, prazoDias, ciclo, parcelasTotal, status, contratoId, diasDesdeConcessao, valorCaptado, createdAt } = emprestimo;
+  const { valor, taxaJurosTotal, prazoDias, ciclo, parcelasTotal, status, contratoId, diasDesdeConcessao, valorCaptado, createdAt, fundingStartedAt } = emprestimo;
   const cicloMeta    = CICLO_META[ciclo];
   const totalAPagar  = valor * (1 + taxaJurosTotal / 100);
   const valorParcela = totalAPagar / parcelasTotal;
@@ -125,7 +125,11 @@ export default function EmprestimoDetalheScreen() {
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
             <Text style={s.heroEyebrow}>Valor do empréstimo</Text>
-            <StatusBadge status={status as LoanStatus} context="dark" createdAt={createdAt} />
+            <StatusBadge
+              status={status as LoanStatus}
+              context="dark"
+              createdAt={status === 'captacao' ? (fundingStartedAt ?? createdAt) : createdAt}
+            />
           </View>
 
           <Text style={s.heroValue}>R$ {formatBRL(valor)}</Text>

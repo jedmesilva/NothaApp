@@ -142,7 +142,7 @@ router.get("/", requireAuth, async (req, res) => {
 
   const loansWithData = await Promise.all(
     loans.map(async (loan) => {
-      const [paidResult, filledOrders, lendersResult] = await Promise.all([
+      const [paidResult, filledOrders, lendersResult, fundingEvent] = await Promise.all([
         db
           .select({ count: count() })
           .from(loanInstallmentsTable)
@@ -168,6 +168,17 @@ router.get("/", requireAuth, async (req, res) => {
               eq(fundingOrderOffersTable.status, "accepted"),
             ),
           ),
+        // Timestamp de quando a captação foi iniciada
+        db
+          .select({ occurredAt: loanEventsTable.occurredAt })
+          .from(loanEventsTable)
+          .where(
+            and(
+              eq(loanEventsTable.loanId, loan.id),
+              eq(loanEventsTable.eventType, "loan_funding_started"),
+            ),
+          )
+          .limit(1),
       ]);
 
       return {
@@ -175,6 +186,7 @@ router.get("/", requireAuth, async (req, res) => {
         installmentsPaid: Number(paidResult[0]?.count ?? 0),
         fundedAmountCents: filledOrders.reduce((s, o) => s + o.amountCents, 0),
         lendersCount: Number(lendersResult[0]?.count ?? 0),
+        fundingStartedAt: fundingEvent[0]?.occurredAt?.toISOString() ?? null,
       };
     }),
   );
@@ -209,7 +221,7 @@ router.get("/:id", requireAuth, async (req, res) => {
     return;
   }
 
-  const [paidResult, filledOrders, lendersResult, installments] =
+  const [paidResult, filledOrders, lendersResult, installments, fundingEvent] =
     await Promise.all([
       db
         .select({ count: count() })
@@ -240,6 +252,17 @@ router.get("/:id", requireAuth, async (req, res) => {
         .from(loanInstallmentsTable)
         .where(eq(loanInstallmentsTable.loanId, loan.id))
         .orderBy(loanInstallmentsTable.installmentNumber),
+      // Timestamp de quando a captação foi iniciada
+      db
+        .select({ occurredAt: loanEventsTable.occurredAt })
+        .from(loanEventsTable)
+        .where(
+          and(
+            eq(loanEventsTable.loanId, loan.id),
+            eq(loanEventsTable.eventType, "loan_funding_started"),
+          ),
+        )
+        .limit(1),
     ]);
 
   res.json({
@@ -248,6 +271,7 @@ router.get("/:id", requireAuth, async (req, res) => {
       installmentsPaid: Number(paidResult[0]?.count ?? 0),
       fundedAmountCents: filledOrders.reduce((s, o) => s + o.amountCents, 0),
       lendersCount: Number(lendersResult[0]?.count ?? 0),
+      fundingStartedAt: fundingEvent[0]?.occurredAt?.toISOString() ?? null,
     },
     installments,
   });
