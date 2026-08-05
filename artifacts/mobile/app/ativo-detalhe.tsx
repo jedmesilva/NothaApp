@@ -233,7 +233,7 @@ export default function AtivoDetalheScreen() {
         {/* ── Hero dark card ── */}
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
-            <Text style={s.heroEyebrow}>Retorno do contrato</Text>
+            <Text style={s.heroEyebrow}>Retorno</Text>
             <StatusBadge
               status={status as LoanStatus}
               context="dark"

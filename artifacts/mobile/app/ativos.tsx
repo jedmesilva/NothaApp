@@ -161,7 +161,7 @@ export default function AtivosScreen() {
               onPress={() => router.push(`/ativo-detalhe?id=${pos.id}` as any)}
             >
               <View style={s.posTopRow}>
-                <Text style={s.eyebrow}>Retorno do contrato</Text>
+                <Text style={s.eyebrow}>Retorno</Text>
                 <StatusBadge
                   status={posStatus as LoanStatus}
                   createdAt={isCaptacao ? pos.loan.fundingStartedAt : undefined}

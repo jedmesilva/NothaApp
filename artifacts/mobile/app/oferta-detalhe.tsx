@@ -229,7 +229,7 @@ export default function OfertaDetalheScreen() {
         {/* ── Hero dark card ── */}
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
-            <Text style={s.heroEyebrow}>Retorno oferecido</Text>
+            <Text style={s.heroEyebrow}>Retorno</Text>
             <StatusBadge
               status={status as LoanStatus}
               context="dark"

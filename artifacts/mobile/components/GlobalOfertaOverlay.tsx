@@ -167,7 +167,7 @@ export default function GlobalOfertaOverlay() {
           >
             {/* Eyebrow + countdown (same layout as eyebrow + score badge) */}
             <View style={s.topRow}>
-              <Text style={s.eyebrow}>Retorno oferecido</Text>
+              <Text style={s.eyebrow}>Retorno</Text>
               <View style={[s.countdownBadge, isUrgent && s.countdownBadgeUrgent]}>
                 <Feather name="clock" size={11} color={isUrgent ? C.red : C.inkFaint} />
                 <Text style={[s.countdownText, isUrgent && s.countdownTextUrgent]}>
