@@ -262,7 +262,7 @@ export default function OfertaDetalheScreen() {
           </View>
 
           {/* ── Slider — dentro do card, abaixo das métricas ── */}
-          {!aceitou && (
+          {!aceitou && offerMinCents < offerMaxCents && (
             <View style={s.sliderInCard}>
               <ValueSlider
                 minCents={offerMinCents}

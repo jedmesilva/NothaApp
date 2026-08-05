@@ -204,15 +204,17 @@ export default function GlobalOfertaOverlay() {
           </View>
 
           {/* ── Slider — mesma seção das métricas ── */}
-          <View style={s.sliderSection}>
-            <ValueSlider
-              minCents={minCents}
-              maxCents={maxCents}
-              valueCents={safeCents}
-              onChange={setAdjustedCents}
-              showValue={false}
-            />
-          </View>
+          {minCents < maxCents && (
+            <View style={s.sliderSection}>
+              <ValueSlider
+                minCents={minCents}
+                maxCents={maxCents}
+                valueCents={safeCents}
+                onChange={setAdjustedCents}
+                showValue={false}
+              />
+            </View>
+          )}
 
           {/* ── Divisor + Captação ── */}
           <View style={s.divider} />
