@@ -201,15 +201,17 @@ export default function OfertasScreen() {
               </View>
 
               {/* Slider de valor */}
-              <View style={s.sliderSection}>
-                <ValueSlider
-                  minCents={minCents}
-                  maxCents={maxCents}
-                  valueCents={safeCents}
-                  onChange={(v) => setAmount(String(o.id), v)}
-                  showValue={false}
-                />
-              </View>
+              {minCents < maxCents && (
+                <View style={s.sliderSection}>
+                  <ValueSlider
+                    minCents={minCents}
+                    maxCents={maxCents}
+                    valueCents={safeCents}
+                    onChange={(v) => setAmount(String(o.id), v)}
+                    showValue={false}
+                  />
+                </View>
+              )}
 
               <View style={s.metricDivider} />
 
