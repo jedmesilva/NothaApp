@@ -391,10 +391,10 @@ export default function CarteiraScreen() {
 
 const g = StyleSheet.create({
   center:     { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg },
-  wrap:       { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing[7], backgroundColor: C.bg },
+  wrap:       { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, backgroundColor: C.bg },
   iconWrap:   { width: 64, height: 64, borderRadius: 32, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', marginBottom: spacing[5] },
   title:      { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, marginBottom: 10, textAlign: 'center' },
-  body:       { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, textAlign: 'center', lineHeight: 22, marginBottom: spacing[7] },
+  body:       { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, textAlign: 'center', lineHeight: 22, marginBottom: 28 },
   btn:        { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingVertical: 17, borderRadius: radii.lg, backgroundColor: C.dark, minHeight: 54 },
   btnDisabled:{ opacity: 0.6 },
   btnText:    { fontSize: fontSize.lg, fontFamily: fonts.bold, color: '#fff' },

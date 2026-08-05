@@ -10,6 +10,7 @@ export type LoanSummary = {
   termDays: number;
   status: string;
   grantedAt: string | null;
+  createdAt: string;
   /** Soma de principalBalanceCents de todos os investidores desse empréstimo */
   fundedAmountCents: number;
 };

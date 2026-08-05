@@ -54,6 +54,7 @@ router.get("/positions", requireAuth, async (req, res) => {
         termDays:          loansTable.termDays,
         status:            loansTable.status,
         grantedAt:         loansTable.grantedAt,
+        createdAt:         loansTable.createdAt,
       },
     })
     .from(positionsTable)
