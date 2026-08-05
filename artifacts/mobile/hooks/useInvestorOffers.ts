@@ -10,6 +10,7 @@ export type OfferLoan = {
   installmentsTotal: number;
   termDays: number;
   status: string;
+  createdAt: string;
   fundedAmountCents: number;
 };
 

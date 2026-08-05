@@ -49,6 +49,7 @@ type PosDisplay = {
   proposito: string;
   installments: InstallmentSummary[];
   jaInvestiu: boolean;
+  loanCreatedAt?: string;
 };
 
 export default function AtivoDetalheScreen() {
@@ -100,6 +101,7 @@ export default function AtivoDetalheScreen() {
           proposito:             '—',
           installments:          [],
           jaInvestiu:            false,
+          loanCreatedAt:         offer.loan.createdAt,
         };
       }
     } else {
@@ -140,6 +142,7 @@ export default function AtivoDetalheScreen() {
           proposito:             '—',
           installments:          pos.installments,
           jaInvestiu:            true,
+          loanCreatedAt:         pos.loan.createdAt,
         };
       }
     }
@@ -303,7 +306,11 @@ export default function AtivoDetalheScreen() {
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
             <Text style={s.heroEyebrow}>{isOferta ? 'Retorno oferecido' : 'Retorno do contrato'}</Text>
-            <StatusBadge status={status as LoanStatus} context="dark" />
+            <StatusBadge
+              status={status as LoanStatus}
+              context="dark"
+              createdAt={status === 'captacao' ? posicao.loanCreatedAt : undefined}
+            />
           </View>
 
           <Text style={s.heroValue}>

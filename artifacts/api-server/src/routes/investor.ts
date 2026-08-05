@@ -181,6 +181,7 @@ router.get("/offers", requireAuth, async (req, res) => {
         installmentsTotal: loansTable.installmentsTotal,
         termDays:          loansTable.termDays,
         status:            loansTable.status,
+        createdAt:         loansTable.createdAt,
       },
     })
     .from(fundingOrderOffersTable)
