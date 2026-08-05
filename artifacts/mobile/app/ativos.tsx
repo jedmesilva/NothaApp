@@ -172,7 +172,7 @@ export default function AtivosScreen() {
                 <Text style={s.heroSign}>+</Text>{taxa}%
               </Text>
               <Text style={s.heroCaption}>
-                Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
+                R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
               </Text>
 
               <View style={s.divider} />

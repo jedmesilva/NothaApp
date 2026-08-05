@@ -180,7 +180,7 @@ export default function OfertasScreen() {
 
               {/* Hero */}
               <Text style={s.heroValue}><Text style={s.heroSign}>+</Text>{o.taxaRetorno}%</Text>
-              <Text style={s.heroCaption}>Rendimento de R$ {formatBRL(retornoValor)} em {o.prazoDias} dias</Text>
+              <Text style={s.heroCaption}>R$ {formatBRL(retornoValor)} em {o.prazoDias} dias</Text>
 
               <View style={s.metricDivider} />
 
