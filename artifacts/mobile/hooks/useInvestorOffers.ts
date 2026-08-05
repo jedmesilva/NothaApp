@@ -11,6 +11,8 @@ export type OfferLoan = {
   termDays: number;
   status: string;
   createdAt: string;
+  /** Timestamp do evento loan_funding_started — null se ainda não entrou em captação */
+  fundingStartedAt: string | null;
   fundedAmountCents: number;
 };
 

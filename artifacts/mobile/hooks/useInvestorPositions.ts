@@ -11,6 +11,8 @@ export type LoanSummary = {
   status: string;
   grantedAt: string | null;
   createdAt: string;
+  /** Timestamp do evento loan_funding_started — null se ainda não entrou em captação */
+  fundingStartedAt: string | null;
   /** Soma de principalBalanceCents de todos os investidores desse empréstimo */
   fundedAmountCents: number;
 };

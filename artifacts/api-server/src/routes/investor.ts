@@ -7,6 +7,7 @@ import {
   positionsTable,
   loansTable,
   loanInstallmentsTable,
+  loanEventsTable,
   fundingOrderOffersTable,
   pushTokensTable,
 } from "@workspace/db";
@@ -99,6 +100,24 @@ router.get("/positions", requireAuth, async (req, res) => {
     fundedRows.map((r) => [r.loanId, Number(r.fundedCents)]),
   );
 
+  // Timestamp real de início de captação por empréstimo
+  const fundingEventRows = await db
+    .select({
+      loanId:      loanEventsTable.loanId,
+      occurredAt:  loanEventsTable.occurredAt,
+    })
+    .from(loanEventsTable)
+    .where(
+      and(
+        inArray(loanEventsTable.loanId, loanIds),
+        eq(loanEventsTable.eventType, "loan_funding_started"),
+      ),
+    );
+
+  const fundingStartedByLoan = new Map(
+    fundingEventRows.map((r) => [r.loanId, r.occurredAt.toISOString()]),
+  );
+
   // Monta resultado por posição
   const positions = rows.map(({ position, loan }) => {
     const installments = installmentsByLoan.get(loan.id) ?? [];
@@ -124,7 +143,8 @@ router.get("/positions", requireAuth, async (req, res) => {
       ...position,
       loan: {
         ...loan,
-        fundedAmountCents: fundedByLoan.get(loan.id) ?? 0,
+        fundedAmountCents:  fundedByLoan.get(loan.id) ?? 0,
+        fundingStartedAt:   fundingStartedByLoan.get(loan.id) ?? null,
       },
       installments: all,
       nextInstallment,
@@ -219,11 +239,30 @@ router.get("/offers", requireAuth, async (req, res) => {
     fundedRows.map((r) => [r.loanId, Number(r.fundedCents)]),
   );
 
+  // Timestamp real de início de captação por empréstimo
+  const fundingEventRowsOffers = await db
+    .select({
+      loanId:     loanEventsTable.loanId,
+      occurredAt: loanEventsTable.occurredAt,
+    })
+    .from(loanEventsTable)
+    .where(
+      and(
+        inArray(loanEventsTable.loanId, loanIds),
+        eq(loanEventsTable.eventType, "loan_funding_started"),
+      ),
+    );
+
+  const fundingStartedByLoanOffers = new Map(
+    fundingEventRowsOffers.map((r) => [r.loanId, r.occurredAt.toISOString()]),
+  );
+
   const offers = offerRows.map(({ offer, loan }) => ({
     ...offer,
     loan: {
       ...loan,
       fundedAmountCents: fundedByLoan.get(loan.id) ?? 0,
+      fundingStartedAt:  fundingStartedByLoanOffers.get(loan.id) ?? null,
     },
   }));
 

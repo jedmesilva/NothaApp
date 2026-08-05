@@ -164,7 +164,7 @@ export default function AtivosScreen() {
                 <Text style={s.eyebrow}>Retorno do contrato</Text>
                 <StatusBadge
                   status={posStatus as LoanStatus}
-                  createdAt={isCaptacao ? pos.loan.createdAt : undefined}
+                  createdAt={isCaptacao ? (pos.loan.fundingStartedAt ?? pos.loan.createdAt) : undefined}
                 />
               </View>
 
