@@ -162,7 +162,10 @@ export default function AtivosScreen() {
             >
               <View style={s.posTopRow}>
                 <Text style={s.eyebrow}>Retorno do contrato</Text>
-                <StatusBadge status={posStatus as LoanStatus} />
+                <StatusBadge
+                  status={posStatus as LoanStatus}
+                  createdAt={isCaptacao ? pos.loan.createdAt : undefined}
+                />
               </View>
 
               <Text style={s.heroValue}>
