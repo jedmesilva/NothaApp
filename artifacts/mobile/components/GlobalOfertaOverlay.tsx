@@ -167,7 +167,7 @@ export default function GlobalOfertaOverlay() {
           >
             {/* Eyebrow + countdown (same layout as eyebrow + score badge) */}
             <View style={s.topRow}>
-              <Text style={s.eyebrow}>Retorno</Text>
+              <Text style={s.eyebrow}>Rendimento</Text>
               <View style={[s.countdownBadge, isUrgent && s.countdownBadgeUrgent]}>
                 <Feather name="clock" size={11} color={isUrgent ? C.red : C.inkFaint} />
                 <Text style={[s.countdownText, isUrgent && s.countdownTextUrgent]}>
@@ -181,7 +181,7 @@ export default function GlobalOfertaOverlay() {
               <Text style={s.heroSign}>+</Text>{ratePct}%
             </Text>
             <Text style={s.heroCaption}>
-              Rendimento de R$ {formatBRL(retornoValor)} em {activeOffer.loan.termDays} dias
+              R$ {formatBRL(retornoValor)} em {activeOffer.loan.termDays} dias
             </Text>
 
           </TouchableOpacity>

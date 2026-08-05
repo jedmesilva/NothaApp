@@ -172,7 +172,7 @@ export default function OfertasScreen() {
             <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => router.push(`/oferta-detalhe?id=${o.id}` as any)}>
               {/* Eyebrow + badge */}
               <View style={s.cardTopRow}>
-                <Text style={s.eyebrow}>Retorno</Text>
+                <Text style={s.eyebrow}>Rendimento</Text>
                 <View style={s.scoreBadge}>
                   <Text style={s.scoreBadgeText}>Classificação {o.tomadorScore}</Text>
                 </View>

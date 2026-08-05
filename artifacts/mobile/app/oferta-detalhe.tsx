@@ -229,7 +229,7 @@ export default function OfertaDetalheScreen() {
         {/* ── Hero dark card ── */}
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
-            <Text style={s.heroEyebrow}>Retorno</Text>
+            <Text style={s.heroEyebrow}>Rendimento</Text>
             <StatusBadge
               status={status as LoanStatus}
               context="dark"
@@ -241,7 +241,7 @@ export default function OfertaDetalheScreen() {
             <Text style={s.heroSign}>+</Text>{taxaJurosTotal}%
           </Text>
           <Text style={s.heroCaption}>
-            Rendimento de R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
+            R$ {formatBRL(Math.round(retornoTotal))} em {prazoDias} dias
           </Text>
 
           <View style={s.heroDivider} />
