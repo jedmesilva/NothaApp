@@ -101,7 +101,7 @@ export default function AtivoDetalheScreen() {
           proposito:             '—',
           installments:          [],
           jaInvestiu:            false,
-          loanCreatedAt:         offer.loan.fundingStartedAt ?? offer.loan.createdAt,
+          loanCreatedAt:         offer.loan.fundingStartedAt,
         };
       }
     } else {
@@ -142,7 +142,7 @@ export default function AtivoDetalheScreen() {
           proposito:             '—',
           installments:          pos.installments,
           jaInvestiu:            true,
-          loanCreatedAt:         pos.loan.fundingStartedAt ?? pos.loan.createdAt,
+          loanCreatedAt:         pos.loan.fundingStartedAt,
         };
       }
     }

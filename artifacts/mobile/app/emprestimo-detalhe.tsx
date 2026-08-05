@@ -128,7 +128,7 @@ export default function EmprestimoDetalheScreen() {
             <StatusBadge
               status={status as LoanStatus}
               context="dark"
-              createdAt={status === 'captacao' ? (fundingStartedAt ?? createdAt) : createdAt}
+              createdAt={status === 'captacao' ? fundingStartedAt : createdAt}
             />
           </View>
 

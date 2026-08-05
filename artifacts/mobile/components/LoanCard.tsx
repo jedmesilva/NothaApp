@@ -51,7 +51,7 @@ export function LoanCard({ loan }: Props) {
         <Text style={st.eyebrow}>Valor do empréstimo</Text>
         <StatusBadge
           status={loan.status as LoanStatus}
-          createdAt={loan.status === 'captacao' ? (loan.fundingStartedAt ?? loan.createdAt) : loan.createdAt}
+          createdAt={loan.status === 'captacao' ? loan.fundingStartedAt : loan.createdAt}
         />
       </View>
       <Text style={st.value}>R$ {formatBRL(loan.valor)}</Text>
