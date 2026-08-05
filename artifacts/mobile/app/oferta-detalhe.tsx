@@ -11,9 +11,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions';
-import type { InstallmentSummary } from '@/hooks/useInvestorPositions';
+import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { useToast } from '@/contexts/ToastContext';
+import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
@@ -21,15 +21,16 @@ import {
   InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
+import ValueSlider from '@/components/ValueSlider';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 // ─── Tipo de exibição ────────────────────────────────────────────────────────
 type PosDisplay = {
   contratoId: string;
-  valorInvestido: number;        // principalBalanceCents / 100
-  originalInvestido: number;     // originalPrincipalCents / 100
-  totalRetornado: number;        // totalReturnedCents / 100
-  taxaJurosTotal: number;        // ratePct (%)
+  valorInvestido: number;
+  originalInvestido: number;
+  totalRetornado: number;
+  taxaJurosTotal: number;
   prazoDias: number;
   ciclo: 'diario' | 'semanal' | 'mensal';
   status: string;
@@ -37,75 +38,64 @@ type PosDisplay = {
   parcelasRecebidas: number;
   diasDesdeConcessao?: number;
   diasAtraso?: number;
-  jaCaptado: number;             // já captado por outros investidores (R$)
-  valorTotalPedido: number;      // loan.amountCents / 100
+  jaCaptado: number;
+  valorTotalPedido: number;
   tomadorScore: string;
   emprestimosAnteriores: number;
   valorTotalTomado: number;
   cidade: string;
   proposito: string;
-  installments: InstallmentSummary[];
+  installments: never[];
   jaInvestiu: boolean;
   loanCreatedAt?: string;
 };
 
-export default function AtivoDetalheScreen() {
+export default function OfertaDetalheScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
 
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const { data: posData, isLoading: posLoading } = useInvestorPositions();
+  const { data: offersData, isLoading: offersLoading } = useInvestorOffers();
+  const { mutateAsync: respond, isPending: isResponding } = useRespondToOffer();
   const { showToast } = useToast();
 
   const [showTimeline,    setShowTimeline]    = useState(false);
-  const [showVencimentos, setShowVencimentos] = useState(false);
   const [showPrevisao,    setShowPrevisao]    = useState(false);
+  const [aceitou,         setAceitou]         = useState(false);
+  const { getAmount, setAmount } = useAdjustedAmounts();
+  const adjustedCents = getAmount(id);
 
-  const isLoading = posLoading;
+  const isLoading = offersLoading;
 
   // ── Constrói o objeto de exibição a partir dos dados da API ──────────────
   let posicao: PosDisplay | undefined;
 
   if (!isLoading) {
-    const pos = posData?.positions.find((p) => p.id === id);
-    if (pos) {
-      const posStatus  = getPosStatus(pos);
-      const grantedAt  = pos.loan.grantedAt
-        ? new Date(pos.loan.grantedAt.slice(0, 10) + 'T00:00:00')
-        : null;
-      const diasDesdeConcessao = grantedAt
-        ? Math.max(0, Math.floor((Date.now() - grantedAt.getTime()) / 86400000))
-        : undefined;
-      const diasAtraso = pos.earliestOverdue
-        ? Math.max(0, Math.floor(
-            (Date.now() - new Date(pos.earliestOverdue.dueDate + 'T00:00:00').getTime()) / 86400000,
-          ))
-        : undefined;
-
+    const offer = offersData?.offers.find((o) => o.id === id);
+    if (offer) {
       posicao = {
-        contratoId:            pos.loan.contractId,
-        valorInvestido:        pos.principalBalanceCents / 100,
-        originalInvestido:     pos.originalPrincipalCents / 100,
-        totalRetornado:        pos.totalReturnedCents / 100,
-        taxaJurosTotal:        pos.ratePct / 100,
-        prazoDias:             pos.loan.termDays,
-        ciclo:                 pos.loan.cycle,
-        status:                posStatus,
-        parcelasTotal:         pos.loan.installmentsTotal,
-        parcelasRecebidas:     pos.installments.filter((i) => i.status === 'paid').length,
-        diasDesdeConcessao,
-        diasAtraso,
-        jaCaptado:             Math.max(0, pos.loan.fundedAmountCents - pos.principalBalanceCents) / 100,
-        valorTotalPedido:      pos.loan.amountCents / 100,
+        contratoId:            offer.loan.contractId,
+        valorInvestido:        offer.maxAmountCents / 100,
+        originalInvestido:     offer.maxAmountCents / 100,
+        totalRetornado:        0,
+        taxaJurosTotal:        offer.ratePct / 100,
+        prazoDias:             offer.loan.termDays,
+        ciclo:                 offer.loan.cycle,
+        status:                'captacao',
+        parcelasTotal:         offer.loan.installmentsTotal,
+        parcelasRecebidas:     0,
+        // Quanto já foi captado sem contar esta oferta — evita dupla-contagem
+        jaCaptado:             Math.max(0, offer.loan.fundedAmountCents - offer.maxAmountCents) / 100,
+        valorTotalPedido:      offer.loan.amountCents / 100,
         tomadorScore:          '—',
         emprestimosAnteriores: 0,
         valorTotalTomado:      0,
         cidade:                '—',
         proposito:             '—',
-        installments:          pos.installments,
-        jaInvestiu:            true,
-        loanCreatedAt:         pos.loan.fundingStartedAt,
+        installments:          [],
+        jaInvestiu:            false,
+        loanCreatedAt:         offer.loan.fundingStartedAt,
       };
     }
   }
@@ -123,18 +113,30 @@ export default function AtivoDetalheScreen() {
   if (!posicao) {
     return (
       <View style={[s.screen, { alignItems: 'center', justifyContent: 'center' }]}>
-        <Text style={{ color: C.inkFaint, fontFamily: fonts.regular }}>Ativo não encontrado.</Text>
+        <Text style={{ color: C.inkFaint, fontFamily: fonts.regular }}>Oferta não encontrada.</Text>
       </View>
     );
   }
 
   const {
-    contratoId, valorInvestido, originalInvestido, totalRetornado,
+    contratoId, valorInvestido: _valorBase, originalInvestido: _origBase, totalRetornado,
     taxaJurosTotal, prazoDias, ciclo,
     status, parcelasTotal, parcelasRecebidas,
     tomadorScore, emprestimosAnteriores, valorTotalTomado, cidade, proposito,
     jaInvestiu,
   } = posicao;
+
+  // ── Slider ────────────────────────────────────────────────────────────────
+  const offerMaxCents = Math.round(_valorBase * 100);
+  const offerMinCents = (() => {
+    const offer = offersData?.offers.find((o) => o.id === id);
+    return offer?.minAmountCents ?? Math.max(1_000, Math.round(offerMaxCents * 0.25 / 100) * 100);
+  })();
+  const sliderCents = adjustedCents > 0 ? adjustedCents : offerMaxCents;
+
+  // Override investido/original so all hero-card calculations track the slider
+  const valorInvestido    = sliderCents / 100;
+  const originalInvestido = sliderCents / 100;
 
   const cicloMeta      = CICLO_META[ciclo];
   const totalComRetorno = originalInvestido * (1 + taxaJurosTotal / 100);
@@ -172,29 +174,14 @@ export default function AtivoDetalheScreen() {
 
   const parcelasRef      = jaConcedido ? parcelasTotal : parcelasPrevistas;
   const valorRecebimento = parcelasRef > 0 ? totalComRetorno / parcelasRef : 0;
-  const pctPago          = jaConcedido && parcelasTotal > 0
-    ? Math.round((parcelasRecebidas / parcelasTotal) * 100)
-    : 0;
+  const pctPago          = 0;
   const recebidoValor    = totalRetornado;
 
-  // Parcelas reais (ativo/atrasado/quitado) — vindas da API
-  const parcelas = jaConcedido && posicao.installments.length > 0
-    ? posicao.installments.map((inst) => ({
-        numero: inst.installmentNumber,
-        data:   new Date(inst.dueDate + 'T00:00:00'),
-        status: (inst.status === 'paid'
-          ? 'recebida'
-          : inst.status === 'overdue'
-          ? 'atrasada'
-          : 'pendente') as 'recebida' | 'atrasada' | 'pendente',
-      }))
-    : [];
-
   const parcelasRestantes = parcelasTotal - parcelasRecebidas;
-  const saldoRestante     = valorInvestido; // saldo em aberto (principal restante)
+  const saldoRestante     = valorInvestido;
 
-  const todosRecebidos = jaConcedido && parcelasRecebidas >= parcelasTotal && parcelasTotal > 0;
-  const jaEncerrado    = status === 'quitado' || todosRecebidos;
+  const todosRecebidos = false;
+  const jaEncerrado    = false;
 
   const timelineEvents: TimelineEvent[] = [
     { label: 'Solicitação',            date: dataSolicitacao,                                    done: true         },
@@ -210,30 +197,39 @@ export default function AtivoDetalheScreen() {
     ? 'Primeiro'
     : `${emprestimosAnteriores + 1}º empréstimo`;
 
+  const handleAceitar = async () => {
+    if (aceitou) return;
+    setAceitou(true);
+    try {
+      await respond({ offerId: String(id), action: 'accepted', amountCents: sliderCents });
+    } catch (_) { /* continua mesmo com erro de rede */ }
+    router.back();
+    showToast({
+      title: 'Oferta aceita',
+      subtitle: `R$ ${formatBRL(sliderCents / 100)} investidos em ${contratoId}`,
+      actionLabel: 'Ver meus ativos',
+      onAction: () => router.push('/ativos' as any),
+      duration: 6000,
+    });
+  };
+
+  const footerHeight = (Platform.OS === 'ios' ? insets.bottom : 0) + 80;
+
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
 
       {/* ── Header fixo ── */}
       <View style={s.header}>
         <BackButton onPress={() => router.back()} />
-        <Text style={s.title}>Detalhes do ativo</Text>
+        <Text style={s.title}>Detalhes da oferta</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
-
-        {/* ── Alert: tomador em atraso ── */}
-        {status === 'atrasado' && posicao.diasAtraso != null && (
-          <AlertBanner
-            style={{ marginHorizontal: spacing[4], marginBottom: 2 }}
-            title="Tomador em atraso"
-            message={`O vencimento está atrasado há ${posicao.diasAtraso} ${posicao.diasAtraso === 1 ? 'dia' : 'dias'}`}
-          />
-        )}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: !aceitou ? footerHeight + 16 : 48 }}>
 
         {/* ── Hero dark card ── */}
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
-            <Text style={s.heroEyebrow}>Retorno do contrato</Text>
+            <Text style={s.heroEyebrow}>Retorno oferecido</Text>
             <StatusBadge
               status={status as LoanStatus}
               context="dark"
@@ -265,6 +261,20 @@ export default function AtivoDetalheScreen() {
             </View>
           </View>
 
+          {/* ── Slider — dentro do card, abaixo das métricas ── */}
+          {!aceitou && (
+            <View style={s.sliderInCard}>
+              <ValueSlider
+                minCents={offerMinCents}
+                maxCents={offerMaxCents}
+                valueCents={sliderCents}
+                onChange={(cents) => setAmount(id, cents)}
+                showValue={false}
+                context="dark"
+              />
+            </View>
+          )}
+
           {/* ── Captação: só enquanto não concedido ── */}
           {!jaConcedido && <View style={s.heroDivider} />}
           {!jaConcedido && (
@@ -283,7 +293,7 @@ export default function AtivoDetalheScreen() {
                   context="dark"
                   items={[
                     { color: '#fff',        label: 'outros credores' },
-                    { color: C.onDarkFaint, label: 'minha participação' },
+                    { color: C.onDarkFaint, label: 'esta oferta' },
                   ]}
                 />
               }
@@ -340,80 +350,6 @@ export default function AtivoDetalheScreen() {
           </View>
         )}
 
-        {/* ── Vencimentos reais (colapsável) ── */}
-        {jaConcedido && (
-          <View style={s.vencimentosCard}>
-            {/* Header row: título + chevron (chevron só aparece se há parcelas para expandir) */}
-            {parcelas.length > 0 ? (
-              <TouchableOpacity
-                style={s.paymentToggle}
-                onPress={() => setShowVencimentos((v) => !v)}
-                activeOpacity={0.8}
-              >
-                <Text style={s.paymentToggleTitle}>Pagamento</Text>
-                <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
-              </TouchableOpacity>
-            ) : (
-              <View style={s.paymentToggle}>
-                <Text style={s.paymentToggleTitle}>Pagamento</Text>
-              </View>
-            )}
-
-            {/* Bar section: sempre visível */}
-            <PaymentProgress
-              ciclo={ciclo}
-              parcelasTotal={parcelasTotal}
-              pctPago={pctPago}
-              valorPago={recebidoValor}
-              valorTotal={totalComRetorno}
-              style={s.paymentBarContainer}
-            />
-
-            {parcelas.length > 0 && showVencimentos && (
-              <View style={s.expandedContent}>
-                {parcelas.map((p) => {
-                  const isRecebida = p.status === 'recebida';
-                  const isAtrasada = p.status === 'atrasada';
-                  return (
-                    <View
-                      key={p.numero}
-                      style={[
-                        s.parcelaCard,
-                        isAtrasada && s.parcelaCardAtrasada,
-                        isRecebida && s.parcelaCardRecebida,
-                      ]}
-                    >
-                      <InstallmentBadge
-                        variant={isRecebida ? 'paid' : isAtrasada ? 'overdue' : 'default'}
-                        label={String(p.numero)}
-                      />
-                      <View style={s.parcelaInfo}>
-                        <Text style={[s.parcelaLabel, isAtrasada && s.parcelaLabelAtrasada]}>
-                          {isRecebida ? 'Recebido em ' : isAtrasada ? 'Venceu em ' : 'Vence em '}
-                          {formatData(p.data)}
-                        </Text>
-                        <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorRecebimento))}</Text>
-                      </View>
-                      <View style={[s.statusTag, isAtrasada && s.statusTagAtrasada]}>
-                        {isRecebida ? (
-                          <>
-                            <Feather name="check" size={14} color={C.inkSoft} />
-                            <Text style={s.statusTagText}>Recebido</Text>
-                          </>
-                        ) : isAtrasada ? (
-                          <Text style={[s.statusTagText, { color: C.red }]}>Vencido</Text>
-                        ) : (
-                          <Text style={s.statusTagText}>A receber</Text>
-                        )}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
-          </View>
-        )}
-
         {/* ── Sobre o tomador ── */}
         <View style={s.tomadorCard}>
           <Text style={s.tomadorTitle}>Sobre o tomador</Text>
@@ -436,8 +372,8 @@ export default function AtivoDetalheScreen() {
         {/* ── Datas (toca → modal de timeline) ── */}
         <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
           <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>Investido em</Text>
-            <Text style={s.dateValue}>{formatDataComAno(dataInvestimento)}</Text>
+            <Text style={s.dateLabel}>Em captação desde</Text>
+            <Text style={s.dateValue}>{formatDataComAno(hoje)}</Text>
           </View>
           <View style={s.datesDivider} />
           <View style={{ flex: 1 }}>
@@ -454,7 +390,7 @@ export default function AtivoDetalheScreen() {
 
         {/* ── Ajuda ── */}
         <GhostButton
-          label="Precisa de ajuda com esse ativo?"
+          label="Precisa de ajuda com essa oferta?"
           onPress={() => {}}
           style={{ marginHorizontal: spacing[4], marginTop: spacing[3] }}
         />
@@ -478,6 +414,20 @@ export default function AtivoDetalheScreen() {
         <Timeline events={timelineEvents} />
       </ModalSheet>
 
+      {/* ── Footer fixo: aceitar oferta ── */}
+      {!aceitou && (
+        <View style={[s.footer, { paddingBottom: (Platform.OS === 'ios' ? insets.bottom : 0) + spacing[4] }]}>
+          <TouchableOpacity
+            style={[s.footerBtn, isResponding && { opacity: 0.6 }]}
+            onPress={handleAceitar}
+            activeOpacity={0.85}
+            disabled={isResponding}
+          >
+            <Feather name="check" size={18} color="#fff" />
+            <Text style={s.footerBtnText}>Aceitar oferta</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }

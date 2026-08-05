@@ -169,7 +169,7 @@ export default function OfertasScreen() {
           const pctOfertaClamped = Math.max(0, pctTotal - pctCaptado);
 
           return (
-            <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => router.push(`/ativo-detalhe?id=${o.id}&source=oferta` as any)}>
+            <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => router.push(`/oferta-detalhe?id=${o.id}` as any)}>
               {/* Eyebrow + badge */}
               <View style={s.cardTopRow}>
                 <Text style={s.eyebrow}>Retorno oferecido</Text>
