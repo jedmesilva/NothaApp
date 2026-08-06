@@ -19,6 +19,7 @@ import { BackButton, StatusBadge, PoolBar, DetailGrid, Chip, ModalSheet } from '
 import { SearchBar } from '@/components/SearchBar';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { PaymentProgress } from '@/components/PaymentProgress';
+import { OfferPaymentHint } from '@/components/OfferPaymentHint';
 import type { LoanStatus } from '@/components/ds';
 
 const FILTERS = [
@@ -212,14 +213,21 @@ export default function AtivosScreen() {
 
               <View style={s.divider} />
 
-              <PaymentProgress
-                label="Pagamento"
-                ciclo={ciclo}
-                parcelasTotal={parcelasTotal}
-                pctPago={pctRecebido}
-                valorPago={recebido}
-                valorTotal={totalComRetorno}
-              />
+              {isCaptacao ? (
+                <OfferPaymentHint
+                  ciclo={ciclo}
+                  parcelasTotal={parcelasTotal}
+                />
+              ) : (
+                <PaymentProgress
+                  label="Pagamento"
+                  ciclo={ciclo}
+                  parcelasTotal={parcelasTotal}
+                  pctPago={pctRecebido}
+                  valorPago={recebido}
+                  valorTotal={totalComRetorno}
+                />
+              )}
             </TouchableOpacity>
           );
         })}
