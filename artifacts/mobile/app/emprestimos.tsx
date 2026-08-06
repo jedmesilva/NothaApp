@@ -59,9 +59,9 @@ export default function EmprestimosScreen() {
 
   return (
     <View style={[st.screen, { paddingTop: topPad }]}>
-      <View style={st.header}>
+      {/* Barra fixa: apenas o botão de voltar */}
+      <View style={st.navBar}>
         <BackButton onPress={() => router.back()} />
-        <Text style={st.title}>Empréstimos</Text>
       </View>
 
       {isLoading ? (
@@ -77,6 +77,9 @@ export default function EmprestimosScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={st.scroll}
         >
+          {/* Título — rola junto com o conteúdo */}
+          <Text style={st.title}>Empréstimos</Text>
+
           <Text style={st.subtitle}>
             {total} {total === 1 ? 'empréstimo' : 'empréstimos'} no total
           </Text>
@@ -104,14 +107,14 @@ export default function EmprestimosScreen() {
 }
 
 const st = StyleSheet.create({
-  screen:  { flex: 1, backgroundColor: C.bg },
-  header:  { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingBottom: spacing[3] },
-  title:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty:   { fontSize: fontSize.base, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center' },
+  screen:   { flex: 1, backgroundColor: C.bg },
+  navBar:   { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
+  title:    { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[1] },
+  loading:  { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  empty:    { fontSize: fontSize.base, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center' },
 
-  scroll:  { paddingHorizontal: spacing[4], paddingBottom: 48 },
-  subtitle:{ fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: spacing[5] },
+  scroll:   { paddingBottom: 48 },
+  subtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, paddingHorizontal: spacing[5], marginBottom: spacing[5] },
 
   group:      { marginBottom: spacing[5] },
   sectionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginBottom: spacing[3] },
