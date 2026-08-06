@@ -95,10 +95,7 @@ export default function EmprestimosScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={st.scroll}>
         {/* Cabeçalho padronizado */}
-        <ScreenHeader
-          title="Empréstimos"
-          subtitle={isLoading ? '…' : `${total} ${total === 1 ? 'empréstimo' : 'empréstimos'} no total`}
-        />
+        <ScreenHeader title="Empréstimos" />
 
         {/* Busca + filtro */}
         <View style={st.searchRow}>
