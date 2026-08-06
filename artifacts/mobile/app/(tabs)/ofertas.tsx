@@ -307,7 +307,7 @@ const s = StyleSheet.create({
 
   // Card
   card:        { borderRadius: radii.hero, backgroundColor: C.card, padding: spacing[6], paddingBottom: spacing[5] },
-  cardTopRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  cardTopRow:  { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 },
   heroValue:   { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:    { fontSize: 24, fontFamily: fonts.display },
   heroCaption:  { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 14 },
