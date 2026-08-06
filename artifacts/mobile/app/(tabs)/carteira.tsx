@@ -257,13 +257,13 @@ export default function CarteiraScreen() {
             style={s.heroTopRow}
           >
             <View style={{ flex: 1 }}>
-              <Eyebrow context="dark">Investido</Eyebrow>
+              <Eyebrow context="dark">Investimentos</Eyebrow>
               <BigValue context="dark">R$ {formatBRL(investido)}</BigValue>
               <Text style={s.ativosInlineLabel}>
                 {ativosCount} {ativosCount === 1 ? 'ativo' : 'ativos'}
               </Text>
             </View>
-            <Feather name="chevron-right" size={22} color="rgba(255,255,255,0.45)" style={{ marginTop: 6 }} />
+            <Feather name="chevron-right" size={22} color="rgba(255,255,255,0.45)" />
           </TouchableOpacity>
 
           {hasInvestments && (
@@ -372,7 +372,7 @@ const s = StyleSheet.create({
   statLabel:   { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 5 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   statSub:     { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
-  heroTopRow:       { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 2 },
+  heroTopRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   ativosInlineLabel:{ fontSize: fontSize['sm+'], color: 'rgba(255,255,255,0.5)', fontFamily: fonts.medium, marginTop: 6 },
   periodChips:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
   chartReturnValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: C.ink, letterSpacing: -0.6 },
