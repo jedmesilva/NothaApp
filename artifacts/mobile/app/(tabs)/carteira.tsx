@@ -273,7 +273,7 @@ export default function CarteiraScreen() {
               {/* Capital retornado */}
               <Eyebrow context="dark" style={{ marginBottom: 10 }}>Capital retornado</Eyebrow>
               <View style={s.capitalPctRow}>
-                <Text style={s.capitalPct}>{rendimentoPercent}</Text>
+                <Text style={s.capitalPct}>{percentRecebido}</Text>
                 <Text style={s.capitalPctSign}>%</Text>
                 <Text style={s.capitalPctLabel}>já retornou</Text>
               </View>
