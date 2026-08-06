@@ -13,7 +13,9 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CICLO_META, formatBRL, addDays, formatData, formatDataShort } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, PoolBar, DetailGrid, InstallmentBadge, AlertBanner, ModalSheet, Timeline } from '@/components/ds';
+import { BackButton, StatusBadge, PoolBar, DetailGrid, InstallmentBadge, AlertBanner, ModalSheet, Timeline, DetailLabel } from '@/components/ds';
+import { PaymentProgress } from '@/components/PaymentProgress';
+import { OfferPaymentHint } from '@/components/OfferPaymentHint';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 import { useLoan, mapLoan } from '@/hooks/useLoans';
 
@@ -21,7 +23,8 @@ export default function EmprestimoDetalheScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
-  const [showTimeline, setShowTimeline] = useState(false);
+  const [showTimeline,    setShowTimeline]    = useState(false);
+  const [showVencimentos, setShowVencimentos] = useState(false);
 
   const { data, isLoading } = useLoan(id ?? '');
 
@@ -169,43 +172,69 @@ export default function EmprestimoDetalheScreen() {
           />
         </View>
 
-        {/* Parcelas */}
-        <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>
-            {jaConcedido ? 'Vencimentos' : 'Previsão de vencimentos'}
-          </Text>
-          {jaConcedido
-            ? <Text style={s.sectionCount}>{parcelasRestantes} restantes</Text>
-            : <Text style={s.sectionCount}>{parcelasTotal} parcelas</Text>
-          }
-        </View>
+        {/* ── Pagamento (colapsável) ── */}
+        <View style={s.vencimentosCard}>
+          <TouchableOpacity
+            style={s.sectionHeader}
+            onPress={() => setShowVencimentos((v) => !v)}
+            activeOpacity={0.8}
+          >
+            <DetailLabel style={{ marginBottom: 0 }}>Pagamento</DetailLabel>
+            <View style={s.sectionChevron} pointerEvents="none">
+              <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
+            </View>
+          </TouchableOpacity>
 
-        {/* Aviso de datas estimadas para captação/análise */}
-        {!jaConcedido && (
-          <Text style={s.estimadoInfo}>
-            As datas serão confirmadas após a conclusão da captação.
-          </Text>
-        )}
+          {/* Barra de progresso — sempre visível quando concedido */}
+          {jaConcedido && (
+            <PaymentProgress
+              ciclo={ciclo}
+              parcelasTotal={parcelasTotal}
+              pctPago={percentPago}
+              valorPago={valorPago}
+              valorTotal={totalAPagar}
+              style={s.paymentBarContainer}
+            />
+          )}
 
-        <View style={s.list}>
-          {jaConcedido
-            ? parcelas.map((p) => {
+          {/* Hint de ciclo para captação/análise */}
+          {!jaConcedido && (
+            <OfferPaymentHint
+              ciclo={ciclo}
+              parcelasTotal={parcelasTotal}
+              style={s.paymentBarContainer}
+            />
+          )}
+
+          {/* Lista expandida */}
+          {showVencimentos && (
+            <View style={s.expandedContent}>
+              {/* Aviso de datas estimadas */}
+              {!jaConcedido && (
+                <View style={s.previsaoAviso}>
+                  <Feather name="info" size={13} color={C.inkFaint} style={{ marginTop: 1 }} />
+                  <Text style={s.previsaoAvisoText}>
+                    As datas dos vencimentos serão confirmadas após a conclusão da captação.
+                  </Text>
+                </View>
+              )}
+
+              {/* Parcelas reais */}
+              {jaConcedido && parcelas.map((p) => {
                 const isPaga     = p.status === 'paga';
                 const isAtrasada = p.status === 'atrasada';
-                const valorParcelaDisplay = p.amountCents
-                  ? p.amountCents / 100
-                  : Math.round(valorParcela);
+                const valorParcelaDisplay = p.amountCents ? p.amountCents / 100 : Math.round(valorParcela);
                 return (
                   <View
                     key={p.numero}
-                    style={[s.parcelaCard, isAtrasada && s.parcelaCardAtrasada, isPaga && { opacity: 0.55 }]}
+                    style={[s.parcelaCard, isAtrasada && s.parcelaCardAtrasada, isPaga && s.parcelaCardRecebida]}
                   >
                     <InstallmentBadge
                       variant={isPaga ? 'paid' : isAtrasada ? 'overdue' : 'default'}
                       label={String(p.numero)}
                     />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[s.parcelaLabel, isAtrasada && { color: C.red, fontFamily: fonts.bold }]}>
+                    <View style={s.parcelaInfo}>
+                      <Text style={[s.parcelaLabel, isAtrasada && s.parcelaLabelAtrasada]}>
                         {isPaga
                           ? `Pago em ${formatData(p.paidAt ?? p.data)}`
                           : isAtrasada
@@ -215,9 +244,9 @@ export default function EmprestimoDetalheScreen() {
                       <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(valorParcelaDisplay))}</Text>
                     </View>
                     {isPaga ? (
-                      <View style={s.pagoLabel}>
+                      <View style={s.statusTag}>
                         <Feather name="check" size={14} color={C.inkSoft} />
-                        <Text style={s.pagoText}>Pago</Text>
+                        <Text style={s.statusTagText}>Pago</Text>
                       </View>
                     ) : (
                       <TouchableOpacity style={[s.payBtn, isAtrasada && s.payBtnAtrasado]} activeOpacity={0.85}>
@@ -226,19 +255,23 @@ export default function EmprestimoDetalheScreen() {
                     )}
                   </View>
                 );
-              })
-            : (parcelasPrevisao ?? []).map((p) => (
+              })}
+
+              {/* Parcelas estimadas (captação/análise) */}
+              {!jaConcedido && (parcelasPrevisao ?? []).map((p) => (
                 <View key={p.numero} style={s.parcelaCard}>
                   <InstallmentBadge variant="default" label={String(p.numero)} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.parcelaLabel}>
-                      ~{p.diasAposConcessao} dias após a concessão
-                    </Text>
+                  <View style={s.parcelaInfo}>
+                    <Text style={s.parcelaLabel}>~{p.diasAposConcessao} dias após a concessão</Text>
                     <Text style={s.parcelaValue}>R$ {formatBRL(Math.round(p.amountCents / 100))}</Text>
                   </View>
+                  <View style={s.statusTag}>
+                    <Text style={[s.statusTagText, s.statusTagPrevisto]}>À pagar</Text>
+                  </View>
                 </View>
-              ))
-          }
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Dates row */}
@@ -312,20 +345,28 @@ const s = StyleSheet.create({
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
   dateLabel: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
   dateValue: { fontFamily: fonts.display, fontSize: fontSize['md+'], color: C.ink },
-  sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: spacing[5], paddingBottom: 8 },
-  estimadoInfo:  { paddingHorizontal: spacing[5], paddingBottom: 12, fontSize: fontSize.sm, fontFamily: fonts.regular, color: C.inkFaint },
-  sectionTitle:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
-  sectionCount:  { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.regular },
-  list: { gap: 10, paddingHorizontal: spacing[4] },
-  parcelaCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: radii.card, padding: 14, backgroundColor: C.card },
-  parcelaCardAtrasada:  { backgroundColor: C.redBg },
-  parcelaLabel: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 2 },
-  parcelaValue: { fontFamily: fonts.display, fontSize: fontSize.xl },
-  payBtn:         { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radii.md, backgroundColor: C.ink },
-  payBtnAtrasado: { backgroundColor: C.red },
-  payBtnText:     { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
-  pagoLabel:  { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  pagoText:   { fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.inkSoft },
+
+  vencimentosCard:     { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
+  sectionHeader:       { paddingHorizontal: spacing[4] + 2, paddingTop: spacing[3] + 2, paddingBottom: spacing[2], position: 'relative' },
+  sectionChevron:      { position: 'absolute', right: spacing[4] + 2, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' },
+  paymentBarContainer: { paddingHorizontal: spacing[4] + 2, paddingBottom: spacing[4] },
+  expandedContent:     {},
+  parcelaCard:         { flexDirection: 'row', alignItems: 'center', gap: 14, padding: spacing[4], borderTopWidth: 1, borderTopColor: C.line },
+  parcelaCardAtrasada: { backgroundColor: C.redBg },
+  parcelaCardRecebida: { opacity: 0.55 },
+  parcelaInfo:         { flex: 1 },
+  parcelaLabel:        { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular, marginBottom: 2 },
+  parcelaLabelAtrasada:{ color: C.red, fontFamily: fonts.bold },
+  parcelaValue:        { fontFamily: fonts.display, fontSize: fontSize.base },
+  payBtn:              { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radii.md, backgroundColor: C.ink },
+  payBtnAtrasado:      { backgroundColor: C.red },
+  payBtnText:          { fontSize: fontSize.base, fontFamily: fonts.bold, color: '#fff' },
+  statusTag:           { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 0 },
+  statusTagText:       { fontSize: fontSize['sm+'], fontFamily: fonts.bold, color: C.inkSoft },
+  statusTagPrevisto:   { color: C.inkFaint },
+  previsaoAviso:       { flexDirection: 'row', alignItems: 'flex-start', gap: 7, marginHorizontal: spacing[4], marginBottom: spacing[2], marginTop: -2 },
+  previsaoAvisoText:   { flex: 1, fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, lineHeight: 16 },
+
   contratoId: { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', marginTop: 20, marginHorizontal: spacing[5] },
   helpBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: spacing[4], marginTop: 18, paddingVertical: 15, borderRadius: spacing[4], borderWidth: 1, borderColor: C.line },
   helpText:   { fontSize: fontSize['base+'], fontFamily: fonts.semibold, color: C.inkSoft },
