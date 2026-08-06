@@ -342,23 +342,16 @@ export default function AtivoDetalheScreen() {
         {/* ── Vencimentos reais (colapsável) ── */}
         {jaConcedido && (
           <View style={s.vencimentosCard}>
-            {/* Chevron só aparece se há parcelas para expandir */}
-            {parcelas.length > 0 ? (
-              <TouchableOpacity
-                style={s.sectionHeader}
-                onPress={() => setShowVencimentos((v) => !v)}
-                activeOpacity={0.8}
-              >
-                <DetailLabel style={{ marginBottom: 0 }}>Pagamento</DetailLabel>
-                <View style={s.sectionChevron} pointerEvents="none">
-                  <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <View style={s.sectionHeader}>
-                <DetailLabel style={{ marginBottom: 0 }}>Pagamento</DetailLabel>
+            <TouchableOpacity
+              style={s.sectionHeader}
+              onPress={() => setShowVencimentos((v) => !v)}
+              activeOpacity={0.8}
+            >
+              <DetailLabel style={{ marginBottom: 0 }}>Pagamento</DetailLabel>
+              <View style={s.sectionChevron} pointerEvents="none">
+                <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
               </View>
-            )}
+            </TouchableOpacity>
 
             {/* Bar section: sempre visível */}
             <PaymentProgress
