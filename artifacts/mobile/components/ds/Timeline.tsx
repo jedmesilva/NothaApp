@@ -113,14 +113,6 @@ export function Timeline({ events }: Props) {
                   {event.label}
                 </Text>
 
-                {isProgress && (
-                  <View style={[s.pill, allPaid && s.pillDone]}>
-                    <Text style={[s.pillText, allPaid && s.pillTextDone]}>
-                      {event.progress!.value}/{event.progress!.total}
-                    </Text>
-                  </View>
-                )}
-
                 {isCurrent && !isProgress && (
                   <View style={s.pillCurrent}>
                     <Text style={s.pillCurrentText}>em andamento</Text>
@@ -137,8 +129,8 @@ export function Timeline({ events }: Props) {
                 )}
               </TouchableOpacity>
 
-              {/* Barra de progresso mini */}
-              {isProgress && !allPaid && (
+              {/* Barra de progresso mini — só quando há progresso real */}
+              {isProgress && !allPaid && pctBar > 0 && (
                 <View style={s.miniBarTrack}>
                   <View style={[s.miniBarFill, { width: `${Math.round(pctBar * 100)}%` }]} />
                 </View>
@@ -149,9 +141,7 @@ export function Timeline({ events }: Props) {
                 <Text style={[s.sub, isPending && s.subFaint]}>
                   {allPaid
                     ? 'Todos os pagamentos realizados'
-                    : `${event.progress!.total - event.progress!.value} ${
-                        event.progress!.total - event.progress!.value === 1 ? 'restante' : 'restantes'
-                      }`}
+                    : `${event.progress!.value}/${event.progress!.total} restantes`}
                 </Text>
               ) : event.date ? (
                 <Text style={[s.sub, isPending && s.subFaint]}>
@@ -282,11 +272,7 @@ const s = StyleSheet.create({
   },
   miniBarFill: { height: 3, backgroundColor: C.ink, borderRadius: radii.full },
 
-  // Pills
-  pill:            { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full, backgroundColor: C.chipMuted },
-  pillDone:        { backgroundColor: C.ink },
-  pillText:        { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
-  pillTextDone:    { color: '#fff' },
+  // Pill "em andamento"
   pillCurrent:     { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full, backgroundColor: C.chipMuted },
   pillCurrentText: { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
 
