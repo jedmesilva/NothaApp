@@ -9,7 +9,7 @@ import { formatBRL } from '@/data/loans';
 import type { Oferta } from '@/data/ofertas';
 import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { PoolBar, PoolLegend, Chip, ModalSheet, PageTitle, BodyText, DarkButton, GhostButton, Eyebrow, DetailLabel } from '@/components/ds';
+import { PoolBar, PoolLegend, Chip, ModalSheet, PageTitle, BodyText, DarkButton, GhostButton, Eyebrow, DetailLabel, StatusBadge } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
@@ -73,6 +73,7 @@ export default function OfertasScreen() {
     valorTotalTomado:      0,
     cidade:                '—',
     proposito:             '—',
+    fundingStartedAt:      o.loan.fundingStartedAt ?? undefined,
   }));
 
   const filtersActive = classificacaoFilter !== 'todos' || cicloFilter !== 'todos';
@@ -171,9 +172,7 @@ export default function OfertasScreen() {
               {/* Eyebrow + badge */}
               <View style={s.cardTopRow}>
                 <Eyebrow style={{ marginBottom: 0 }}>Rendimento</Eyebrow>
-                <View style={s.scoreBadge}>
-                  <Text style={s.scoreBadgeText}>Classificação {o.tomadorScore}</Text>
-                </View>
+                <StatusBadge status="captacao" createdAt={o.fundingStartedAt} />
               </View>
 
               {/* Hero */}
@@ -309,8 +308,6 @@ const s = StyleSheet.create({
   // Card
   card:        { borderRadius: radii.hero, backgroundColor: C.card, padding: spacing[6], paddingBottom: spacing[5] },
   cardTopRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  scoreBadge:  { paddingHorizontal: 11, paddingVertical: 6, borderRadius: radii.full, backgroundColor: C.bg },
-  scoreBadgeText: { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
   heroValue:   { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:    { fontSize: 24, fontFamily: fonts.display },
   heroCaption:  { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 14 },

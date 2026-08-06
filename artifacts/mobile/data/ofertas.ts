@@ -21,6 +21,7 @@ export interface Oferta {
   valorTotalTomado:      number;
   cidade:                string;
   proposito:             string;
+  fundingStartedAt?:     string;
 }
 
 export const MOCK_OFERTAS: Oferta[] = [
