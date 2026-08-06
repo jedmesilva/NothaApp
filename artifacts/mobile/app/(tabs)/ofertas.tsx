@@ -12,7 +12,7 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import { PoolBar, PoolLegend, Chip, ModalSheet, PageTitle, BodyText, DarkButton, GhostButton } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
-import { OfferSlider, effectiveMinCents } from '@/components/OfferSlider';
+import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
 
 const CLASSIFICACOES = [
   { key: 'todos', label: 'Todas' },
@@ -181,28 +181,13 @@ export default function OfertasScreen() {
 
               <View style={s.metricDivider} />
 
-              {/* Investimento / Retorno / Prazo */}
-              <View style={s.metricRow}>
-                <View>
-                  <Text style={s.metricLabel}>Investimento</Text>
-                  <Text style={s.metricValue}>R$ {formatBRL(valorR$)}</Text>
-                </View>
-                <View style={{ alignItems: 'center' }}>
-                  <Text style={s.metricLabel}>Retorno</Text>
-                  <Text style={s.metricValue}>R$ {formatBRL(valorR$ + retornoValor)}</Text>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={s.metricLabel}>Prazo</Text>
-                  <Text style={s.metricValue}>{o.prazoDias} dias</Text>
-                </View>
-              </View>
-
-              {/* Slider de valor */}
-              {effectiveMinCents(0, maxCents) < maxCents && (
-                <View style={s.sliderSection}>
-                  <OfferSlider offerId={String(o.id)} maxAmountCents={maxCents} />
-                </View>
-              )}
+              <OfferMetricsBlock
+                investimento={`R$ ${formatBRL(valorR$)}`}
+                retorno={`R$ ${formatBRL(valorR$ + retornoValor)}`}
+                prazo={`${o.prazoDias} dias`}
+                offerId={String(o.id)}
+                maxAmountCents={maxCents}
+              />
 
               <View style={s.metricDivider} />
 
@@ -333,13 +318,6 @@ const s = StyleSheet.create({
   heroSign:    { fontSize: 24, fontFamily: fonts.display },
   heroCaption:  { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 14 },
   metricDivider:{ height: 1, backgroundColor: C.line, marginBottom: 20 },
-  metricRow:    { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
-  metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
-  metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
-
-  // Slider
-  sliderSection: { marginBottom: spacing[2] },
-
   // Bar footer
   paymentHint:       { paddingBottom: spacing[4], gap: 4 },
   paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },

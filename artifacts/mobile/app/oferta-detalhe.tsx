@@ -21,7 +21,7 @@ import {
   InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
-import { OfferSlider, effectiveMinCents } from '@/components/OfferSlider';
+import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 // ─── Tipo de exibição ────────────────────────────────────────────────────────
@@ -243,27 +243,16 @@ export default function OfertaDetalheScreen() {
 
           <View style={s.heroDivider} />
 
-          <View style={s.splitRow}>
-            <View>
-              <Text style={s.splitLabel}>Investimento</Text>
-              <Text style={s.splitValue}>R$ {formatBRL(valorInvestido)}</Text>
-            </View>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={s.splitLabel}>Retorno</Text>
-              <Text style={s.splitValue}>R$ {formatBRL(Math.round(totalComRetorno))}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.splitLabel}>Prazo</Text>
-              <Text style={s.splitValue}>{prazoDias} dias</Text>
-            </View>
-          </View>
-
-          {/* ── Slider — dentro do card, abaixo das métricas ── */}
-          {!aceitou && effectiveMinCents(offerRawMinCents, offerMaxCents) < offerMaxCents && (
-            <View style={s.sliderInCard}>
-              <OfferSlider offerId={id} maxAmountCents={offerMaxCents} minAmountCents={offerRawMinCents} context="dark" />
-            </View>
-          )}
+          <OfferMetricsBlock
+            investimento={`R$ ${formatBRL(valorInvestido)}`}
+            retorno={`R$ ${formatBRL(Math.round(totalComRetorno))}`}
+            prazo={`${prazoDias} dias`}
+            offerId={id}
+            maxAmountCents={offerMaxCents}
+            minAmountCents={offerRawMinCents}
+            showSlider={!aceitou}
+            context="dark"
+          />
 
           {/* ── Captação: só enquanto não concedido ── */}
           {!jaConcedido && <View style={s.heroDivider} />}
@@ -435,12 +424,7 @@ const s = StyleSheet.create({
   heroSign:     { fontSize: 24, fontFamily: fonts.display },
   heroCaption:  { fontSize: fontSize['base+'], color: C.onDarkFaint, fontFamily: fonts.regular, marginBottom: 16 },
   heroDivider:  { height: 1, backgroundColor: C.onDarkBorder, marginBottom: 20 },
-  splitRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
-  splitLabel:   { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.onDarkFaint, textTransform: 'uppercase', marginBottom: 4 },
-  splitValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: '#fff', letterSpacing: -0.3 },
-
   sliderCard:   { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5], paddingBottom: spacing[4] },
-  sliderInCard: { marginTop: spacing[1], marginBottom: spacing[2] },
   barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   barFooterText: { fontSize: fontSize.xs, color: C.onDarkFaint, fontFamily: fonts.regular },
 

@@ -26,7 +26,7 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import { parcelasLabel } from '@/data/loans';
 import { PoolBar, PoolLegend } from '@/components/ds';
 import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
-import { OfferSlider, effectiveMinCents } from '@/components/OfferSlider';
+import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
 
 const COUNTDOWN = 30;
 
@@ -187,31 +187,14 @@ export default function GlobalOfertaOverlay() {
 
           {/* ── Divisor + 3 colunas: Investimento | Retorno | Prazo + Slider ── */}
           <View style={s.divider} />
-          <View style={s.metricRow}>
-            <View>
-              <Text style={s.metricLabel}>Investimento</Text>
-              <Text style={s.metricValue}>R$ {formatBRL(valorR$)}</Text>
-            </View>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={s.metricLabel}>Retorno</Text>
-              <Text style={s.metricValue}>R$ {formatBRL(valorR$ + retornoValor)}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.metricLabel}>Prazo</Text>
-              <Text style={s.metricValue}>{activeOffer.loan.termDays} dias</Text>
-            </View>
-          </View>
-
-          {/* ── Slider — mesma seção das métricas ── */}
-          {effectiveMinCents(activeOffer.minAmountCents, maxCents) < maxCents && (
-            <View style={s.sliderSection}>
-              <OfferSlider
-                offerId={activeOffer.id}
-                maxAmountCents={maxCents}
-                minAmountCents={activeOffer.minAmountCents}
-              />
-            </View>
-          )}
+          <OfferMetricsBlock
+            investimento={`R$ ${formatBRL(valorR$)}`}
+            retorno={`R$ ${formatBRL(valorR$ + retornoValor)}`}
+            prazo={`${activeOffer.loan.termDays} dias`}
+            offerId={activeOffer.id}
+            maxAmountCents={maxCents}
+            minAmountCents={activeOffer.minAmountCents}
+          />
 
           {/* ── Divisor + Captação ── */}
           <View style={s.divider} />
@@ -341,25 +324,9 @@ const s = StyleSheet.create({
 
   // Seções — mesma estrutura do card de ativos
   divider:     { height: 1, backgroundColor: C.line, marginBottom: 18 },
-  metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
-  metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   paymentHint:       { paddingBottom: spacing[4], gap: 4 },
   paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
   paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
-
-  // Slider
-  sliderSection: {
-    marginBottom: spacing[2],
-  },
-  sliderLabel: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.semibold,
-    letterSpacing: 0.2,
-    color: C.inkFaint,
-    textTransform: 'uppercase',
-    marginBottom: spacing[3],
-  },
 
   // Dismiss (outside sheet, top-right)
   dismissBtn: {
