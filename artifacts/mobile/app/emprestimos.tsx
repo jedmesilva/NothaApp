@@ -64,44 +64,46 @@ export default function EmprestimosScreen() {
         <BackButton onPress={() => router.back()} />
       </View>
 
-      {isLoading ? (
-        <View style={st.loading}>
-          <ActivityIndicator color={C.ink} />
-        </View>
-      ) : total === 0 ? (
-        <View style={st.loading}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={st.scroll}
+      >
+        {/* Título — rola junto com o conteúdo */}
+        <Text style={st.title}>Empréstimos</Text>
+
+        {isLoading && (
+          <ActivityIndicator color={C.ink} style={st.centered} />
+        )}
+
+        {!isLoading && total === 0 && (
           <Text style={st.empty}>Você ainda não tem empréstimos.</Text>
-        </View>
-      ) : (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={st.scroll}
-        >
-          {/* Título — rola junto com o conteúdo */}
-          <Text style={st.title}>Empréstimos</Text>
+        )}
 
-          <Text style={st.subtitle}>
-            {total} {total === 1 ? 'empréstimo' : 'empréstimos'} no total
-          </Text>
+        {!isLoading && total > 0 && (
+          <>
+            <Text style={st.subtitle}>
+              {total} {total === 1 ? 'empréstimo' : 'empréstimos'} no total
+            </Text>
 
-          {groups.map((group) => (
-            <View key={group.label} style={st.group}>
-              {/* Separador de período */}
-              <View style={st.sectionRow}>
-                <Text style={st.sectionLabel}>{group.label}</Text>
-                <View style={st.sectionLine} />
+            {groups.map((group) => (
+              <View key={group.label} style={st.group}>
+                {/* Separador de período */}
+                <View style={st.sectionRow}>
+                  <Text style={st.sectionLabel}>{group.label}</Text>
+                  <View style={st.sectionLine} />
+                </View>
+
+                {/* Cards do grupo */}
+                <View style={st.groupCards}>
+                  {group.loans.map((loan) => (
+                    <LoanCard key={String(loan.id)} loan={loan} />
+                  ))}
+                </View>
               </View>
-
-              {/* Cards do grupo */}
-              <View style={st.groupCards}>
-                {group.loans.map((loan) => (
-                  <LoanCard key={String(loan.id)} loan={loan} />
-                ))}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      )}
+            ))}
+          </>
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -110,13 +112,13 @@ const st = StyleSheet.create({
   screen:   { flex: 1, backgroundColor: C.bg },
   navBar:   { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
   title:    { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[1] },
-  loading:  { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  empty:    { fontSize: fontSize.base, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center' },
+  centered: { paddingVertical: 60, alignSelf: 'center' },
+  empty:    { fontSize: fontSize.base, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', paddingVertical: 60, paddingHorizontal: spacing[5] },
 
   scroll:   { paddingBottom: 48 },
   subtitle: { fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, paddingHorizontal: spacing[5], marginBottom: spacing[5] },
 
-  group:      { marginBottom: spacing[5] },
+  group:      { marginBottom: spacing[5], paddingHorizontal: spacing[4] },
   sectionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginBottom: spacing[3] },
   sectionLabel: {
     fontFamily: fonts.bold,
