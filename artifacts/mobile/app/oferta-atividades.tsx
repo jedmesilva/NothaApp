@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { CICLO_META, formatBRL, addDays } from '@/data/loans';
-import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, Timeline } from '@/components/ds';
-import type { LoanStatus, TimelineEvent } from '@/components/ds';
+import { CICLO_META, addDays } from '@/data/loans';
+import { palette as C, fonts, fontSize, spacing } from '@/constants/theme';
+import { BackButton, Timeline } from '@/components/ds';
+import type { TimelineEvent } from '@/components/ds';
 import { useInvestorOffers } from '@/hooks/useInvestorOffers';
 
 export default function OfertaAtividadesScreen() {
@@ -79,28 +79,7 @@ export default function OfertaAtividadesScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
 
-        {/* Meta card */}
-        <View style={s.metaCard}>
-          <View style={s.metaRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={s.metaLabel}>Oferta</Text>
-              <Text style={s.metaValue}>+{taxaJurosTotal}%</Text>
-              <Text style={s.metaSub}>
-                R$ {formatBRL(valorInvestido)} · {prazoDias} dias
-              </Text>
-            </View>
-            <StatusBadge
-              status={'captacao' as LoanStatus}
-              createdAt={offer.loan.fundingStartedAt ?? undefined}
-            />
-          </View>
-          <View style={s.metaDivider} />
-          <Text style={s.contratoId}>Contrato {offer.loan.contractId}</Text>
-        </View>
-
-        {/* Timeline */}
-        <View style={s.timelineCard}>
-          <Text style={s.sectionLabel}>Histórico</Text>
+        <View style={s.timelineWrap}>
           <Timeline events={timelineEvents} />
         </View>
 
@@ -114,36 +93,9 @@ const s = StyleSheet.create({
   header:  { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingBottom: spacing[3] },
   title:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
 
-  metaCard: {
-    marginHorizontal: spacing[4],
-    marginTop: spacing[2],
-    marginBottom: spacing[4],
-    borderRadius: radii.card,
-    backgroundColor: C.card,
-    padding: spacing[5],
-  },
-  metaRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: spacing[3] },
-  metaLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, color: C.inkFaint, letterSpacing: 0.3, textTransform: 'uppercase', marginBottom: 4 },
-  metaValue:  { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: C.ink, letterSpacing: -0.5, marginBottom: 4 },
-  metaSub:    { fontSize: fontSize['sm+'], fontFamily: fonts.regular, color: C.inkSoft },
-  metaDivider: { height: 1, backgroundColor: C.line, marginVertical: spacing[4] },
-  contratoId: { fontSize: fontSize.sm, fontFamily: fonts.regular, color: C.inkFaint },
-
-  timelineCard: {
-    marginHorizontal: spacing[4],
-    marginBottom: spacing[4],
-    borderRadius: radii.card,
-    backgroundColor: C.card,
-    padding: spacing[5],
-    paddingBottom: spacing[3],
-  },
-  sectionLabel: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.semibold,
-    color: C.inkFaint,
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-    marginBottom: spacing[5],
+  timelineWrap: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
   },
 
 });
