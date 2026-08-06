@@ -507,7 +507,7 @@ const s = StyleSheet.create({
   dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
 
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
-  sectionHeader:        { paddingHorizontal: spacing[4] + 2, paddingVertical: spacing[3] + 2, position: 'relative' },
+  sectionHeader:        { paddingHorizontal: spacing[4] + 2, paddingTop: spacing[3] + 2, paddingBottom: spacing[2], position: 'relative' },
   sectionChevron:       { position: 'absolute', right: spacing[4] + 2, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' },
   paymentBarContainer:  { paddingHorizontal: spacing[4] + 2, paddingBottom: spacing[4] },
   expandedContent:      {},
