@@ -8,7 +8,9 @@
  *  PageTitle    — SpaceGrotesk 22-24 screen/tab header
  *  ScreenTitle  — SpaceGrotesk 18 back-button page header
  *  BodyText     — regular body copy with color variant
- *  DetailLabel  — 11.5 uppercase caption used in DetailGrid (standalone)
+ *  DetailLabel  — 11.5 uppercase caption for field/section labels
+ *                 ("Pagamento", "Propósito declarado", "Investimento" etc.)
+ *                 No default marginBottom — each caller sets its own via style.
  */
 import React from 'react';
 import { Text, StyleSheet, TextStyle } from 'react-native';
@@ -86,12 +88,26 @@ export function BodyText({
   );
 }
 
+// ---------------------------------------------------------------------------
+// DetailLabel — xs uppercase caption for field/section labels
+// ---------------------------------------------------------------------------
+export function DetailLabel({ children, style }: TextProps) {
+  return <Text style={[t.detailLabel, style]}>{children}</Text>;
+}
+
 const t = StyleSheet.create({
   eyebrow: {
     fontSize: fontSize.sm,
     fontFamily: fonts.semibold,
     letterSpacing: 0.3,
     marginBottom: 10,
+  },
+  detailLabel: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.semibold,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+    color: C.inkFaint,
   },
   bigValue: {
     fontFamily: fonts.display,

@@ -24,7 +24,7 @@ import { useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { useToast } from '@/contexts/ToastContext';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { OfferPaymentHint } from '@/components/OfferPaymentHint';
-import { PoolBar, PoolLegend } from '@/components/ds';
+import { PoolBar, PoolLegend, Eyebrow, DetailLabel } from '@/components/ds';
 import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
 
@@ -166,7 +166,7 @@ export default function GlobalOfertaOverlay() {
           >
             {/* Eyebrow + countdown (same layout as eyebrow + score badge) */}
             <View style={s.topRow}>
-              <Text style={s.eyebrow}>Rendimento</Text>
+              <Eyebrow style={{ marginBottom: 0 }}>Rendimento</Eyebrow>
               <View style={[s.countdownBadge, isUrgent && s.countdownBadgeUrgent]}>
                 <Feather name="clock" size={11} color={isUrgent ? C.red : C.inkFaint} />
                 <Text style={[s.countdownText, isUrgent && s.countdownTextUrgent]}>
@@ -218,7 +218,7 @@ export default function GlobalOfertaOverlay() {
 
           {/* ── Divisor + Pagamento — só label + parcelas (oferta: nada pago ainda) ── */}
           <View style={s.divider} />
-          <Text style={s.paymentLabel}>Pagamento</Text>
+          <DetailLabel style={{ marginBottom: 10 }}>Pagamento</DetailLabel>
           <OfferPaymentHint
             ciclo={ciclo}
             parcelasTotal={activeOffer.loan.installmentsTotal}
@@ -275,12 +275,6 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 6,
   },
-  eyebrow: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.semibold,
-    letterSpacing: 0.3,
-    color: C.inkFaint,
-  },
   countdownBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -321,7 +315,6 @@ const s = StyleSheet.create({
 
   // Seções — mesma estrutura do card de ativos
   divider:      { height: 1, backgroundColor: C.line, marginBottom: 18 },
-  paymentLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
 
   // Dismiss (outside sheet, top-right)
   dismissBtn: {

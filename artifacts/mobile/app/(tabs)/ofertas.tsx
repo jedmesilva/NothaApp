@@ -9,7 +9,7 @@ import { formatBRL } from '@/data/loans';
 import type { Oferta } from '@/data/ofertas';
 import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { PoolBar, PoolLegend, Chip, ModalSheet, PageTitle, BodyText, DarkButton, GhostButton } from '@/components/ds';
+import { PoolBar, PoolLegend, Chip, ModalSheet, PageTitle, BodyText, DarkButton, GhostButton, Eyebrow, DetailLabel } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
@@ -170,7 +170,7 @@ export default function OfertasScreen() {
             <TouchableOpacity key={o.id} style={s.card} activeOpacity={0.92} onPress={() => router.push(`/oferta-detalhe?id=${o.id}` as any)}>
               {/* Eyebrow + badge */}
               <View style={s.cardTopRow}>
-                <Text style={s.eyebrow}>Rendimento</Text>
+                <Eyebrow style={{ marginBottom: 0 }}>Rendimento</Eyebrow>
                 <View style={s.scoreBadge}>
                   <Text style={s.scoreBadgeText}>Classificação {o.tomadorScore}</Text>
                 </View>
@@ -249,7 +249,7 @@ export default function OfertasScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={s.modalSectionLabel}>Classificação</Text>
+        <DetailLabel style={{ marginBottom: 10 }}>Classificação</DetailLabel>
         <View style={s.pillsWrap}>
           {CLASSIFICACOES.map((c) => (
             <Chip
@@ -262,7 +262,7 @@ export default function OfertasScreen() {
           ))}
         </View>
 
-        <Text style={s.modalSectionLabel}>Ciclo</Text>
+        <DetailLabel style={{ marginBottom: 10 }}>Ciclo</DetailLabel>
         <View style={s.pillsWrap}>
           {CICLOS_FILTRO.map((c) => (
             <Chip
@@ -308,7 +308,6 @@ const s = StyleSheet.create({
   // Card
   card:        { borderRadius: radii.hero, backgroundColor: C.card, padding: spacing[6], paddingBottom: spacing[5] },
   cardTopRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  eyebrow:     { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint },
   scoreBadge:  { paddingHorizontal: 11, paddingVertical: 6, borderRadius: radii.full, backgroundColor: C.bg },
   scoreBadgeText: { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
   heroValue:   { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
@@ -325,7 +324,6 @@ const s = StyleSheet.create({
   modalHeader:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[5] },
   modalTitle:        { fontFamily: fonts.display, fontSize: fontSize.xl, color: C.ink },
   modalClose:        { width: 32, height: 32, borderRadius: radii.full, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  modalSectionLabel: { fontSize: fontSize.xs, fontFamily: fonts.bold, letterSpacing: 0.3, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 10 },
   pillsWrap:         { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing[5] },
   modalFooter:       { flexDirection: 'row', gap: 10, marginTop: spacing[1] },
 });

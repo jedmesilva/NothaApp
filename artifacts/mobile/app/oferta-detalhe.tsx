@@ -19,6 +19,7 @@ import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme
 import {
   BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid,
   InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
+  Eyebrow, DetailLabel, ScreenTitle, SectionTitle, PageTitle,
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
 import { OfferPaymentHint } from '@/components/OfferPaymentHint';
@@ -219,7 +220,7 @@ export default function OfertaDetalheScreen() {
       {/* ── Header fixo ── */}
       <View style={s.header}>
         <BackButton onPress={() => router.back()} />
-        <Text style={s.title}>Detalhes da oferta</Text>
+        <ScreenTitle>Detalhes da oferta</ScreenTitle>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: !aceitou ? footerHeight + 16 : 48 }}>
@@ -227,7 +228,7 @@ export default function OfertaDetalheScreen() {
         {/* ── Hero dark card ── */}
         <View style={s.heroCard}>
           <View style={s.heroTopRow}>
-            <Text style={s.heroEyebrow}>Rendimento</Text>
+            <Eyebrow context="dark" style={{ marginBottom: 0 }}>Rendimento</Eyebrow>
             <StatusBadge
               status={status as LoanStatus}
               context="dark"
@@ -290,7 +291,7 @@ export default function OfertaDetalheScreen() {
               onPress={() => setShowPrevisao((v) => !v)}
               activeOpacity={0.8}
             >
-              <Text style={s.sectionTitle}>Pagamento</Text>
+              <DetailLabel>Pagamento</DetailLabel>
               <View style={s.sectionChevron} pointerEvents="none">
                 <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
               </View>
@@ -330,7 +331,7 @@ export default function OfertaDetalheScreen() {
         {jaConcedido && (
           <View style={s.vencimentosCard}>
             <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>Pagamento</Text>
+              <DetailLabel>Pagamento</DetailLabel>
             </View>
             <PaymentProgress
               ciclo={ciclo}
@@ -345,7 +346,7 @@ export default function OfertaDetalheScreen() {
 
         {/* ── Sobre o tomador ── */}
         <View style={s.tomadorCard}>
-          <Text style={s.tomadorTitle}>Sobre o tomador</Text>
+          <SectionTitle style={{ fontSize: fontSize['md+'], marginBottom: spacing[4] }}>Sobre o tomador</SectionTitle>
 
           <View style={s.tomadorGridWrap}>
             <DetailGrid
@@ -358,21 +359,21 @@ export default function OfertaDetalheScreen() {
             />
           </View>
 
-          <Text style={s.propositoLabel}>Propósito declarado</Text>
+          <DetailLabel style={{ marginBottom: 4 }}>Propósito declarado</DetailLabel>
           <Text style={s.propositoValue}>{proposito}</Text>
         </View>
 
         {/* ── Datas (toca → modal de timeline) ── */}
         <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
           <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>Em captação desde</Text>
+            <DetailLabel style={{ marginBottom: 3 }}>Em captação desde</DetailLabel>
             <Text style={s.dateValue}>{formatDataComAno(hoje)}</Text>
           </View>
           <View style={s.datesDivider} />
           <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>
+            <DetailLabel style={{ marginBottom: 3 }}>
               {vencimentoEhEstimado ? 'Vencimento estimado' : 'Vencimento'}
-            </Text>
+            </DetailLabel>
             <Text style={s.dateValue}>{formatDataComAno(dataVencimentoFinal)}</Text>
           </View>
           <Feather name="chevron-right" size={18} color={C.inkFaint} />
@@ -398,7 +399,7 @@ export default function OfertaDetalheScreen() {
         style={{ padding: spacing[5], paddingTop: spacing[4] }}
       >
         <View style={s.modalHeader}>
-          <Text style={s.modalTitle}>Histórico</Text>
+          <PageTitle size={fontSize.xl}>Histórico</PageTitle>
           <TouchableOpacity style={s.modalClose} onPress={() => setShowTimeline(false)}>
             <Feather name="x" size={16} color={C.ink} />
           </TouchableOpacity>
@@ -429,11 +430,9 @@ const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
 
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], paddingHorizontal: spacing[5], paddingBottom: spacing[3] },
-  title:  { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2 },
 
   heroCard:     { borderRadius: radii.hero, marginHorizontal: spacing[4], marginTop: spacing[4], marginBottom: spacing[4], padding: spacing[6], backgroundColor: C.dark },
   heroTopRow:   { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 },
-  heroEyebrow:  { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.onDarkSoft },
   heroValue:    { fontFamily: fonts.display, fontSize: fontSize.mega, color: '#fff', letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:     { fontSize: 24, fontFamily: fonts.display },
   heroCaption:  { fontSize: fontSize['base+'], color: C.onDarkFaint, fontFamily: fonts.regular, marginBottom: 16 },
@@ -444,12 +443,10 @@ const s = StyleSheet.create({
 
   datesRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: spacing[4], marginBottom: spacing[4], padding: 14, borderRadius: radii.lg, backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
-  dateLabel:    { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 3 },
   dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
 
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
   sectionHeader:        { paddingHorizontal: spacing[4] + 2, paddingVertical: spacing[3] + 2, position: 'relative' },
-  sectionTitle:         { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
   sectionChevron:       { position: 'absolute', right: spacing[4] + 2, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' },
   paymentBarContainer:  { paddingHorizontal: spacing[4] + 2, paddingBottom: spacing[4] },
   expandedContent:      {},
@@ -469,9 +466,7 @@ const s = StyleSheet.create({
   previsaoAvisoText: { flex: 1, fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.regular, lineHeight: 16 },
 
   tomadorCard:     { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, padding: spacing[5] },
-  tomadorTitle:    { fontFamily: fonts.display, fontSize: fontSize['md+'], color: C.ink, marginBottom: spacing[4] },
   tomadorGridWrap: { borderBottomWidth: 1, borderBottomColor: C.line, paddingBottom: spacing[4], marginBottom: spacing[4] },
-  propositoLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   propositoValue:  { fontSize: fontSize.base, fontFamily: fonts.regular, color: C.ink, lineHeight: 20 },
 
   contratoId: { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', marginTop: spacing[3], marginBottom: spacing[1] },
@@ -481,6 +476,5 @@ const s = StyleSheet.create({
   footerBtnText: { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: '#fff' },
 
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
-  modalTitle:  { fontFamily: fonts.display, fontSize: fontSize.xl, color: C.ink },
   modalClose:  { width: 32, height: 32, borderRadius: radii.md, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
 });

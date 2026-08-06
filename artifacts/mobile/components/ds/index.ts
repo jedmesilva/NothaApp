@@ -24,6 +24,7 @@ export {
   PageTitle,
   ScreenTitle,
   BodyText,
+  DetailLabel,
 } from './Typography';
 export { ContaCard } from './ContaCard';
 export type { ContaCardVariant, ContaCardProps } from './ContaCard';

@@ -15,7 +15,7 @@ import { formatBRL } from '@/data/loans';
 import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions';
 import type { InvestorPosition } from '@/hooks/useInvestorPositions';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, PoolBar, DetailGrid, Chip, ModalSheet } from '@/components/ds';
+import { BackButton, StatusBadge, PoolBar, DetailGrid, Chip, ModalSheet, Eyebrow, DetailLabel, ScreenTitle } from '@/components/ds';
 import { SearchBar } from '@/components/SearchBar';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { PaymentProgress } from '@/components/PaymentProgress';
@@ -159,7 +159,7 @@ export default function AtivosScreen() {
               onPress={() => router.push(`/ativo-detalhe?id=${pos.id}` as any)}
             >
               <View style={s.posTopRow}>
-                <Text style={s.eyebrow}>Rendimento</Text>
+                <Eyebrow style={{ marginBottom: 0 }}>Rendimento</Eyebrow>
                 <StatusBadge
                   status={posStatus as LoanStatus}
                   createdAt={isCaptacao ? pos.loan.fundingStartedAt : undefined}
@@ -177,15 +177,15 @@ export default function AtivosScreen() {
 
               <View style={s.metricRow}>
                 <View>
-                  <Text style={s.metricLabel}>Investimento</Text>
+                  <DetailLabel style={{ marginBottom: 4 }}>Investimento</DetailLabel>
                   <Text style={s.metricValue}>R$ {formatBRL(investido)}</Text>
                 </View>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={s.metricLabel}>Retorno</Text>
+                  <DetailLabel style={{ marginBottom: 4 }}>Retorno</DetailLabel>
                   <Text style={s.metricValue}>R$ {formatBRL(Math.round(totalComRetorno))}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={s.metricLabel}>Prazo</Text>
+                  <DetailLabel style={{ marginBottom: 4 }}>Prazo</DetailLabel>
                   <Text style={s.metricValue}>{prazoDias} dias</Text>
                 </View>
               </View>
@@ -213,7 +213,7 @@ export default function AtivosScreen() {
 
               <View style={s.divider} />
 
-              <Text style={s.paymentLabel}>Pagamento</Text>
+              <DetailLabel style={{ marginBottom: 10 }}>Pagamento</DetailLabel>
 
               {isCaptacao ? (
                 <OfferPaymentHint
@@ -243,13 +243,13 @@ export default function AtivosScreen() {
         style={{ padding: 20, paddingTop: 14 }}
       >
         <View style={s.modalHeader}>
-          <Text style={s.modalTitle}>Filtrar posições</Text>
+          <ScreenTitle style={{ letterSpacing: -0.3 }}>Filtrar posições</ScreenTitle>
           <TouchableOpacity style={s.modalClose} onPress={() => setModalOpen(false)}>
             <Feather name="x" size={16} color={C.ink} />
           </TouchableOpacity>
         </View>
 
-        <Text style={s.modalSectionLabel}>Status</Text>
+        <DetailLabel style={{ marginBottom: 10 }}>Status</DetailLabel>
         <View style={s.pillsWrap}>
           {FILTERS.map((f) => (
             <Chip
@@ -295,13 +295,10 @@ const s = StyleSheet.create({
   emptyState: { textAlign: 'center', paddingVertical: 60, color: C.inkFaint, fontSize: fontSize.md, fontFamily: fonts.regular },
   posCard:         { borderRadius: radii.card, backgroundColor: C.card, padding: 22 },
   metricRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22 },
-  metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   posCardAtrasado: { borderWidth: 1.5, borderColor: C.red },
-  paymentLabel:         { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
   posCardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
   posTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  eyebrow:    { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint },
   heroValue:  { fontFamily: fonts.display, fontSize: fontSize.mega, color: C.ink, letterSpacing: -1.1, lineHeight: 50, marginBottom: 8 },
   heroSign:   { fontSize: 24, fontFamily: fonts.display },
   heroCaption:{ fontSize: fontSize['base+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 14 },
@@ -312,9 +309,7 @@ const s = StyleSheet.create({
   legendText: { fontSize: fontSize.xs, color: C.inkSoft, fontFamily: fonts.medium },
   // Modal
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  modalTitle:  { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.3 },
   modalClose:  { width: 32, height: 32, borderRadius: 16, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
-  modalSectionLabel: { fontSize: fontSize.sm, fontFamily: fonts.bold, letterSpacing: 0.3, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
   pillsWrap:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 26 },
   modalFooter:  { flexDirection: 'row', gap: 10, marginTop: 6 },
   footerBtnGhost:    { flex: 1, paddingVertical: 15, borderRadius: radii.lg, alignItems: 'center', borderWidth: 1, borderColor: C.line },
