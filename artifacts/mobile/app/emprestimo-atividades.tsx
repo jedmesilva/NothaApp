@@ -108,14 +108,6 @@ export default function EmprestimoAtividadesScreen() {
           <Timeline events={timelineEvents} />
         </View>
 
-        {/* Nota de datas estimadas */}
-        {(!jaConcedido) && (
-          <Text style={s.estimadoNote}>
-            As datas marcadas como "Pendente" são estimativas baseadas no fluxo padrão
-            de aprovação e poderão variar.
-          </Text>
-        )}
-
       </ScrollView>
     </View>
   );
@@ -158,12 +150,4 @@ const s = StyleSheet.create({
     marginBottom: spacing[5],
   },
 
-  estimadoNote: {
-    marginHorizontal: spacing[5],
-    fontSize: fontSize.xs,
-    fontFamily: fonts.regular,
-    color: C.inkFaint,
-    lineHeight: 17,
-    textAlign: 'center',
-  },
 });

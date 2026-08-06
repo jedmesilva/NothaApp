@@ -104,11 +104,6 @@ export default function OfertaAtividadesScreen() {
           <Timeline events={timelineEvents} />
         </View>
 
-        <Text style={s.estimadoNote}>
-          As etapas "Pendente" dependem do encerramento da captação e da concessão
-          do crédito ao tomador.
-        </Text>
-
       </ScrollView>
     </View>
   );
@@ -151,12 +146,4 @@ const s = StyleSheet.create({
     marginBottom: spacing[5],
   },
 
-  estimadoNote: {
-    marginHorizontal: spacing[5],
-    fontSize: fontSize.xs,
-    fontFamily: fonts.regular,
-    color: C.inkFaint,
-    lineHeight: 17,
-    textAlign: 'center',
-  },
 });

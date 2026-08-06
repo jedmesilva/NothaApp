@@ -117,13 +117,6 @@ export default function AtivoAtividadesScreen() {
           <Timeline events={timelineEvents} />
         </View>
 
-        {!jaConcedido && (
-          <Text style={s.estimadoNote}>
-            As datas marcadas como "Pendente" são estimativas e poderão variar conforme
-            o andamento da captação.
-          </Text>
-        )}
-
       </ScrollView>
     </View>
   );
@@ -166,12 +159,4 @@ const s = StyleSheet.create({
     marginBottom: spacing[5],
   },
 
-  estimadoNote: {
-    marginHorizontal: spacing[5],
-    fontSize: fontSize.xs,
-    fontFamily: fonts.regular,
-    color: C.inkFaint,
-    lineHeight: 17,
-    textAlign: 'center',
-  },
 });
