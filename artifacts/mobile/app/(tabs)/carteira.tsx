@@ -389,7 +389,7 @@ export default function CarteiraScreen() {
                 <Text style={s.chartReturnSub}>
                   {interestInPeriodCents > 0
                     ? `R$ ${formatBRL(interestInPeriodCents / 100)} em juros no período`
-                    : 'Sem juros recebidos no período'}
+                    : 'Sem rendimentos no período'}
                 </Text>
               </View>
               {valores.length > 1 && (
