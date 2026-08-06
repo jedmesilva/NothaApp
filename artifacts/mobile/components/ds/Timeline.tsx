@@ -147,8 +147,6 @@ export function Timeline({ events }: Props) {
                 <Text style={[s.sub, isPending && s.subFaint]}>
                   {formatDataComAno(event.date)}
                 </Text>
-              ) : isPending ? (
-                <Text style={s.subFaint}>Pendente</Text>
               ) : null}
 
               {/* ── Lista de parcelas expandida ── */}
