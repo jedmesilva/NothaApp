@@ -26,7 +26,8 @@ type Props = {
 export function OfferPaymentHint({ ciclo, parcelasTotal, style }: Props) {
   return (
     <View style={[s.wrap, style]}>
-      <Text style={s.label}>Pagamento</Text>
+      {/* O título "Pagamento" é renderizado pelo PaymentSectionHeader no pai —
+          este componente exibe apenas o valor das parcelas. */}
       <Text style={s.value}>
         {parcelasTotal > 0 ? parcelasLabel(ciclo, parcelasTotal) : '—'}
       </Text>
@@ -38,13 +39,6 @@ const s = StyleSheet.create({
   wrap: {
     paddingBottom: spacing[4],
     gap: 4,
-  },
-  label: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.semibold,
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
-    color: C.inkFaint,
   },
   value: {
     fontFamily: fonts.display,

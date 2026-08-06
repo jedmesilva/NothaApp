@@ -22,6 +22,7 @@ import {
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
 import { OfferPaymentHint } from '@/components/OfferPaymentHint';
+import { PaymentSectionHeader } from '@/components/PaymentSectionHeader';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 // ─── Tipo de exibição ────────────────────────────────────────────────────────
@@ -296,15 +297,10 @@ export default function AtivoDetalheScreen() {
         {/* ── Pagamento (captação) ── */}
         {!jaConcedido && (
           <View style={s.vencimentosCard}>
-            {/* Header row: título + chevron */}
-            <TouchableOpacity
-              style={s.paymentToggle}
+            <PaymentSectionHeader
               onPress={() => setShowPrevisao((v) => !v)}
-              activeOpacity={0.8}
-            >
-              <Text style={s.paymentToggleTitle}>Pagamento</Text>
-              <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
-            </TouchableOpacity>
+              expanded={showPrevisao}
+            />
 
             <OfferPaymentHint
               ciclo={ciclo}
@@ -340,21 +336,11 @@ export default function AtivoDetalheScreen() {
         {/* ── Vencimentos reais (colapsável) ── */}
         {jaConcedido && (
           <View style={s.vencimentosCard}>
-            {/* Header row: título + chevron (chevron só aparece se há parcelas para expandir) */}
-            {parcelas.length > 0 ? (
-              <TouchableOpacity
-                style={s.paymentToggle}
-                onPress={() => setShowVencimentos((v) => !v)}
-                activeOpacity={0.8}
-              >
-                <Text style={s.paymentToggleTitle}>Pagamento</Text>
-                <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
-              </TouchableOpacity>
-            ) : (
-              <View style={s.paymentToggle}>
-                <Text style={s.paymentToggleTitle}>Pagamento</Text>
-              </View>
-            )}
+            {/* Chevron só aparece se há parcelas para expandir */}
+            <PaymentSectionHeader
+              onPress={parcelas.length > 0 ? () => setShowVencimentos((v) => !v) : undefined}
+              expanded={showVencimentos}
+            />
 
             {/* Bar section: sempre visível */}
             <PaymentProgress
@@ -507,8 +493,6 @@ const s = StyleSheet.create({
   dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
 
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
-  paymentToggle:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing[4] + 2, paddingVertical: spacing[3] + 2 },
-  paymentToggleTitle:   { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: C.ink },
   paymentBarContainer:  { paddingHorizontal: spacing[4] + 2, paddingBottom: spacing[4] },
   expandedContent:      {},
   parcelaCard:          { flexDirection: 'row', alignItems: 'center', gap: 14, padding: spacing[4], borderTopWidth: 1, borderTopColor: C.line },
