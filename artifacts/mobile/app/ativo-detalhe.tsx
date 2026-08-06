@@ -21,6 +21,7 @@ import {
   InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
+import { OfferPaymentHint } from '@/components/OfferPaymentHint';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 // ─── Tipo de exibição ────────────────────────────────────────────────────────
@@ -292,8 +293,8 @@ export default function AtivoDetalheScreen() {
 
         </View>
 
-        {/* ── Previsão de vencimentos (captação) ── */}
-        {!jaConcedido && parcelasPrevisao.length > 0 && (
+        {/* ── Pagamento (captação) ── */}
+        {!jaConcedido && (
           <View style={s.vencimentosCard}>
             {/* Header row: título + chevron */}
             <TouchableOpacity
@@ -305,13 +306,9 @@ export default function AtivoDetalheScreen() {
               <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
             </TouchableOpacity>
 
-            {/* Bar section: sempre visível */}
-            <PaymentProgress
+            <OfferPaymentHint
               ciclo={ciclo}
               parcelasTotal={parcelasTotal}
-              pctPago={pctPago}
-              valorPago={recebidoValor}
-              valorTotal={totalComRetorno}
               style={s.paymentBarContainer}
             />
 

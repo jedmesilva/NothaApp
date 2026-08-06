@@ -21,6 +21,7 @@ import {
   InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
+import { OfferPaymentHint } from '@/components/OfferPaymentHint';
 import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
@@ -281,10 +282,9 @@ export default function OfertaDetalheScreen() {
 
         </View>
 
-        {/* ── Previsão de vencimentos (captação) ── */}
-        {!jaConcedido && parcelasPrevisao.length > 0 && (
+        {/* ── Pagamento (captação: hint simples; pós-concessão: progresso real) ── */}
+        {!jaConcedido && (
           <View style={s.vencimentosCard}>
-            {/* Header row: título + chevron */}
             <TouchableOpacity
               style={s.paymentToggle}
               onPress={() => setShowPrevisao((v) => !v)}
@@ -294,13 +294,9 @@ export default function OfertaDetalheScreen() {
               <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
             </TouchableOpacity>
 
-            {/* Bar section: sempre visível */}
-            <PaymentProgress
+            <OfferPaymentHint
               ciclo={ciclo}
               parcelasTotal={parcelasTotal}
-              pctPago={pctPago}
-              valorPago={recebidoValor}
-              valorTotal={totalComRetorno}
               style={s.paymentBarContainer}
             />
 
@@ -326,6 +322,22 @@ export default function OfertaDetalheScreen() {
                 ))}
               </View>
             )}
+          </View>
+        )}
+
+        {jaConcedido && (
+          <View style={s.vencimentosCard}>
+            <View style={s.paymentToggle}>
+              <Text style={s.paymentToggleTitle}>Pagamento</Text>
+            </View>
+            <PaymentProgress
+              ciclo={ciclo}
+              parcelasTotal={parcelasTotal}
+              pctPago={pctPago}
+              valorPago={recebidoValor}
+              valorTotal={totalComRetorno}
+              style={s.paymentBarContainer}
+            />
           </View>
         )}
 
