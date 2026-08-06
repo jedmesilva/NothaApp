@@ -269,24 +269,22 @@ export default function CarteiraScreen() {
           {hasInvestments && (
             <>
               <View style={s.heroDivider} />
-              <View style={{ marginTop: 14, marginBottom: 20 }}>
-                <Eyebrow context="dark">Retorno</Eyebrow>
-                <Text style={s.retornoValue}><Text style={s.retornoSign}>+</Text>{rendimentoPercent}%</Text>
-                <Text style={s.retornoCaption}>R$ {formatBRL(rendimentoValor)} de retorno sobre investimento</Text>
+
+              {/* Capital retornado */}
+              <Eyebrow context="dark" style={{ marginBottom: 10 }}>Capital retornado</Eyebrow>
+              <View style={s.capitalPctRow}>
+                <Text style={s.capitalPct}>{rendimentoPercent}</Text>
+                <Text style={s.capitalPctSign}>%</Text>
+                <Text style={s.capitalPctLabel}>já retornou</Text>
               </View>
+
+              <ThinBar pct={percentRecebido} context="dark" style={{ marginTop: 16, marginBottom: 18 }} />
 
               <SplitRow
                 context="dark"
                 left={{ label: 'Recebido', value: `R$ ${formatBRL(recebido)}` }}
                 right={{ label: 'A receber', value: `R$ ${formatBRL(aReceber)}` }}
-                style={{ marginBottom: 16 }}
               />
-
-              <ThinBar pct={percentRecebido} context="dark" />
-              <View style={s.progressCaption}>
-                <Text style={s.progressCaptionText}>{percentRecebido}% recebido</Text>
-                <Text style={s.progressCaptionText}>de R$ {formatBRL(totalAReceber)}</Text>
-              </View>
             </>
           )}
         </DarkCard>
@@ -365,11 +363,10 @@ const s = StyleSheet.create({
   greeting:     { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[4], fontSize: fontSize.lg, color: C.inkSoft, fontFamily: fonts.regular },
   greetingName: { color: C.ink, fontFamily: fonts.bold },
   sectionTitle: { marginHorizontal: spacing[4], marginTop: 4, marginBottom: 10 },
-  retornoValue:   { fontFamily: fonts.display, fontSize: fontSize.display, color: '#fff', letterSpacing: -0.8, lineHeight: 38 },
-  retornoSign:    { fontSize: fontSize['4xl'], fontFamily: fonts.display },
-  retornoCaption: { fontSize: fontSize.base, color: C.onDarkMid, marginTop: 8, fontFamily: fonts.regular },
-  progressCaption:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9 },
-  progressCaptionText: { fontSize: fontSize['sm+'], color: C.onDarkFaint, fontFamily: fonts.regular },
+  capitalPctRow:  { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  capitalPct:     { fontFamily: fonts.display, fontSize: 52, color: '#fff', letterSpacing: -1.5, lineHeight: 56 },
+  capitalPctSign: { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: 'rgba(255,255,255,0.55)', lineHeight: 56 },
+  capitalPctLabel:{ fontFamily: fonts.medium, fontSize: fontSize.md, color: 'rgba(255,255,255,0.40)', marginLeft: 4 },
   statLabel:   { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 5 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   statSub:     { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
