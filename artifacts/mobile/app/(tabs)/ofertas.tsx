@@ -327,8 +327,8 @@ const s = StyleSheet.create({
   filterBadge:    { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.card },
 
   // List
-  list:      { paddingHorizontal: spacing[4], paddingBottom: 120 },
-  cardsList: { gap: 12 },
+  list:      { paddingBottom: 120 },
+  cardsList: { gap: 12, paddingHorizontal: spacing[4] },
   emptyState:{ textAlign: 'center', paddingVertical: 60, color: C.inkFaint, fontFamily: fonts.regular, fontSize: fontSize.base },
 
   // Card
