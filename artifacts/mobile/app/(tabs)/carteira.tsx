@@ -184,12 +184,12 @@ export default function CarteiraScreen() {
   const { labels, valores } = useMemo(() => {
     if (!periodDates) return { labels: [] as string[], valores: [] as number[] };
 
-    const parcelas = (cashflowData?.cashflows ?? [])
-      .filter((cf) => cf.kind === 'parcela')
-      .map((cf) => ({ ms: new Date(cf.date + 'T12:00:00Z').getTime(), interest: cf.interestCents ?? 0 }))
+    // Usa os mesmos cashflows do XIRR — aportes (negativos), parcelas e residual (positivos)
+    const allCfs = (cashflowData?.cashflows ?? [])
+      .map((cf) => ({ ms: new Date(cf.date + 'T12:00:00Z').getTime(), amountCents: cf.amountCents }))
       .sort((a, b) => a.ms - b.ms);
 
-    if (parcelas.length === 0) return { labels: [] as string[], valores: [] as number[] };
+    if (allCfs.length === 0) return { labels: [] as string[], valores: [] as number[] };
 
     const inicio = new Date(periodDates.start + 'T00:00:00Z');
     const fim    = new Date(periodDates.end   + 'T00:00:00Z');
@@ -222,9 +222,9 @@ export default function CarteiraScreen() {
 
     let cumulative = 0;
     const valores = buckets.map((b) => {
-      cumulative += parcelas
-        .filter((p) => p.ms >= b.startMs && p.ms <= b.endMs)
-        .reduce((s, p) => s + p.interest, 0);
+      cumulative += allCfs
+        .filter((cf) => cf.ms >= b.startMs && cf.ms <= b.endMs)
+        .reduce((s, cf) => s + cf.amountCents, 0);
       return cumulative / 100;
     });
 
