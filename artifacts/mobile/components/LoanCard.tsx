@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { CICLO_META, formatBRL, addDays, formatDataShort } from '@/data/loans';
 import type { Emprestimo } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii } from '@/constants/theme';
-import { PoolBar, DetailGrid, StatusBadge } from '@/components/ds';
+import { PoolBar, DetailGrid, StatusBadge, DetailLabel } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
 import type { LoanStatus } from '@/components/ds';
 
@@ -73,7 +73,7 @@ export function LoanCard({ loan }: Props) {
 
       {(loan.status === 'ativo' || isAtrasado) && (
         <>
-          <Text style={st.paymentLabel}>Pagamento</Text>
+          <DetailLabel style={{ marginBottom: 10 }}>Pagamento</DetailLabel>
           <PaymentProgress
             ciclo={loan.ciclo}
             parcelasTotal={loan.parcelasTotal}
@@ -112,6 +112,5 @@ const st = StyleSheet.create({
   label: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular },
   valueSpacer: { marginBottom: 16 },
 
-  paymentLabel:   { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
   paymentSection: { marginBottom: 18 },
 });

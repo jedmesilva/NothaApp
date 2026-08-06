@@ -22,6 +22,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { palette as C, fontSize, fonts, radii } from '@/constants/theme';
+import { DetailLabel } from './Typography';
 
 export type PoolSegment = {
   pct: number;
@@ -61,7 +62,7 @@ export function PoolBar({
   return (
     <View style={style}>
       {label != null && (
-        <Text style={[s.label, { color: labelColor }]}>{label}</Text>
+        <DetailLabel style={{ color: labelColor, marginBottom: 6 }}>{label}</DetailLabel>
       )}
       {(headLeft != null || headRight != null) && (
         <View style={s.head}>
@@ -151,13 +152,6 @@ export function ThinBar({
 }
 
 const s = StyleSheet.create({
-  label: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.semibold,
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
-    marginBottom: 6,
-  },
   head: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   headLeft: { fontFamily: fonts.display, fontSize: fontSize.lg },
   headRight: { fontFamily: fonts.display, fontSize: fontSize.base },

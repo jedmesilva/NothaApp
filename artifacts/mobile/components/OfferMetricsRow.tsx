@@ -17,6 +17,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { palette as C, fonts, fontSize } from '@/constants/theme';
+import { DetailLabel } from '@/components/ds';
 
 type Props = {
   investimento: string;
@@ -34,15 +35,15 @@ export function OfferMetricsRow({ investimento, retorno, prazo, context = 'light
   return (
     <View style={[s.row, style]}>
       <View>
-        <Text style={[s.label, { color: labelColor }]}>Investimento</Text>
+        <DetailLabel style={{ color: labelColor, marginBottom: 4 }}>Investimento</DetailLabel>
         <Text style={[s.value, { color: valueColor }]}>{investimento}</Text>
       </View>
       <View style={{ alignItems: 'center' }}>
-        <Text style={[s.label, { color: labelColor }]}>Retorno</Text>
+        <DetailLabel style={{ color: labelColor, marginBottom: 4 }}>Retorno</DetailLabel>
         <Text style={[s.value, { color: valueColor }]}>{retorno}</Text>
       </View>
       <View style={{ alignItems: 'flex-end' }}>
-        <Text style={[s.label, { color: labelColor }]}>Prazo</Text>
+        <DetailLabel style={{ color: labelColor, marginBottom: 4 }}>Prazo</DetailLabel>
         <Text style={[s.value, { color: valueColor }]}>{prazo}</Text>
       </View>
     </View>
@@ -54,13 +55,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 22,
-  },
-  label: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.semibold,
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
-    marginBottom: 4,
   },
   value: {
     fontFamily: fonts.display,
