@@ -12,7 +12,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { CICLO_META, addDays } from '@/data/loans';
 import { palette as C, fonts, fontSize, spacing } from '@/constants/theme';
 import { BackButton, Timeline } from '@/components/ds';
-import type { TimelineEvent } from '@/components/ds';
+import type { TimelineEvent, TimelineSubEvent } from '@/components/ds';
 import { useLoan, mapLoan } from '@/hooks/useLoans';
 
 export default function EmprestimoAtividadesScreen() {
@@ -54,13 +54,19 @@ export default function EmprestimoAtividadesScreen() {
   const jaConcedido        = status !== 'analise' && status !== 'captacao' && status !== 'cancelado';
   const jaCaptacaoIniciada = status !== 'analise';
 
-  const parcelas = jaConcedido
-    ? data.installments.map((inst) => ({
-        status: inst.status === 'paid' ? 'paga' : inst.status === 'overdue' ? 'atrasada' : 'pendente',
-      }))
+  const subEventsPagamento: TimelineSubEvent[] = jaConcedido
+    ? data.installments.map((inst) => {
+        const isPaid = inst.status === 'paid';
+        return {
+          number:      inst.installmentNumber,
+          date:        new Date(isPaid && inst.paidAt ? inst.paidAt : inst.dueDate),
+          status:      isPaid ? 'paid' : inst.status === 'overdue' ? 'overdue' : 'pending',
+          amountCents: inst.amountCents,
+        } satisfies TimelineSubEvent;
+      })
     : [];
 
-  const pagas           = parcelas.filter((p) => p.status === 'paga').length;
+  const pagas           = subEventsPagamento.filter((p) => p.status === 'paid').length;
   const todosPagesPagos = pagas >= parcelasTotal && parcelasTotal > 0;
 
   const timelineEvents: TimelineEvent[] = [
@@ -68,7 +74,7 @@ export default function EmprestimoAtividadesScreen() {
     { label: 'Captação iniciada',  date: jaCaptacaoIniciada ? dataCaptacaoIniciada : undefined,                                       done: jaCaptacaoIniciada  },
     { label: 'Captação concluída', date: jaConcedido        ? dataCaptacaoConcluida : undefined,                                      done: jaConcedido         },
     { label: 'Concedido',          date: jaConcedido        ? dataConcessao : undefined,                                               done: jaConcedido         },
-    { label: 'Pagamentos',         done: todosPagesPagos,   progress: { value: pagas, total: parcelasTotal }                         },
+    { label: 'Pagamentos',         done: todosPagesPagos,   progress: { value: pagas, total: parcelasTotal }, subEvents: subEventsPagamento.length > 0 ? subEventsPagamento : undefined },
     { label: 'Quitado',            date: (status === 'quitado' || todosPagesPagos) ? dataVencimentoFinal : undefined, done: status === 'quitado' || todosPagesPagos },
   ];
 

@@ -1,17 +1,28 @@
 /**
  * Timeline — linha do tempo vertical do DS.
  *
- * Recebe um array de `TimelineEvent` e renderiza pontos, linhas e
- * rótulos. Três estados visuais:
- *   - done    → ponto sólido escuro com ícone de check
- *   - current → anel escuro (border-only) — primeiro passo não-concluído
- *   - pending → anel cinza claro
+ * Três estados visuais de passo:
+ *   done    → ponto sólido escuro + check
+ *   current → anel escuro (primeiro passo não-concluído)
+ *   pending → anel cinza claro
+ *
+ * O passo de progresso aceita `subEvents` para exibir parcelas
+ * individuais quando expandido.
  */
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { formatDataComAno } from '@/data/loans';
+import { formatDataComAno, formatBRL } from '@/data/loans';
+
+// ─── Tipos ───────────────────────────────────────────────────────────────────
+
+export type TimelineSubEvent = {
+  number: number;
+  date: Date;
+  status: 'paid' | 'overdue' | 'pending';
+  amountCents?: number;
+};
 
 export type TimelineEvent =
   | {
@@ -25,31 +36,47 @@ export type TimelineEvent =
       date?: undefined;
       done: boolean;
       progress: { value: number; total: number };
+      subEvents?: TimelineSubEvent[];
     };
 
 type Props = {
   events: TimelineEvent[];
 };
 
+// ─── Constantes ──────────────────────────────────────────────────────────────
+
 const DOT     = 22;
 const LINE_W  = 2;
 const ROW_GAP = 32;
 
+// ─── Componente principal ────────────────────────────────────────────────────
+
 export function Timeline({ events }: Props) {
   const currentIdx = events.findIndex((e) => !e.done);
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  const toggle = (i: number) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
 
   return (
     <View>
       {events.map((event, i) => {
-        const isLast     = i === events.length - 1;
-        const isDone     = event.done;
-        const isCurrent  = i === currentIdx;
-        const isPending  = !isDone && !isCurrent;
-        const isProgress = event.progress !== undefined;
-        const allPaid    = isProgress && event.progress!.value >= event.progress!.total;
-        const pctBar     = isProgress && event.progress!.total > 0
+        const isLast        = i === events.length - 1;
+        const isDone        = event.done;
+        const isCurrent     = i === currentIdx;
+        const isPending     = !isDone && !isCurrent;
+        const isProgress    = event.progress !== undefined;
+        const allPaid       = isProgress && event.progress!.value >= event.progress!.total;
+        const pctBar        = isProgress && event.progress!.total > 0
           ? event.progress!.value / event.progress!.total
           : 0;
+        const subEvents     = isProgress ? (event as any).subEvents as TimelineSubEvent[] | undefined : undefined;
+        const hasSubEvents  = !!subEvents && subEvents.length > 0;
+        const isExpanded    = expanded.has(i);
 
         return (
           <View key={event.label} style={s.row}>
@@ -65,16 +92,19 @@ export function Timeline({ events }: Props) {
                 {isDone    && <Feather name="check" size={11} color="#fff" />}
                 {isCurrent && <View style={s.dotCurrentCore} />}
               </View>
-              {!isLast && (
-                <View style={[s.line, isDone && s.lineDone]} />
-              )}
+              {!isLast && <View style={[s.line, isDone && s.lineDone]} />}
             </View>
 
             {/* ── Conteúdo ── */}
             <View style={s.content}>
 
-              {/* Linha do rótulo */}
-              <View style={s.labelRow}>
+              {/* Cabeçalho do passo */}
+              <TouchableOpacity
+                disabled={!hasSubEvents}
+                onPress={() => toggle(i)}
+                activeOpacity={0.7}
+                style={s.labelRow}
+              >
                 <Text style={[
                   s.label,
                   isCurrent && s.labelCurrent,
@@ -96,25 +126,33 @@ export function Timeline({ events }: Props) {
                     <Text style={s.pillCurrentText}>em andamento</Text>
                   </View>
                 )}
-              </View>
 
-              {/* Sub-texto / data */}
+                {hasSubEvents && (
+                  <Feather
+                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={14}
+                    color={C.inkFaint}
+                    style={{ marginLeft: 'auto' }}
+                  />
+                )}
+              </TouchableOpacity>
+
+              {/* Barra de progresso mini */}
+              {isProgress && !allPaid && (
+                <View style={s.miniBarTrack}>
+                  <View style={[s.miniBarFill, { width: `${Math.round(pctBar * 100)}%` }]} />
+                </View>
+              )}
+
+              {/* Sub-texto */}
               {isProgress ? (
-                <>
-                  {/* Barra de progresso mini */}
-                  {!allPaid && (
-                    <View style={s.miniBarTrack}>
-                      <View style={[s.miniBarFill, { width: `${Math.round(pctBar * 100)}%` }]} />
-                    </View>
-                  )}
-                  <Text style={[s.sub, isPending && s.subFaint]}>
-                    {allPaid
-                      ? 'Todos os pagamentos realizados'
-                      : `${event.progress!.total - event.progress!.value} ${
-                          event.progress!.total - event.progress!.value === 1 ? 'restante' : 'restantes'
-                        }`}
-                  </Text>
-                </>
+                <Text style={[s.sub, isPending && s.subFaint]}>
+                  {allPaid
+                    ? 'Todos os pagamentos realizados'
+                    : `${event.progress!.total - event.progress!.value} ${
+                        event.progress!.total - event.progress!.value === 1 ? 'restante' : 'restantes'
+                      }`}
+                </Text>
               ) : event.date ? (
                 <Text style={[s.sub, isPending && s.subFaint]}>
                   {formatDataComAno(event.date)}
@@ -122,6 +160,56 @@ export function Timeline({ events }: Props) {
               ) : isPending ? (
                 <Text style={s.subFaint}>Pendente</Text>
               ) : null}
+
+              {/* ── Lista de parcelas expandida ── */}
+              {hasSubEvents && isExpanded && (
+                <View style={s.subList}>
+                  {subEvents!.map((sub, si) => {
+                    const isPaid    = sub.status === 'paid';
+                    const isOverdue = sub.status === 'overdue';
+                    const amount    = sub.amountCents != null ? sub.amountCents / 100 : null;
+                    const dateLabel = isPaid
+                      ? `Pago em ${formatDataComAno(sub.date)}`
+                      : isOverdue
+                      ? `Venceu em ${formatDataComAno(sub.date)}`
+                      : `Vence em ${formatDataComAno(sub.date)}`;
+
+                    return (
+                      <View
+                        key={si}
+                        style={[
+                          s.subRow,
+                          si > 0 && s.subRowBorder,
+                          isOverdue && s.subRowOverdue,
+                        ]}
+                      >
+                        {/* Número da parcela */}
+                        <View style={[s.subNum, isPaid && s.subNumPaid, isOverdue && s.subNumOverdue]}>
+                          <Text style={[s.subNumText, (isPaid || isOverdue) && s.subNumTextAlt]}>
+                            {sub.number}
+                          </Text>
+                        </View>
+
+                        {/* Info */}
+                        <View style={s.subInfo}>
+                          <Text style={[s.subDateLabel, isOverdue && s.subDateLabelOverdue]}>
+                            {dateLabel}
+                          </Text>
+                          {amount != null && (
+                            <Text style={s.subAmount}>R$ {formatBRL(Math.round(amount))}</Text>
+                          )}
+                        </View>
+
+                        {/* Status */}
+                        {isPaid && <Feather name="check" size={14} color={C.inkSoft} />}
+                        {isOverdue && (
+                          <Text style={s.subOverdueTag}>Em atraso</Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
 
             </View>
           </View>
@@ -131,6 +219,8 @@ export function Timeline({ events }: Props) {
   );
 }
 
+// ─── Estilos ─────────────────────────────────────────────────────────────────
+
 const s = StyleSheet.create({
   row: {
     flexDirection: 'row',
@@ -138,7 +228,7 @@ const s = StyleSheet.create({
     paddingBottom: ROW_GAP,
   },
 
-  // ── Trilho ────────────────────────────────────────────────────────────────
+  // Trilho
   rail: {
     alignItems: 'center',
     width: DOT,
@@ -152,25 +242,10 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
   },
-  dotDone: {
-    backgroundColor: C.ink,
-  },
-  dotCurrent: {
-    backgroundColor: C.bg,
-    borderWidth: 2.5,
-    borderColor: C.ink,
-  },
-  dotCurrentCore: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: C.ink,
-  },
-  dotPending: {
-    backgroundColor: C.bg,
-    borderWidth: 1.5,
-    borderColor: C.line,
-  },
+  dotDone:        { backgroundColor: C.ink },
+  dotCurrent:     { backgroundColor: C.bg, borderWidth: 2.5, borderColor: C.ink },
+  dotCurrentCore: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.ink },
+  dotPending:     { backgroundColor: C.bg, borderWidth: 1.5, borderColor: C.line },
   line: {
     flex: 1,
     width: LINE_W,
@@ -179,15 +254,10 @@ const s = StyleSheet.create({
     backgroundColor: C.line,
     borderRadius: LINE_W,
   },
-  lineDone: {
-    backgroundColor: C.ink,
-  },
+  lineDone: { backgroundColor: C.ink },
 
-  // ── Conteúdo ──────────────────────────────────────────────────────────────
-  content: {
-    flex: 1,
-    paddingTop: 1,
-  },
+  // Conteúdo
+  content:  { flex: 1, paddingTop: 1 },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -195,30 +265,13 @@ const s = StyleSheet.create({
     gap: 8,
     marginBottom: 4,
   },
-  label: {
-    fontSize: fontSize.md,
-    fontFamily: fonts.bold,
-    color: C.ink,
-    letterSpacing: -0.1,
-  },
-  labelCurrent: {
-    color: C.ink,
-  },
-  labelPending: {
-    color: C.inkFaint,
-    fontFamily: fonts.semibold,
-  },
-  sub: {
-    fontSize: fontSize['sm+'],
-    fontFamily: fonts.regular,
-    color: C.inkSoft,
-    lineHeight: 17,
-  },
-  subFaint: {
-    color: C.inkFaint,
-  },
+  label:        { fontSize: fontSize.md, fontFamily: fonts.bold, color: C.ink, letterSpacing: -0.1 },
+  labelCurrent: { color: C.ink },
+  labelPending: { color: C.inkFaint, fontFamily: fonts.semibold },
+  sub:          { fontSize: fontSize['sm+'], fontFamily: fonts.regular, color: C.inkSoft, lineHeight: 17 },
+  subFaint:     { color: C.inkFaint },
 
-  // ── Barra mini de progresso ────────────────────────────────────────────────
+  // Barra mini
   miniBarTrack: {
     height: 3,
     backgroundColor: C.line,
@@ -227,39 +280,54 @@ const s = StyleSheet.create({
     marginBottom: 6,
     marginTop: 2,
   },
-  miniBarFill: {
-    height: 3,
-    backgroundColor: C.ink,
-    borderRadius: radii.full,
-  },
+  miniBarFill: { height: 3, backgroundColor: C.ink, borderRadius: radii.full },
 
-  // ── Pills ──────────────────────────────────────────────────────────────────
-  pill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radii.full,
-    backgroundColor: C.chipMuted,
+  // Pills
+  pill:            { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full, backgroundColor: C.chipMuted },
+  pillDone:        { backgroundColor: C.ink },
+  pillText:        { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
+  pillTextDone:    { color: '#fff' },
+  pillCurrent:     { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.full, backgroundColor: C.chipMuted },
+  pillCurrentText: { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
+
+  // Sub-lista de parcelas
+  subList: {
+    marginTop: spacing[3],
+    borderRadius: radii.lg,
+    backgroundColor: C.bg,
+    overflow: 'hidden',
   },
-  pillDone: {
-    backgroundColor: C.ink,
+  subRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  pillText: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.bold,
-    color: C.inkSoft,
+  subRowBorder:  { borderTopWidth: 1, borderTopColor: C.line },
+  subRowOverdue: { backgroundColor: C.redBg },
+
+  // Badge de número
+  subNum: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    backgroundColor: C.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  pillTextDone: {
-    color: '#fff',
-  },
-  pillCurrent: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radii.full,
-    backgroundColor: C.chipMuted,
-  },
-  pillCurrentText: {
-    fontSize: fontSize.xs,
-    fontFamily: fonts.bold,
-    color: C.inkSoft,
-  },
+  subNumPaid:     { backgroundColor: C.chipMuted },
+  subNumOverdue:  { backgroundColor: C.red },
+  subNumText:     { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.inkSoft },
+  subNumTextAlt:  { color: '#fff' },
+
+  // Texto da parcela
+  subInfo:              { flex: 1 },
+  subDateLabel:         { fontSize: fontSize['sm+'], fontFamily: fonts.regular, color: C.inkSoft },
+  subDateLabelOverdue:  { color: C.red, fontFamily: fonts.semibold },
+  subAmount:            { fontSize: fontSize.xs, fontFamily: fonts.regular, color: C.inkFaint, marginTop: 1 },
+
+  // Tag de atraso
+  subOverdueTag: { fontSize: fontSize.xs, fontFamily: fonts.bold, color: C.red, flexShrink: 0 },
 });

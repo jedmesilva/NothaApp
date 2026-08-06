@@ -12,7 +12,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { CICLO_META, addDays } from '@/data/loans';
 import { palette as C, fonts, fontSize, spacing } from '@/constants/theme';
 import { BackButton, Timeline } from '@/components/ds';
-import type { TimelineEvent } from '@/components/ds';
+import type { TimelineEvent, TimelineSubEvent } from '@/components/ds';
 import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions';
 
 export default function AtivoAtividadesScreen() {
@@ -67,6 +67,15 @@ export default function AtivoAtividadesScreen() {
 
   const parcelasPrevistas = !jaConcedido ? Math.round(prazoDias / cicloMeta.dias) : 0;
 
+  const subEventsPagamento: TimelineSubEvent[] = jaConcedido
+    ? pos.installments.map((inst) => ({
+        number:      inst.installmentNumber,
+        date:        new Date(inst.dueDate + 'T00:00:00'),
+        status:      inst.status === 'paid' ? 'paid' : inst.status === 'overdue' ? 'overdue' : 'pending',
+        amountCents: inst.amountCents,
+      } satisfies TimelineSubEvent))
+    : [];
+
   const valorInvestido    = pos.originalPrincipalCents / 100;
   const taxaJurosTotal    = pos.ratePct / 100;
   const totalComRetorno   = valorInvestido * (1 + taxaJurosTotal / 100);
@@ -77,7 +86,7 @@ export default function AtivoAtividadesScreen() {
     { label: 'Investimento realizado', date: dataInvestimento,                                   done: true                   },
     { label: 'Captação concluída',     ...(jaConcedido ? { date: dataCaptacaoConcluida } : {}),  done: jaConcedido             },
     { label: 'Concedido',              ...(jaConcedido ? { date: dataConcessao } : {}),          done: jaConcedido             },
-    { label: 'Pagamentos',             done: todosRecebidos, progress: { value: jaConcedido ? parcelasRecebidas : 0, total: jaConcedido ? parcelasTotal : parcelasPrevistas } },
+    { label: 'Pagamentos',             done: todosRecebidos, progress: { value: jaConcedido ? parcelasRecebidas : 0, total: jaConcedido ? parcelasTotal : parcelasPrevistas }, subEvents: subEventsPagamento.length > 0 ? subEventsPagamento : undefined },
     { label: 'Encerrado',              ...(jaEncerrado ? { date: dataVencimentoFinal } : {}),    done: jaEncerrado             },
   ];
 
