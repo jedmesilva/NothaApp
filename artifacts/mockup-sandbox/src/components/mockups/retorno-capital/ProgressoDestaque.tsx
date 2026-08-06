@@ -42,9 +42,6 @@ export function ProgressoDestaque() {
                style={{ width: `${pct}%`, background: "#fff" }} />
         </div>
 
-        {/* Divisor */}
-        <div className="w-full h-px mb-5" style={{ background: "rgba(255,255,255,0.10)" }} />
-
         {/* Dois valores */}
         <div className="flex justify-between items-start">
           <div>
