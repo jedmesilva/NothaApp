@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Platform, TextInput,
+  TextInput,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { formatBRL, parcelasLabel } from '@/data/loans';
 import type { Oferta } from '@/data/ofertas';
 import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { PoolBar, PoolLegend, Chip, ModalSheet } from '@/components/ds';
+import { PoolBar, PoolLegend, Chip, ModalSheet, PageTitle, BodyText, DarkButton, GhostButton } from '@/components/ds';
 import { useToast } from '@/contexts/ToastContext';
 import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import { OfferSlider, effectiveMinCents } from '@/components/OfferSlider';
@@ -36,7 +35,6 @@ const CICLO_KEY: Record<string, string> = {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function OfertasScreen() {
-  const insets = useSafeAreaInsets();
   const { showToast } = useToast();
 
   const [classificacaoFilter, setClassificacaoFilter] = useState('todos');
@@ -124,8 +122,8 @@ export default function OfertasScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.list}>
         {/* Header */}
         <View style={s.header}>
-          <Text style={s.title}>Ofertas</Text>
-          <Text style={s.subtitle}>{offersLoading ? '…' : `${apiOfertas.length} ofertas disponíveis`}</Text>
+          <PageTitle size={fontSize['3xl']}>Ofertas</PageTitle>
+          <BodyText size={fontSize['sm+']}>{offersLoading ? '…' : `${apiOfertas.length} ofertas disponíveis`}</BodyText>
         </View>
 
         {/* Busca + filtro */}
@@ -296,12 +294,8 @@ export default function OfertasScreen() {
         </View>
 
         <View style={s.modalFooter}>
-          <TouchableOpacity style={s.modalBtnGhost} onPress={clearFilters} activeOpacity={0.8}>
-            <Text style={s.modalBtnGhostText}>Limpar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.modalBtnSolid} onPress={applyFilters} activeOpacity={0.85}>
-            <Text style={s.modalBtnSolidText}>Aplicar filtros</Text>
-          </TouchableOpacity>
+          <GhostButton label="Limpar" onPress={clearFilters} style={{ flex: 1 }} />
+          <DarkButton label="Aplicar filtros" onPress={applyFilters} style={{ flex: 2 }} />
         </View>
       </ModalSheet>
 
@@ -315,8 +309,6 @@ const s = StyleSheet.create({
   screen:    { flex: 1, backgroundColor: C.bg },
 
   header:   { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[3] },
-  title:    { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, marginBottom: 4 },
-  subtitle: { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular },
 
   // Search + filter
   searchRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginBottom: spacing[4] },
@@ -364,10 +356,6 @@ const s = StyleSheet.create({
   modalSectionLabel: { fontSize: fontSize.xs, fontFamily: fonts.bold, letterSpacing: 0.3, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 10 },
   pillsWrap:         { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing[5] },
   modalFooter:       { flexDirection: 'row', gap: 10, marginTop: spacing[1] },
-  modalBtnGhost:     { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 15, borderRadius: radii.lg, borderWidth: 1, borderColor: C.line },
-  modalBtnGhostText: { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: C.ink },
-  modalBtnSolid:     { flex: 2, alignItems: 'center', justifyContent: 'center', paddingVertical: 15, borderRadius: radii.lg, backgroundColor: C.dark },
-  modalBtnSolidText: { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: '#fff' },
 });
 
 
