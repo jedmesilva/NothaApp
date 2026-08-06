@@ -20,14 +20,19 @@ import { parcelasLabel } from '@/data/loans';
 type Props = {
   ciclo: string;
   parcelasTotal: number;
+  /**
+   * Exibe o label "Pagamento" acima do valor.
+   * Passe `false` quando o contexto pai (ex: PaymentSectionHeader) já provê o título.
+   * @default true
+   */
+  showLabel?: boolean;
   style?: ViewStyle;
 };
 
-export function OfferPaymentHint({ ciclo, parcelasTotal, style }: Props) {
+export function OfferPaymentHint({ ciclo, parcelasTotal, showLabel = true, style }: Props) {
   return (
     <View style={[s.wrap, style]}>
-      {/* O título "Pagamento" é renderizado pelo PaymentSectionHeader no pai —
-          este componente exibe apenas o valor das parcelas. */}
+      {showLabel && <Text style={s.label}>Pagamento</Text>}
       <Text style={s.value}>
         {parcelasTotal > 0 ? parcelasLabel(ciclo, parcelasTotal) : '—'}
       </Text>
@@ -39,6 +44,13 @@ const s = StyleSheet.create({
   wrap: {
     paddingBottom: spacing[4],
     gap: 4,
+  },
+  label: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.semibold,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+    color: C.inkFaint,
   },
   value: {
     fontFamily: fonts.display,

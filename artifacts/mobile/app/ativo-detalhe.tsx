@@ -305,6 +305,7 @@ export default function AtivoDetalheScreen() {
             <OfferPaymentHint
               ciclo={ciclo}
               parcelasTotal={parcelasTotal}
+              showLabel={false}
               style={s.paymentBarContainer}
             />
 

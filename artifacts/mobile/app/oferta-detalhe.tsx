@@ -294,6 +294,7 @@ export default function OfertaDetalheScreen() {
             <OfferPaymentHint
               ciclo={ciclo}
               parcelasTotal={parcelasTotal}
+              showLabel={false}
               style={s.paymentBarContainer}
             />
 
