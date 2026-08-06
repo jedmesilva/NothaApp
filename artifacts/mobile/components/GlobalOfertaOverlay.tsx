@@ -218,7 +218,7 @@ export default function GlobalOfertaOverlay() {
 
           {/* ── Divisor + Pagamento — só label + parcelas (oferta: nada pago ainda) ── */}
           <View style={s.divider} />
-          <DetailLabel style={{ marginBottom: 10 }}>Pagamento</DetailLabel>
+          <DetailLabel>Pagamento</DetailLabel>
           <OfferPaymentHint
             ciclo={ciclo}
             parcelasTotal={activeOffer.loan.installmentsTotal}

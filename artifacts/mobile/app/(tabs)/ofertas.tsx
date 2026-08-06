@@ -213,7 +213,8 @@ export default function OfertasScreen() {
 
               <View style={s.metricDivider} />
 
-              {/* Pagamento — só label + parcelas (oferta: nada foi pago ainda) */}
+              {/* Pagamento — label + parcelas */}
+              <DetailLabel>Pagamento</DetailLabel>
               <OfferPaymentHint
                 ciclo={CICLO_KEY[o.ciclo] ?? 'mensal'}
                 parcelasTotal={o.parcelasTotal}
@@ -249,7 +250,7 @@ export default function OfertasScreen() {
           </TouchableOpacity>
         </View>
 
-        <DetailLabel style={{ marginBottom: 10 }}>Classificação</DetailLabel>
+        <DetailLabel>Classificação</DetailLabel>
         <View style={s.pillsWrap}>
           {CLASSIFICACOES.map((c) => (
             <Chip
@@ -262,7 +263,7 @@ export default function OfertasScreen() {
           ))}
         </View>
 
-        <DetailLabel style={{ marginBottom: 10 }}>Ciclo</DetailLabel>
+        <DetailLabel>Ciclo</DetailLabel>
         <View style={s.pillsWrap}>
           {CICLOS_FILTRO.map((c) => (
             <Chip

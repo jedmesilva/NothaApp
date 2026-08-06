@@ -213,7 +213,7 @@ export default function AtivosScreen() {
 
               <View style={s.divider} />
 
-              <DetailLabel style={{ marginBottom: 10 }}>Pagamento</DetailLabel>
+              <DetailLabel>Pagamento</DetailLabel>
 
               {isCaptacao ? (
                 <OfferPaymentHint
@@ -249,7 +249,7 @@ export default function AtivosScreen() {
           </TouchableOpacity>
         </View>
 
-        <DetailLabel style={{ marginBottom: 10 }}>Status</DetailLabel>
+        <DetailLabel>Status</DetailLabel>
         <View style={s.pillsWrap}>
           {FILTERS.map((f) => (
             <Chip

@@ -73,7 +73,7 @@ export function LoanCard({ loan }: Props) {
 
       {(loan.status === 'ativo' || isAtrasado) && (
         <>
-          <DetailLabel style={{ marginBottom: 10 }}>Pagamento</DetailLabel>
+          <DetailLabel>Pagamento</DetailLabel>
           <PaymentProgress
             ciclo={loan.ciclo}
             parcelasTotal={loan.parcelasTotal}

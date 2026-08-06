@@ -62,7 +62,7 @@ export function PoolBar({
   return (
     <View style={style}>
       {label != null && (
-        <DetailLabel style={{ color: labelColor, marginBottom: 6 }}>{label}</DetailLabel>
+        <DetailLabel style={{ color: labelColor }}>{label}</DetailLabel>
       )}
       {(headLeft != null || headRight != null) && (
         <View style={s.head}>

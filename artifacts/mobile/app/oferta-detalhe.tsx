@@ -291,7 +291,7 @@ export default function OfertaDetalheScreen() {
               onPress={() => setShowPrevisao((v) => !v)}
               activeOpacity={0.8}
             >
-              <DetailLabel>Pagamento</DetailLabel>
+              <DetailLabel style={{ marginBottom: 0 }}>Pagamento</DetailLabel>
               <View style={s.sectionChevron} pointerEvents="none">
                 <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
               </View>
@@ -331,7 +331,7 @@ export default function OfertaDetalheScreen() {
         {jaConcedido && (
           <View style={s.vencimentosCard}>
             <View style={s.sectionHeader}>
-              <DetailLabel>Pagamento</DetailLabel>
+              <DetailLabel style={{ marginBottom: 0 }}>Pagamento</DetailLabel>
             </View>
             <PaymentProgress
               ciclo={ciclo}

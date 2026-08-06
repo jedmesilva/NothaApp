@@ -14,7 +14,7 @@
  */
 import React from 'react';
 import { Text, StyleSheet, TextStyle } from 'react-native';
-import { palette as C, fontSize, fonts } from '@/constants/theme';
+import { palette as C, fontSize, fonts, spacing } from '@/constants/theme';
 
 type TextProps = {
   children: React.ReactNode;
@@ -108,6 +108,7 @@ const t = StyleSheet.create({
     letterSpacing: 0.2,
     textTransform: 'uppercase',
     color: C.inkFaint,
+    marginBottom: spacing[2], // DS standard: 8px between a section label and its content
   },
   bigValue: {
     fontFamily: fonts.display,
