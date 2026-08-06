@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { formatBRL, parcelasLabel } from '@/data/loans';
+import { formatBRL } from '@/data/loans';
 import type { Oferta } from '@/data/ofertas';
 import { useInvestorOffers, useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
@@ -13,6 +13,7 @@ import { PoolBar, PoolLegend, Chip, ModalSheet, PageTitle, BodyText, DarkButton,
 import { useToast } from '@/contexts/ToastContext';
 import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
+import { OfferPaymentHint } from '@/components/OfferPaymentHint';
 
 const CLASSIFICACOES = [
   { key: 'todos', label: 'Todas' },
@@ -213,14 +214,10 @@ export default function OfertasScreen() {
               <View style={s.metricDivider} />
 
               {/* Pagamento — só label + parcelas (oferta: nada foi pago ainda) */}
-              <View style={s.paymentHint}>
-                <Text style={s.paymentHintLabel}>Pagamento</Text>
-                <Text style={s.paymentHintValue}>
-                  {o.parcelasTotal > 0
-                    ? parcelasLabel(CICLO_KEY[o.ciclo] ?? 'mensal', o.parcelasTotal)
-                    : '—'}
-                </Text>
-              </View>
+              <OfferPaymentHint
+                ciclo={CICLO_KEY[o.ciclo] ?? 'mensal'}
+                parcelasTotal={o.parcelasTotal}
+              />
 
               {/* Botão */}
               <TouchableOpacity
@@ -319,9 +316,6 @@ const s = StyleSheet.create({
   heroCaption:  { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginBottom: 14 },
   metricDivider:{ height: 1, backgroundColor: C.line, marginBottom: 20 },
   // Bar footer
-  paymentHint:       { paddingBottom: spacing[4], gap: 4 },
-  paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
-  paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
 
   // Buttons
   aceitarBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 18, borderRadius: radii.lg, backgroundColor: C.dark },

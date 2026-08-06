@@ -23,7 +23,7 @@ import { useOfertaOverlay } from '@/contexts/OfertaOverlayContext';
 import { useRespondToOffer } from '@/hooks/useInvestorOffers';
 import { useToast } from '@/contexts/ToastContext';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { parcelasLabel } from '@/data/loans';
+import { OfferPaymentHint } from '@/components/OfferPaymentHint';
 import { PoolBar, PoolLegend } from '@/components/ds';
 import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
 import { OfferMetricsBlock } from '@/components/OfferMetricsBlock';
@@ -218,14 +218,10 @@ export default function GlobalOfertaOverlay() {
 
           {/* ── Divisor + Pagamento — só label + parcelas (oferta: nada pago ainda) ── */}
           <View style={s.divider} />
-          <View style={s.paymentHint}>
-            <Text style={s.paymentHintLabel}>Pagamento</Text>
-            <Text style={s.paymentHintValue}>
-              {activeOffer.loan.installmentsTotal > 0
-                ? parcelasLabel(ciclo, activeOffer.loan.installmentsTotal)
-                : '—'}
-            </Text>
-          </View>
+          <OfferPaymentHint
+            ciclo={ciclo}
+            parcelasTotal={activeOffer.loan.installmentsTotal}
+          />
         </ScrollView>
 
         {/* Accept button — pinned at bottom */}
@@ -324,9 +320,6 @@ const s = StyleSheet.create({
 
   // Seções — mesma estrutura do card de ativos
   divider:     { height: 1, backgroundColor: C.line, marginBottom: 18 },
-  paymentHint:       { paddingBottom: spacing[4], gap: 4 },
-  paymentHintLabel:  { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
-  paymentHintValue:  { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
 
   // Dismiss (outside sheet, top-right)
   dismissBtn: {
