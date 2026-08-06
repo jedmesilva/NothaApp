@@ -77,9 +77,11 @@ const s = StyleSheet.create({
     // position: 'relative' é o padrão no RN — necessário para o filho absoluto.
   },
   title: {
-    fontSize: fontSize['base+'],
-    fontFamily: fonts.bold,
-    color: C.ink,
+    fontSize: fontSize.xs,
+    fontFamily: fonts.semibold,
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+    color: C.inkFaint,
   },
   chevronWrap: {
     position: 'absolute',
