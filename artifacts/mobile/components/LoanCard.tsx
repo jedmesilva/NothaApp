@@ -59,6 +59,9 @@ export function LoanCard({ loan }: Props) {
       <View style={st.valueSpacer} />
 
       {isCaptacao && (
+        <View style={st.divider} />
+      )}
+      {isCaptacao && (
         <PoolBar
           label="Captação"
           headLeft={`${percentCaptado}% captado`}
@@ -109,5 +112,6 @@ const st = StyleSheet.create({
   label: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular },
   valueSpacer: { marginBottom: 16 },
 
+  divider:        { height: 1, backgroundColor: C.line, marginBottom: 18 },
   paymentSection: { marginBottom: 18 },
 });

@@ -135,6 +135,7 @@ export default function EmprestimoDetalheScreen() {
           <Text style={s.heroValue}>R$ {formatBRL(valor)}</Text>
           <Text style={s.heroSub}>R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade}</Text>
 
+          {status === 'captacao' && <View style={s.heroDivider} />}
           {status === 'captacao' && (
             <PoolBar
               label="Captação"
@@ -305,7 +306,8 @@ const s = StyleSheet.create({
   heroTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 },
   heroEyebrow: { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.onDarkSoft, marginBottom: 10 },
   heroValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: '#fff', letterSpacing: -1, lineHeight: 44, marginBottom: 6 },
-  heroSub:   { fontSize: fontSize.base, color: C.onDarkSoft, fontFamily: fonts.regular, marginBottom: 20 },
+  heroSub:      { fontSize: fontSize.base, color: C.onDarkSoft, fontFamily: fonts.regular, marginBottom: 20 },
+  heroDivider:  { height: 1, backgroundColor: C.onDarkBorder, marginBottom: 20 },
   datesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginHorizontal: spacing[4], marginBottom: 14, padding: 14, borderRadius: radii['2xl'], backgroundColor: C.card },
   datesDivider: { width: 1, height: 30, backgroundColor: C.line },
   dateLabel: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
