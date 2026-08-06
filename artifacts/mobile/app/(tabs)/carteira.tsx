@@ -278,7 +278,7 @@ export default function CarteiraScreen() {
                 <Text style={s.capitalPctLabel}>já retornou</Text>
               </View>
 
-              <ThinBar pct={percentRecebido} context="dark" style={{ marginTop: 8, marginBottom: 18 }} />
+              <ThinBar pct={percentRecebido} context="dark" style={{ marginTop: 2, marginBottom: 18 }} />
 
               <SplitRow
                 context="dark"
@@ -364,8 +364,8 @@ const s = StyleSheet.create({
   greetingName: { color: C.ink, fontFamily: fonts.bold },
   sectionTitle: { marginHorizontal: spacing[4], marginTop: 4, marginBottom: 10 },
   capitalPctRow:  { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  capitalPct:     { fontFamily: fonts.display, fontSize: 52, color: '#fff', letterSpacing: -1.5, lineHeight: 56 },
-  capitalPctSign: { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: 'rgba(255,255,255,0.55)', lineHeight: 56 },
+  capitalPct:     { fontFamily: fonts.display, fontSize: 52, color: '#fff', letterSpacing: -1.5, lineHeight: 48 },
+  capitalPctSign: { fontFamily: fonts.display, fontSize: fontSize['4xl'], color: 'rgba(255,255,255,0.55)', lineHeight: 48 },
   capitalPctLabel:{ fontFamily: fonts.medium, fontSize: fontSize.md, color: 'rgba(255,255,255,0.40)', marginLeft: 4 },
   statLabel:   { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 5 },
   statValue:   { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
