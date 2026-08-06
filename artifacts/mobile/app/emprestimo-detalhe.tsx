@@ -13,17 +13,16 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CICLO_META, formatBRL, addDays, formatData, formatDataShort } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { BackButton, StatusBadge, PoolBar, DetailGrid, InstallmentBadge, AlertBanner, ModalSheet, Timeline, DetailLabel } from '@/components/ds';
+import { BackButton, StatusBadge, PoolBar, DetailGrid, InstallmentBadge, AlertBanner, DetailLabel } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
 import { OfferPaymentHint } from '@/components/OfferPaymentHint';
-import type { LoanStatus, TimelineEvent } from '@/components/ds';
+import type { LoanStatus } from '@/components/ds';
 import { useLoan, mapLoan } from '@/hooks/useLoans';
 
 export default function EmprestimoDetalheScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const topPad = Platform.OS === 'web' ? 20 : insets.top;
-  const [showTimeline,    setShowTimeline]    = useState(false);
   const [showVencimentos, setShowVencimentos] = useState(false);
 
   const { data, isLoading } = useLoan(id ?? '');
@@ -96,15 +95,6 @@ export default function EmprestimoDetalheScreen() {
   const percentCaptado = valorCaptado && valor > 0
     ? Math.round((valorCaptado / valor) * 100)
     : 0;
-
-  const timelineEvents: TimelineEvent[] = [
-    { label: 'Solicitado',         date: dataSolicitacao,                              done: true                },
-    { label: 'Captação iniciada',  date: jaCaptacaoIniciada ? dataCaptacaoIniciada : undefined,  done: jaCaptacaoIniciada  },
-    { label: 'Captação concluída', date: jaConcedido        ? dataCaptacaoConcluida : undefined, done: jaConcedido         },
-    { label: 'Concedido',          date: jaConcedido        ? dataConcessao : undefined,         done: jaConcedido         },
-    { label: 'Pagamentos',         date: undefined,                                    done: todosPagesPagos,    progress: { value: pagas, total: parcelasTotal } },
-    { label: 'Quitado',            date: (status === 'quitado' || todosPagesPagos) ? dataVencimentoFinal : undefined, done: status === 'quitado' || todosPagesPagos },
-  ];
 
   return (
     <View style={[s.screen, { paddingTop: topPad }]}>
@@ -274,25 +264,15 @@ export default function EmprestimoDetalheScreen() {
           )}
         </View>
 
-        {/* Dates row */}
-        <TouchableOpacity style={[s.datesRow, { marginTop: spacing[4] }]} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.dateLabel}>{jaConcedido ? 'Concedido em' : 'Solicitado em'}</Text>
-            <Text style={s.dateValue}>{formatData(jaConcedido ? dataConcessao : dataSolicitacao)}</Text>
-          </View>
-          {jaConcedido && (
-            <>
-              <View style={s.datesDivider} />
-              <View style={{ flex: 1 }}>
-                <Text style={s.dateLabel}>Vencimento</Text>
-                <Text style={s.dateValue}>{formatData(dataVencimentoFinal)}</Text>
-              </View>
-            </>
-          )}
-          <Feather name="chevron-right" size={18} color={C.inkFaint} />
-        </TouchableOpacity>
-
         <Text style={s.contratoId}>Contrato Nº {contratoId ?? `EMP-${id}`}</Text>
+
+        <TouchableOpacity
+          style={s.atividadesBtn}
+          activeOpacity={0.7}
+          onPress={() => router.push({ pathname: '/emprestimo-atividades', params: { id: id ?? '' } })}
+        >
+          <Text style={s.atividadesBtnText}>Registro de atividades</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={s.helpBtn}
@@ -312,21 +292,6 @@ export default function EmprestimoDetalheScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Timeline Modal */}
-      <ModalSheet
-        visible={showTimeline}
-        onClose={() => setShowTimeline(false)}
-        grabber={false}
-        style={{ padding: spacing[5], paddingTop: spacing[4] }}
-      >
-        <View style={s.modalHeader}>
-          <Text style={s.modalTitle}>Histórico</Text>
-          <TouchableOpacity style={s.modalClose} onPress={() => setShowTimeline(false)} activeOpacity={0.8}>
-            <Feather name="x" size={16} color={C.ink} />
-          </TouchableOpacity>
-        </View>
-        <Timeline events={timelineEvents} />
-      </ModalSheet>
     </View>
   );
 }
@@ -341,10 +306,8 @@ const s = StyleSheet.create({
   heroValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: '#fff', letterSpacing: -1, lineHeight: 44, marginBottom: 6 },
   heroSub:      { fontSize: fontSize.base, color: C.onDarkSoft, fontFamily: fonts.regular, marginBottom: 20 },
   heroDivider:  { height: 1, backgroundColor: C.onDarkBorder, marginBottom: 20 },
-  datesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginHorizontal: spacing[4], marginBottom: 14, padding: 14, borderRadius: radii['2xl'], backgroundColor: C.card },
-  datesDivider: { width: 1, height: 30, backgroundColor: C.line },
-  dateLabel: { fontSize: fontSize.xs, color: C.inkFaint, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', marginBottom: 3 },
-  dateValue: { fontFamily: fonts.display, fontSize: fontSize['md+'], color: C.ink },
+  atividadesBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4, marginBottom: 4, paddingVertical: 10 },
+  atividadesBtnText: { fontSize: fontSize.sm, fontFamily: fonts.semibold, color: C.inkFaint },
 
   vencimentosCard:     { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
   sectionHeader:       { paddingHorizontal: spacing[4] + 2, paddingTop: spacing[3] + 2, paddingBottom: spacing[2], position: 'relative' },
@@ -370,7 +333,4 @@ const s = StyleSheet.create({
   contratoId: { fontSize: fontSize.sm, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', marginTop: 20, marginHorizontal: spacing[5] },
   helpBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: spacing[4], marginTop: 18, paddingVertical: 15, borderRadius: spacing[4], borderWidth: 1, borderColor: C.line },
   helpText:   { fontSize: fontSize['base+'], fontFamily: fonts.semibold, color: C.inkSoft },
-  modalHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
-  modalTitle:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink },
-  modalClose:   { width: 32, height: 32, borderRadius: 10, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
 });

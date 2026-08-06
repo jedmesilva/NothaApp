@@ -18,12 +18,12 @@ import { CICLO_META, formatBRL, addDays, formatData, formatDataComAno } from '@/
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import {
   BackButton, StatusBadge, PoolBar, PoolLegend, DetailGrid,
-  InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
-  Eyebrow, DetailLabel, ScreenTitle, SectionTitle, PageTitle,
+  InstallmentBadge, AlertBanner, GhostButton,
+  Eyebrow, DetailLabel, ScreenTitle, SectionTitle,
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
 import { OfferPaymentHint } from '@/components/OfferPaymentHint';
-import type { LoanStatus, TimelineEvent } from '@/components/ds';
+import type { LoanStatus } from '@/components/ds';
 
 // ─── Tipo de exibição ────────────────────────────────────────────────────────
 type PosDisplay = {
@@ -60,7 +60,6 @@ export default function AtivoDetalheScreen() {
   const { data: posData, isLoading: posLoading } = useInvestorPositions();
   const { showToast } = useToast();
 
-  const [showTimeline,    setShowTimeline]    = useState(false);
   const [showVencimentos, setShowVencimentos] = useState(false);
   const [showPrevisao,    setShowPrevisao]    = useState(false);
 
@@ -197,16 +196,6 @@ export default function AtivoDetalheScreen() {
 
   const todosRecebidos = jaConcedido && parcelasRecebidas >= parcelasTotal && parcelasTotal > 0;
   const jaEncerrado    = status === 'quitado' || todosRecebidos;
-
-  const timelineEvents: TimelineEvent[] = [
-    { label: 'Solicitação',            date: dataSolicitacao,                                    done: true         },
-    { label: 'Captação iniciada',      date: dataCaptacaoIniciada,                               done: true         },
-    { label: 'Investimento realizado', ...(jaInvestiu ? { date: dataInvestimento } : {}),        done: jaInvestiu   },
-    { label: 'Captação concluída',     ...(jaConcedido ? { date: dataCaptacaoConcluida } : {}),  done: jaConcedido  },
-    { label: 'Concedido',              ...(jaConcedido ? { date: dataConcessao } : {}),          done: jaConcedido  },
-    { label: 'Pagamentos',             done: todosRecebidos, progress: { value: jaConcedido ? parcelasRecebidas : 0, total: jaConcedido ? parcelasTotal : parcelasPrevistas } },
-    { label: 'Encerrado',              ...(jaEncerrado ? { date: dataVencimentoFinal } : {}),    done: jaEncerrado  },
-  ];
 
   const numeroDoContrato = emprestimosAnteriores === 0
     ? 'Primeiro'
@@ -427,24 +416,17 @@ export default function AtivoDetalheScreen() {
           <Text style={s.propositoValue}>{proposito}</Text>
         </View>
 
-        {/* ── Datas (toca → modal de timeline) ── */}
-        <TouchableOpacity style={s.datesRow} onPress={() => setShowTimeline(true)} activeOpacity={0.85}>
-          <View style={{ flex: 1 }}>
-            <DetailLabel style={{ marginBottom: 3 }}>Investido em</DetailLabel>
-            <Text style={s.dateValue}>{formatDataComAno(dataInvestimento)}</Text>
-          </View>
-          <View style={s.datesDivider} />
-          <View style={{ flex: 1 }}>
-            <DetailLabel style={{ marginBottom: 3 }}>
-              {vencimentoEhEstimado ? 'Vencimento estimado' : 'Vencimento'}
-            </DetailLabel>
-            <Text style={s.dateValue}>{formatDataComAno(dataVencimentoFinal)}</Text>
-          </View>
-          <Feather name="chevron-right" size={18} color={C.inkFaint} />
-        </TouchableOpacity>
-
         {/* ── Contrato ID ── */}
         <Text style={s.contratoId}>Contrato Nº {contratoId}</Text>
+
+        {/* ── Registro de atividades ── */}
+        <TouchableOpacity
+          style={s.atividadesBtn}
+          activeOpacity={0.7}
+          onPress={() => router.push({ pathname: '/ativo-atividades', params: { id: id ?? '' } })}
+        >
+          <Text style={s.atividadesBtnText}>Registro de atividades</Text>
+        </TouchableOpacity>
 
         {/* ── Ajuda ── */}
         <GhostButton
@@ -454,23 +436,6 @@ export default function AtivoDetalheScreen() {
         />
 
       </ScrollView>
-
-      {/* ── Modal: histórico / timeline ── */}
-      <ModalSheet
-        visible={showTimeline}
-        onClose={() => setShowTimeline(false)}
-        grabber={false}
-        style={{ padding: spacing[5], paddingTop: spacing[4] }}
-      >
-        <View style={s.modalHeader}>
-          <PageTitle size={fontSize.xl}>Histórico</PageTitle>
-          <TouchableOpacity style={s.modalClose} onPress={() => setShowTimeline(false)}>
-            <Feather name="x" size={16} color={C.ink} />
-          </TouchableOpacity>
-        </View>
-
-        <Timeline events={timelineEvents} />
-      </ModalSheet>
 
     </View>
   );
@@ -495,9 +460,8 @@ const s = StyleSheet.create({
   barFooter:     { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   barFooterText: { fontSize: fontSize.xs, color: C.onDarkFaint, fontFamily: fonts.regular },
 
-  datesRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: spacing[4], marginBottom: spacing[4], padding: 14, borderRadius: radii.lg, backgroundColor: C.card },
-  datesDivider: { width: 1, height: 30, backgroundColor: C.line },
-  dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
+  atividadesBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, marginBottom: spacing[1] },
+  atividadesBtnText: { fontSize: fontSize.sm, fontFamily: fonts.semibold, color: C.inkFaint },
 
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
   sectionHeader:        { paddingHorizontal: spacing[4] + 2, paddingTop: spacing[3] + 2, paddingBottom: spacing[2], position: 'relative' },
@@ -528,7 +492,4 @@ const s = StyleSheet.create({
   footer:      { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.line, paddingHorizontal: spacing[4], paddingTop: spacing[4] },
   footerBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: radii.lg, backgroundColor: C.dark },
   footerBtnText: { fontSize: fontSize['base+'], fontFamily: fonts.bold, color: '#fff' },
-
-  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing[4] + 2 },
-  modalClose:  { width: 32, height: 32, borderRadius: radii.md, backgroundColor: C.chipMuted, alignItems: 'center', justifyContent: 'center' },
 });

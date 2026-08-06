@@ -2,28 +2,25 @@
  * Timeline — linha do tempo vertical do DS.
  *
  * Recebe um array de `TimelineEvent` e renderiza pontos, linhas e
- * rótulos de forma consistente. Toda regra visual vive aqui;
- * as telas só passam dados.
- *
- * Tipos de passo:
- *  - Com `date`     → exibe a data (ou "~data" se `estimado: true`)
- *  - Com `progress` → exibe pill X/N e texto de parcelas restantes
+ * rótulos. Três estados visuais:
+ *   - done    → ponto sólido escuro com ícone de check
+ *   - current → anel escuro (border-only) — primeiro passo não-concluído
+ *   - pending → anel cinza claro
  */
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { formatData, formatDataHora } from '@/data/loans';
+import { formatDataComAno } from '@/data/loans';
 
 export type TimelineEvent =
   | {
-      /** Etapas com data: forneça `date` apenas quando `done: true` */
       label: string;
       date?: Date;
       done: boolean;
       progress?: undefined;
     }
   | {
-      /** Etapa de progresso (ex: Pagamentos X/N) — sem data */
       label: string;
       date?: undefined;
       done: boolean;
@@ -34,52 +31,98 @@ type Props = {
   events: TimelineEvent[];
 };
 
+const DOT     = 22;
+const LINE_W  = 2;
+const ROW_GAP = 32;
+
 export function Timeline({ events }: Props) {
+  const currentIdx = events.findIndex((e) => !e.done);
+
   return (
     <View>
       {events.map((event, i) => {
         const isLast     = i === events.length - 1;
+        const isDone     = event.done;
+        const isCurrent  = i === currentIdx;
+        const isPending  = !isDone && !isCurrent;
         const isProgress = event.progress !== undefined;
-        const allPaid    = isProgress && event.progress.value >= event.progress.total;
+        const allPaid    = isProgress && event.progress!.value >= event.progress!.total;
+        const pctBar     = isProgress && event.progress!.total > 0
+          ? event.progress!.value / event.progress!.total
+          : 0;
 
         return (
           <View key={event.label} style={s.row}>
-            {/* Coluna esquerda: dot + linha vertical */}
+
+            {/* ── Trilho ── */}
             <View style={s.rail}>
-              <View style={[s.dot, !event.done && s.dotPending]} />
+              <View style={[
+                s.dot,
+                isDone    && s.dotDone,
+                isCurrent && s.dotCurrent,
+                isPending && s.dotPending,
+              ]}>
+                {isDone    && <Feather name="check" size={11} color="#fff" />}
+                {isCurrent && <View style={s.dotCurrentCore} />}
+              </View>
               {!isLast && (
-                <View style={[s.line, event.done && s.lineDone]} />
+                <View style={[s.line, isDone && s.lineDone]} />
               )}
             </View>
 
-            {/* Conteúdo */}
+            {/* ── Conteúdo ── */}
             <View style={s.content}>
+
+              {/* Linha do rótulo */}
               <View style={s.labelRow}>
-                <Text style={[s.label, !event.done && s.labelPending]}>
+                <Text style={[
+                  s.label,
+                  isCurrent && s.labelCurrent,
+                  isPending && s.labelPending,
+                ]}>
                   {event.label}
                 </Text>
+
                 {isProgress && (
                   <View style={[s.pill, allPaid && s.pillDone]}>
                     <Text style={[s.pillText, allPaid && s.pillTextDone]}>
-                      {event.progress.value}/{event.progress.total}
+                      {event.progress!.value}/{event.progress!.total}
                     </Text>
+                  </View>
+                )}
+
+                {isCurrent && !isProgress && (
+                  <View style={s.pillCurrent}>
+                    <Text style={s.pillCurrentText}>em andamento</Text>
                   </View>
                 )}
               </View>
 
+              {/* Sub-texto / data */}
               {isProgress ? (
-                <Text style={s.sub}>
-                  {allPaid
-                    ? 'Todos os pagamentos realizados'
-                    : `${event.progress.total - event.progress.value} ${
-                        event.progress.total - event.progress.value === 1
-                          ? 'restante'
-                          : 'restantes'
-                      }`}
-                </Text>
+                <>
+                  {/* Barra de progresso mini */}
+                  {!allPaid && (
+                    <View style={s.miniBarTrack}>
+                      <View style={[s.miniBarFill, { width: `${Math.round(pctBar * 100)}%` }]} />
+                    </View>
+                  )}
+                  <Text style={[s.sub, isPending && s.subFaint]}>
+                    {allPaid
+                      ? 'Todos os pagamentos realizados'
+                      : `${event.progress!.total - event.progress!.value} ${
+                          event.progress!.total - event.progress!.value === 1 ? 'restante' : 'restantes'
+                        }`}
+                  </Text>
+                </>
               ) : event.date ? (
-                <Text style={s.sub}>{formatDataHora(event.date)}</Text>
+                <Text style={[s.sub, isPending && s.subFaint]}>
+                  {formatDataComAno(event.date)}
+                </Text>
+              ) : isPending ? (
+                <Text style={s.subFaint}>Pendente</Text>
               ) : null}
+
             </View>
           </View>
         );
@@ -88,59 +131,77 @@ export function Timeline({ events }: Props) {
   );
 }
 
-const DOT_SIZE = 10;
-const LINE_W   = 2;
-const ROW_PB   = spacing[4] + 2; // espaçamento entre linhas
-
 const s = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    gap: 14,
-    paddingBottom: ROW_PB,
+    gap: 16,
+    paddingBottom: ROW_GAP,
   },
 
-  // ── Trilho (dot + linha) ───────────────────────────────────────────────
+  // ── Trilho ────────────────────────────────────────────────────────────────
   rail: {
     alignItems: 'center',
-    width: DOT_SIZE,
+    width: DOT,
     flexShrink: 0,
   },
   dot: {
-    width: DOT_SIZE,
-    height: DOT_SIZE,
-    borderRadius: DOT_SIZE / 2,
-    backgroundColor: C.ink,
+    width: DOT,
+    height: DOT,
+    borderRadius: DOT / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1,
-    marginTop: 4,
+  },
+  dotDone: {
+    backgroundColor: C.ink,
+  },
+  dotCurrent: {
+    backgroundColor: C.bg,
+    borderWidth: 2.5,
+    borderColor: C.ink,
+  },
+  dotCurrentCore: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: C.ink,
   },
   dotPending: {
-    backgroundColor: C.line,
+    backgroundColor: C.bg,
+    borderWidth: 1.5,
+    borderColor: C.line,
   },
   line: {
     flex: 1,
     width: LINE_W,
-    marginTop: 4,
-    marginBottom: -(ROW_PB), // preenche até o início do próximo dot
+    marginTop: 5,
+    marginBottom: -(ROW_GAP),
     backgroundColor: C.line,
+    borderRadius: LINE_W,
   },
   lineDone: {
     backgroundColor: C.ink,
   },
 
-  // ── Conteúdo ───────────────────────────────────────────────────────────
+  // ── Conteúdo ──────────────────────────────────────────────────────────────
   content: {
     flex: 1,
-    paddingTop: 2,
+    paddingTop: 1,
   },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   label: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.md,
     fontFamily: fonts.bold,
+    color: C.ink,
+    letterSpacing: -0.1,
+  },
+  labelCurrent: {
     color: C.ink,
   },
   labelPending: {
@@ -151,9 +212,28 @@ const s = StyleSheet.create({
     fontSize: fontSize['sm+'],
     fontFamily: fonts.regular,
     color: C.inkSoft,
+    lineHeight: 17,
+  },
+  subFaint: {
+    color: C.inkFaint,
   },
 
-  // ── Pill de progresso ──────────────────────────────────────────────────
+  // ── Barra mini de progresso ────────────────────────────────────────────────
+  miniBarTrack: {
+    height: 3,
+    backgroundColor: C.line,
+    borderRadius: radii.full,
+    overflow: 'hidden',
+    marginBottom: 6,
+    marginTop: 2,
+  },
+  miniBarFill: {
+    height: 3,
+    backgroundColor: C.ink,
+    borderRadius: radii.full,
+  },
+
+  // ── Pills ──────────────────────────────────────────────────────────────────
   pill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -170,5 +250,16 @@ const s = StyleSheet.create({
   },
   pillTextDone: {
     color: '#fff',
+  },
+  pillCurrent: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+    backgroundColor: C.chipMuted,
+  },
+  pillCurrentText: {
+    fontSize: fontSize.xs,
+    fontFamily: fonts.bold,
+    color: C.inkSoft,
   },
 });
