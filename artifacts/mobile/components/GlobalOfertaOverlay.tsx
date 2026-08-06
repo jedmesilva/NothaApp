@@ -218,6 +218,7 @@ export default function GlobalOfertaOverlay() {
 
           {/* ── Divisor + Pagamento — só label + parcelas (oferta: nada pago ainda) ── */}
           <View style={s.divider} />
+          <Text style={s.paymentLabel}>Pagamento</Text>
           <OfferPaymentHint
             ciclo={ciclo}
             parcelasTotal={activeOffer.loan.installmentsTotal}
@@ -319,7 +320,8 @@ const s = StyleSheet.create({
   },
 
   // Seções — mesma estrutura do card de ativos
-  divider:     { height: 1, backgroundColor: C.line, marginBottom: 18 },
+  divider:      { height: 1, backgroundColor: C.line, marginBottom: 18 },
+  paymentLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
 
   // Dismiss (outside sheet, top-right)
   dismissBtn: {

@@ -22,7 +22,6 @@ import {
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
 import { OfferPaymentHint } from '@/components/OfferPaymentHint';
-import { PaymentSectionHeader } from '@/components/PaymentSectionHeader';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 // ─── Tipo de exibição ────────────────────────────────────────────────────────
@@ -297,15 +296,20 @@ export default function AtivoDetalheScreen() {
         {/* ── Pagamento (captação) ── */}
         {!jaConcedido && (
           <View style={s.vencimentosCard}>
-            <PaymentSectionHeader
+            <TouchableOpacity
+              style={s.sectionHeader}
               onPress={() => setShowPrevisao((v) => !v)}
-              expanded={showPrevisao}
-            />
+              activeOpacity={0.8}
+            >
+              <Text style={s.sectionTitle}>Pagamento</Text>
+              <View style={s.sectionChevron} pointerEvents="none">
+                <Feather name={showPrevisao ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
+              </View>
+            </TouchableOpacity>
 
             <OfferPaymentHint
               ciclo={ciclo}
               parcelasTotal={parcelasTotal}
-              showLabel={false}
               style={s.paymentBarContainer}
             />
 
@@ -338,10 +342,22 @@ export default function AtivoDetalheScreen() {
         {jaConcedido && (
           <View style={s.vencimentosCard}>
             {/* Chevron só aparece se há parcelas para expandir */}
-            <PaymentSectionHeader
-              onPress={parcelas.length > 0 ? () => setShowVencimentos((v) => !v) : undefined}
-              expanded={showVencimentos}
-            />
+            {parcelas.length > 0 ? (
+              <TouchableOpacity
+                style={s.sectionHeader}
+                onPress={() => setShowVencimentos((v) => !v)}
+                activeOpacity={0.8}
+              >
+                <Text style={s.sectionTitle}>Pagamento</Text>
+                <View style={s.sectionChevron} pointerEvents="none">
+                  <Feather name={showVencimentos ? 'chevron-up' : 'chevron-down'} size={18} color={C.inkFaint} />
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <View style={s.sectionHeader}>
+                <Text style={s.sectionTitle}>Pagamento</Text>
+              </View>
+            )}
 
             {/* Bar section: sempre visível */}
             <PaymentProgress
@@ -494,6 +510,9 @@ const s = StyleSheet.create({
   dateValue:    { fontFamily: fonts.display, fontSize: fontSize['base+'], color: C.ink },
 
   vencimentosCard:      { marginHorizontal: spacing[4], marginBottom: spacing[4], borderRadius: radii.card, backgroundColor: C.card, overflow: 'hidden' },
+  sectionHeader:        { paddingHorizontal: spacing[4] + 2, paddingVertical: spacing[3] + 2, position: 'relative' },
+  sectionTitle:         { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint },
+  sectionChevron:       { position: 'absolute', right: spacing[4] + 2, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' },
   paymentBarContainer:  { paddingHorizontal: spacing[4] + 2, paddingBottom: spacing[4] },
   expandedContent:      {},
   parcelaCard:          { flexDirection: 'row', alignItems: 'center', gap: 14, padding: spacing[4], borderTopWidth: 1, borderTopColor: C.line },

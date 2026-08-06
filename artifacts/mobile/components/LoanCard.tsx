@@ -72,14 +72,17 @@ export function LoanCard({ loan }: Props) {
       )}
 
       {(loan.status === 'ativo' || isAtrasado) && (
-        <PaymentProgress
-          ciclo={loan.ciclo}
-          parcelasTotal={loan.parcelasTotal}
-          pctPago={percentPago}
-          valorPago={valorPago}
-          valorTotal={totalAPagar}
-          style={st.paymentSection}
-        />
+        <>
+          <Text style={st.paymentLabel}>Pagamento</Text>
+          <PaymentProgress
+            ciclo={loan.ciclo}
+            parcelasTotal={loan.parcelasTotal}
+            pctPago={percentPago}
+            valorPago={valorPago}
+            valorTotal={totalAPagar}
+            style={st.paymentSection}
+          />
+        </>
       )}
 
       <DetailGrid
@@ -109,5 +112,6 @@ const st = StyleSheet.create({
   label: { fontSize: fontSize['sm+'], color: C.inkFaint, fontFamily: fonts.regular },
   valueSpacer: { marginBottom: 16 },
 
+  paymentLabel:   { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
   paymentSection: { marginBottom: 18 },
 });

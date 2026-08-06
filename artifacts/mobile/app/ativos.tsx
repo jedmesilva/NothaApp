@@ -213,6 +213,8 @@ export default function AtivosScreen() {
 
               <View style={s.divider} />
 
+              <Text style={s.paymentLabel}>Pagamento</Text>
+
               {isCaptacao ? (
                 <OfferPaymentHint
                   ciclo={ciclo}
@@ -220,7 +222,6 @@ export default function AtivosScreen() {
                 />
               ) : (
                 <PaymentProgress
-                  label="Pagamento"
                   ciclo={ciclo}
                   parcelasTotal={parcelasTotal}
                   pctPago={pctRecebido}
@@ -297,6 +298,7 @@ const s = StyleSheet.create({
   metricLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, color: C.inkFaint, textTransform: 'uppercase', marginBottom: 4 },
   metricValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: C.ink, letterSpacing: -0.3 },
   posCardAtrasado: { borderWidth: 1.5, borderColor: C.red },
+  paymentLabel:         { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
   posCardCaptacao: { borderWidth: 1.5, borderColor: C.inkFaint, borderStyle: 'dashed' },
   posTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   eyebrow:    { fontSize: fontSize.sm, fontFamily: fonts.semibold, letterSpacing: 0.3, color: C.inkFaint },

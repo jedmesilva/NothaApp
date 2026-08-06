@@ -1,10 +1,13 @@
 /**
- * PaymentProgress — bloco reutilizável de progresso de pagamento.
+ * PaymentProgress — conteúdo puro.
  *
- * Renderiza as 3 linhas padrão:
+ * Renderiza as 3 linhas de progresso de pagamento:
  *   1. "N parcela(s) mensal/mensais" · "X% pago"
  *   2. Barra de progresso fina
  *   3. "R$ X pago" · "R$ Y total"
+ *
+ * Não renderiza nenhum título ou cabeçalho — o contexto pai é responsável
+ * por exibir o cabeçalho de seção "Pagamento" acima deste componente.
  *
  * Use o prop `style` para margens/padding externo.
  */
@@ -20,8 +23,6 @@ type Props = {
   pctPago: number;    // 0–100
   valorPago: number;  // R$
   valorTotal: number; // R$
-  /** Título de seção exibido acima das 3 linhas (ex: "Pagamento"). */
-  label?: string;
   style?: ViewStyle;
 };
 
@@ -31,12 +32,10 @@ export function PaymentProgress({
   pctPago,
   valorPago,
   valorTotal,
-  label,
   style,
 }: Props) {
   return (
     <View style={style}>
-      {label != null && <Text style={st.sectionLabel}>{label}</Text>}
       {/* Linha 1: rótulo de parcelas + percentual */}
       <View style={st.head}>
         <Text style={st.headLeft}>
@@ -58,7 +57,6 @@ export function PaymentProgress({
 }
 
 const st = StyleSheet.create({
-  sectionLabel: { fontSize: fontSize.xs, fontFamily: fonts.semibold, letterSpacing: 0.2, textTransform: 'uppercase', color: C.inkFaint, marginBottom: 10 },
   head:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
   headLeft:   { fontFamily: fonts.display, fontSize: fontSize.lg, color: C.ink },
   headRight:  { fontFamily: fonts.display, fontSize: fontSize.base, color: C.inkSoft },
