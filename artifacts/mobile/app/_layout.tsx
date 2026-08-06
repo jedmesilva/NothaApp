@@ -77,7 +77,10 @@ function RootLayoutNav() {
               <Stack.Screen name="depositar"           options={{ headerShown: false }} />
               <Stack.Screen name="perfil"              options={{ headerShown: false }} />
               <Stack.Screen name="dados-pessoais"      options={{ headerShown: false }} />
-              <Stack.Screen name="emprestimo-ajuda"    options={{ headerShown: false }} />
+              <Stack.Screen name="emprestimo-ajuda"       options={{ headerShown: false }} />
+              <Stack.Screen name="emprestimo-atividades" options={{ headerShown: false }} />
+              <Stack.Screen name="ativo-atividades"      options={{ headerShown: false }} />
+              <Stack.Screen name="oferta-atividades"     options={{ headerShown: false }} />
             </Stack>
 
             <GlobalToast toast={toast} onClose={() => setToast(null)} />
