@@ -268,6 +268,7 @@ export default function CarteiraScreen() {
 
           {hasInvestments && (
             <>
+              <View style={s.heroDivider} />
               <View style={{ marginTop: 14, marginBottom: 20 }}>
                 <Eyebrow context="dark">Retorno</Eyebrow>
                 <Text style={s.retornoValue}><Text style={s.retornoSign}>+</Text>{rendimentoPercent}%</Text>
@@ -374,6 +375,7 @@ const s = StyleSheet.create({
   statSub:     { fontSize: fontSize['sm+'], color: C.inkSoft, fontFamily: fonts.regular, marginTop: 2 },
   heroTopRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   ativosInlineLabel:{ fontSize: fontSize['sm+'], color: 'rgba(255,255,255,0.5)', fontFamily: fonts.medium, marginTop: 6 },
+  heroDivider:      { height: 1, backgroundColor: 'rgba(255,255,255,0.12)', marginVertical: 20 },
   periodChips:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
   chartReturnValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: C.ink, letterSpacing: -0.6 },
   chartReturnSub:   { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.medium, marginTop: 4, marginBottom: 12 },
