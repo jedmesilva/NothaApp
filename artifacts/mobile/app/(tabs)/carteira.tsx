@@ -284,6 +284,7 @@ export default function CarteiraScreen() {
                 context="dark"
                 left={{ label: 'Recebido', value: `R$ ${formatBRL(recebido)}` }}
                 right={{ label: 'A receber', value: `R$ ${formatBRL(aReceber)}` }}
+                style={{ marginBottom: 0 }}
               />
             </>
           )}
