@@ -7,10 +7,10 @@ export const modules: ModuleMap = {
   "./components/mockups/investment-section/ParaInvestir.tsx": () => import("../components/mockups/investment-section/ParaInvestir.tsx"),
   "./components/mockups/investment-section/Segmented.tsx": () => import("../components/mockups/investment-section/Segmented.tsx"),
   "./components/mockups/investment-section/Stepped.tsx": () => import("../components/mockups/investment-section/Stepped.tsx"),
-  "./components/mockups/retorno-capital/DoisNumeros.tsx": () => import("../components/mockups/retorno-capital/DoisNumeros.tsx"),
-  "./components/mockups/retorno-capital/ProgressoDestaque.tsx": () => import("../components/mockups/retorno-capital/ProgressoDestaque.tsx"),
-  "./components/mockups/retorno-capital/TimelineRetorno.tsx": () => import("../components/mockups/retorno-capital/TimelineRetorno.tsx"),
   "./components/mockups/toast-variants/BoldBrand.tsx": () => import("../components/mockups/toast-variants/BoldBrand.tsx"),
   "./components/mockups/toast-variants/LightCard.tsx": () => import("../components/mockups/toast-variants/LightCard.tsx"),
-  "./components/mockups/toast-variants/Pill.tsx": () => import("../components/mockups/toast-variants/Pill.tsx")
+  "./components/mockups/toast-variants/Pill.tsx": () => import("../components/mockups/toast-variants/Pill.tsx"),
+  "./components/mockups/retorno-capital/DoisNumeros.tsx": () => import("../components/mockups/retorno-capital/DoisNumeros.tsx"),
+  "./components/mockups/retorno-capital/ProgressoDestaque.tsx": () => import("../components/mockups/retorno-capital/ProgressoDestaque.tsx"),
+  "./components/mockups/retorno-capital/TimelineRetorno.tsx": () => import("../components/mockups/retorno-capital/TimelineRetorno.tsx")
 };
