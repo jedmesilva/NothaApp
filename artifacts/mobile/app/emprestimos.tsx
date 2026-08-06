@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TextInput, StyleSheet, Platform } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
-import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
+import { palette as C, fonts, fontSize, spacing } from '@/constants/theme';
 import { BackButton } from '@/components/ds';
+import { SearchBar } from '@/components/SearchBar';
 import { LoanCard } from '@/components/LoanCard';
 import { useLoans } from '@/hooks/useLoans';
 import type { Emprestimo } from '@/data/loans';
@@ -61,7 +61,7 @@ export default function EmprestimosScreen() {
   const filtered = useMemo(() => {
     const term = busca.trim().toLowerCase();
     return (rawLoans ?? []).filter((l) =>
-      term === '' || l.contractId.toLowerCase().includes(term)
+      term === '' || (l.contratoId ?? '').toLowerCase().includes(term)
     );
   }, [rawLoans, busca]);
 
@@ -83,16 +83,12 @@ export default function EmprestimosScreen() {
         <Text style={st.title}>Empréstimos</Text>
 
         {/* Busca */}
-        <View style={st.searchWrap}>
-          <Feather name="search" size={17} color={C.inkFaint} />
-          <TextInput
-            style={st.searchInput}
-            placeholder="Buscar por número do contrato"
-            placeholderTextColor={C.inkFaint}
-            value={busca}
-            onChangeText={setBusca}
-          />
-        </View>
+        <SearchBar
+          value={busca}
+          onChangeText={setBusca}
+          placeholder="Buscar por número do contrato"
+          style={st.searchBar}
+        />
 
         {isLoading && (
           <ActivityIndicator color={C.ink} style={st.centered} />
@@ -139,8 +135,7 @@ const st = StyleSheet.create({
   screen:   { flex: 1, backgroundColor: C.bg },
   navBar:   { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
   title:    { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[1] },
-  searchWrap:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginBottom: spacing[4], padding: 13, borderRadius: radii.lg, backgroundColor: C.card },
-  searchInput: { flex: 1, fontSize: fontSize['md+'], color: C.ink, fontFamily: fonts.regular, padding: 0 },
+  searchBar: { marginHorizontal: spacing[4], marginBottom: spacing[4] },
   centered: { paddingVertical: 60, alignSelf: 'center' },
   empty:    { fontSize: fontSize.base, color: C.inkFaint, fontFamily: fonts.regular, textAlign: 'center', paddingVertical: 60, paddingHorizontal: spacing[5] },
 

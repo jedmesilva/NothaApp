@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
   ActivityIndicator,
   Platform,
@@ -17,6 +16,7 @@ import { useInvestorPositions, getPosStatus } from '@/hooks/useInvestorPositions
 import type { InvestorPosition } from '@/hooks/useInvestorPositions';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, StatusBadge, PoolBar, DetailGrid, Chip, ModalSheet } from '@/components/ds';
+import { SearchBar } from '@/components/SearchBar';
 import { PaymentProgress } from '@/components/PaymentProgress';
 import type { LoanStatus } from '@/components/ds';
 
@@ -102,16 +102,12 @@ export default function AtivosScreen() {
 
         {/* Busca + filtro — rolam com o conteúdo */}
         <View style={s.searchRow}>
-          <View style={s.searchWrap}>
-            <Feather name="search" size={17} color={C.inkFaint} />
-            <TextInput
-              style={s.searchInput}
-              placeholder="Buscar por número do contrato"
-              placeholderTextColor={C.inkFaint}
-              value={busca}
-              onChangeText={setBusca}
-            />
-          </View>
+          <SearchBar
+            value={busca}
+            onChangeText={setBusca}
+            placeholder="Buscar por número do contrato"
+            style={s.searchField}
+          />
           <TouchableOpacity
             style={[s.filterBtn, filtersActive && s.filterBtnActive]}
             onPress={openModal}
@@ -282,9 +278,8 @@ const s = StyleSheet.create({
   navBar:  { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
   title:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[3] },
   cardsList: { paddingHorizontal: spacing[4], gap: 12 },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginBottom: spacing[4] },
-  searchWrap:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 13, borderRadius: radii.lg, backgroundColor: C.card },
-  searchInput:  { flex: 1, fontSize: fontSize['md+'], color: C.ink, fontFamily: fonts.regular, padding: 0 },
+  searchRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginBottom: spacing[4] },
+  searchField: { flex: 1 },
   filterBtn:       { width: 46, height: 46, borderRadius: radii.lg, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
   filterBtnActive: { backgroundColor: C.dark },
   filterBadge:     { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4, backgroundColor: C.ink, borderWidth: 2, borderColor: C.card },
