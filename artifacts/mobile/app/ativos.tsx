@@ -17,6 +17,7 @@ import type { InvestorPosition } from '@/hooks/useInvestorPositions';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { BackButton, StatusBadge, PoolBar, DetailGrid, Chip, ModalSheet } from '@/components/ds';
 import { SearchBar } from '@/components/SearchBar';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { PaymentProgress } from '@/components/PaymentProgress';
 import type { LoanStatus } from '@/components/ds';
 
@@ -97,8 +98,8 @@ export default function AtivosScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
-        {/* Título — rola junto com o conteúdo */}
-        <Text style={s.title}>Ativos</Text>
+        {/* Cabeçalho padronizado */}
+        <ScreenHeader title="Ativos" />
 
         {/* Busca + filtro — rolam com o conteúdo */}
         <View style={s.searchRow}>
@@ -276,7 +277,6 @@ export default function AtivosScreen() {
 const s = StyleSheet.create({
   screen:  { flex: 1, backgroundColor: C.bg },
   navBar:  { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
-  title:   { fontFamily: fonts.display, fontSize: fontSize['3xl'], color: C.ink, letterSpacing: -0.2, paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[3] },
   cardsList: { paddingHorizontal: spacing[4], gap: 12 },
   searchRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: spacing[4], marginBottom: spacing[4] },
   searchField: { flex: 1 },
