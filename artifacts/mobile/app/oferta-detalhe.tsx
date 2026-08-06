@@ -21,7 +21,7 @@ import {
   InstallmentBadge, AlertBanner, GhostButton, ModalSheet, Timeline,
 } from '@/components/ds';
 import { PaymentProgress } from '@/components/PaymentProgress';
-import ValueSlider from '@/components/ValueSlider';
+import { OfferSlider, effectiveMinCents } from '@/components/OfferSlider';
 import type { LoanStatus, TimelineEvent } from '@/components/ds';
 
 // ─── Tipo de exibição ────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ export default function OfertaDetalheScreen() {
   const [showTimeline,    setShowTimeline]    = useState(false);
   const [showPrevisao,    setShowPrevisao]    = useState(false);
   const [aceitou,         setAceitou]         = useState(false);
-  const { getAmount, setAmount } = useAdjustedAmounts();
+  const { getAmount } = useAdjustedAmounts();
   const adjustedCents = getAmount(id);
 
   const isLoading = offersLoading;
@@ -127,12 +127,9 @@ export default function OfertaDetalheScreen() {
   } = posicao;
 
   // ── Slider ────────────────────────────────────────────────────────────────
-  const offerMaxCents = Math.round(_valorBase * 100);
-  const offerMinCents = (() => {
-    const offer = offersData?.offers.find((o) => o.id === id);
-    return offer?.minAmountCents ?? Math.max(1_000, Math.round(offerMaxCents * 0.25 / 100) * 100);
-  })();
-  const sliderCents = adjustedCents > 0 ? adjustedCents : offerMaxCents;
+  const offerMaxCents     = Math.round(_valorBase * 100);
+  const offerRawMinCents  = offersData?.offers.find((o) => o.id === id)?.minAmountCents ?? 0;
+  const sliderCents       = adjustedCents > 0 ? adjustedCents : offerMaxCents;
 
   // Override investido/original so all hero-card calculations track the slider
   const valorInvestido    = sliderCents / 100;
@@ -262,16 +259,9 @@ export default function OfertaDetalheScreen() {
           </View>
 
           {/* ── Slider — dentro do card, abaixo das métricas ── */}
-          {!aceitou && offerMinCents < offerMaxCents && (
+          {!aceitou && effectiveMinCents(offerRawMinCents, offerMaxCents) < offerMaxCents && (
             <View style={s.sliderInCard}>
-              <ValueSlider
-                minCents={offerMinCents}
-                maxCents={offerMaxCents}
-                valueCents={sliderCents}
-                onChange={(cents) => setAmount(id, cents)}
-                showValue={false}
-                context="dark"
-              />
+              <OfferSlider offerId={id} maxAmountCents={offerMaxCents} minAmountCents={offerRawMinCents} context="dark" />
             </View>
           )}
 

@@ -25,7 +25,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
 import { parcelasLabel } from '@/data/loans';
 import { PoolBar, PoolLegend } from '@/components/ds';
-import ValueSlider from '@/components/ValueSlider';
+import { useAdjustedAmounts } from '@/contexts/AdjustedAmountsContext';
+import { OfferSlider, effectiveMinCents } from '@/components/OfferSlider';
 
 const COUNTDOWN = 30;
 
@@ -45,7 +46,7 @@ export default function GlobalOfertaOverlay() {
   const scrimOpacity = useRef(new Animated.Value(0)).current;
   const sheetY       = useRef(new Animated.Value(700)).current;
 
-  const [adjustedCents, setAdjustedCents] = useState(0);
+  const { getAmount } = useAdjustedAmounts();
   const [secondsLeft,   setSecondsLeft]   = useState(COUNTDOWN);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -53,7 +54,6 @@ export default function GlobalOfertaOverlay() {
     if (!activeOffer) return;
 
     setSecondsLeft(COUNTDOWN);
-    setAdjustedCents(activeOffer.maxAmountCents);
 
     Animated.parallel([
       Animated.timing(scrimOpacity, { toValue: 1, duration: 260, useNativeDriver: true }),
@@ -82,7 +82,7 @@ export default function GlobalOfertaOverlay() {
   const handleAccept = async () => {
     if (!activeOffer) return;
     clearInterval(intervalRef.current!);
-    const safeCents = adjustedCents > 0 ? adjustedCents : activeOffer.maxAmountCents;
+    const safeCents = getAmount(activeOffer.id) || activeOffer.maxAmountCents;
     try {
       await respond({ offerId: activeOffer.id, action: 'accepted', amountCents: safeCents });
     } catch (_) {}
@@ -119,8 +119,7 @@ export default function GlobalOfertaOverlay() {
   // ── Derived values (same formulas as ofertas.tsx) ─────────────────────────
   const ratePct       = activeOffer.ratePct / 100;                        // e.g. 12.50
   const maxCents      = activeOffer.maxAmountCents;
-  const minCents      = activeOffer.minAmountCents > 0 ? activeOffer.minAmountCents : Math.max(1_000, Math.round(maxCents * 0.25 / 100) * 100);
-  const safeCents     = adjustedCents > 0 ? adjustedCents : maxCents;
+  const safeCents     = getAmount(activeOffer.id) || maxCents;
   const valorR$       = safeCents / 100;
   const retornoValor  = Math.round(valorR$ * (ratePct / 100));
   const totalPedidoR$ = activeOffer.loan.amountCents / 100;
@@ -204,14 +203,12 @@ export default function GlobalOfertaOverlay() {
           </View>
 
           {/* ── Slider — mesma seção das métricas ── */}
-          {minCents < maxCents && (
+          {effectiveMinCents(activeOffer.minAmountCents, maxCents) < maxCents && (
             <View style={s.sliderSection}>
-              <ValueSlider
-                minCents={minCents}
-                maxCents={maxCents}
-                valueCents={safeCents}
-                onChange={setAdjustedCents}
-                showValue={false}
+              <OfferSlider
+                offerId={activeOffer.id}
+                maxAmountCents={maxCents}
+                minAmountCents={activeOffer.minAmountCents}
               />
             </View>
           )}
