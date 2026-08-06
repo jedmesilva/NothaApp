@@ -278,7 +278,7 @@ export default function CarteiraScreen() {
                 <Text style={s.capitalPctLabel}>já retornou</Text>
               </View>
 
-              <ThinBar pct={percentRecebido} context="dark" style={{ marginTop: 16, marginBottom: 18 }} />
+              <ThinBar pct={percentRecebido} context="dark" style={{ marginTop: 8, marginBottom: 18 }} />
 
               <SplitRow
                 context="dark"
