@@ -18,20 +18,14 @@ import { DarkCard, LightCard, ThinBar, SplitRow, Chip, SectionTitle, Eyebrow, Bi
 import { useAuth } from '@/contexts/AuthContext';
 import { useInvestorPositions } from '@/hooks/useInvestorPositions';
 import { useInvestorProfile, useActivateInvestorProfile } from '@/hooks/useInvestorProfile';
+import { useInvestorCashflows } from '@/hooks/useInvestorCashflows';
+import { xirr, totalInterestCents } from '@/lib/xirr';
 
 const W = Dimensions.get('window').width;
 
 const MESES   = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-function seededNoise(i: number) {
-  const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
-  return x - Math.floor(x);
-}
-function gerarSerie(n: number, base: number, seed: number) {
-  let acc = 0;
-  return Array.from({ length: n }, (_, i) => { acc += base * (0.55 + seededNoise(i + seed) * 0.9); return acc; });
-}
 function buildSmoothPath(pts: { x: number; y: number }[]) {
   if (pts.length < 2) return '';
   let d = `M ${pts[0].x} ${pts[0].y}`;
@@ -78,12 +72,41 @@ export default function CarteiraScreen() {
   const saudacao = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
   // Dados reais — positions do banco conforme o documento
-  const { data: posData, isLoading: posLoading } = useInvestorPositions();
+  const { data: posData } = useInvestorPositions();
   const summary   = posData?.summary;
   const positions = posData?.positions ?? [];
 
   const hoje = new Date();
   const toDate = (s: string) => new Date(s + 'T00:00:00');
+
+  // ── Intervalo do período selecionado ────────────────────────────────────────
+  const periodDates = useMemo(() => {
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    if (periodo === '7d') {
+      const s = new Date(hoje); s.setDate(s.getDate() - 6);
+      return { start: fmt(s), end: fmt(hoje) };
+    }
+    if (periodo === '1m') {
+      const s = new Date(hoje); s.setMonth(s.getMonth() - 1);
+      return { start: fmt(s), end: fmt(hoje) };
+    }
+    if (periodo === '1a') {
+      const s = new Date(hoje); s.setFullYear(s.getFullYear() - 1);
+      return { start: fmt(s), end: fmt(hoje) };
+    }
+    if (periodo === 'custom') {
+      const inicio = parseDateBR(dataInicio); const fim = parseDateBR(dataFim);
+      if (!inicio || !fim || fim <= inicio) return null;
+      return { start: fmt(inicio), end: fmt(fim) };
+    }
+    return null;
+  }, [periodo, dataInicio, dataFim]);
+
+  // ── Cashflows reais do período ──────────────────────────────────────────────
+  const { data: cashflowData, isLoading: cashflowLoading } = useInvestorCashflows(
+    periodDates?.start ?? null,
+    periodDates?.end ?? null,
+  );
 
   // Métricas do hero card (fontes diretas de positions, como no documento)
   const investido       = (summary?.principalBalanceCents  ?? 0) / 100;
@@ -141,34 +164,72 @@ export default function CarteiraScreen() {
     ? Math.min(92, Math.max(8, (diasProximo / diasUltimo) * 100))
     : 50;
 
+  // ── XIRR e rendimento em juros do período ──────────────────────────────────
+  const xirrRate = useMemo(() => {
+    const cfs = cashflowData?.cashflows ?? [];
+    if (cfs.length < 2) return null;
+    return xirr(
+      cfs.map((cf) => ({ date: new Date(cf.date + 'T12:00:00Z'), amountCents: cf.amountCents })),
+    );
+  }, [cashflowData]);
+
+  const interestInPeriodCents = useMemo(
+    () => totalInterestCents(cashflowData?.cashflows ?? []),
+    [cashflowData],
+  );
+
   // Chart
   const chartW = W - 72; const chartH = 120; const padTop = 10; const padBot = 6;
 
   const { labels, valores } = useMemo(() => {
-    if (periodo === '7d') {
-      const lbs = Array.from({ length: 7 }, (_, i) => { const d = new Date(hoje); d.setDate(d.getDate() - (6 - i)); return DIAS_SEM[d.getDay()]; });
-      return { labels: lbs, valores: gerarSerie(7, 12, 1) };
+    if (!periodDates) return { labels: [] as string[], valores: [] as number[] };
+
+    const parcelas = (cashflowData?.cashflows ?? [])
+      .filter((cf) => cf.kind === 'parcela')
+      .map((cf) => ({ ms: new Date(cf.date + 'T12:00:00Z').getTime(), interest: cf.interestCents ?? 0 }))
+      .sort((a, b) => a.ms - b.ms);
+
+    if (parcelas.length === 0) return { labels: [] as string[], valores: [] as number[] };
+
+    const inicio = new Date(periodDates.start + 'T00:00:00Z');
+    const fim    = new Date(periodDates.end   + 'T00:00:00Z');
+    const diffDays = Math.round((fim.getTime() - inicio.getTime()) / 86400000);
+
+    type Bucket = { label: string; startMs: number; endMs: number };
+    let buckets: Bucket[] = [];
+
+    if (diffDays <= 14) {
+      buckets = Array.from({ length: diffDays + 1 }, (_, i) => {
+        const d = new Date(inicio); d.setDate(d.getDate() + i);
+        const nx = new Date(d);    nx.setDate(nx.getDate() + 1);
+        return { label: `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`, startMs: d.getTime(), endMs: nx.getTime() - 1 };
+      });
+    } else if (diffDays <= 60) {
+      const weeks = Math.ceil(diffDays / 7);
+      buckets = Array.from({ length: weeks }, (_, i) => {
+        const d = new Date(inicio); d.setDate(d.getDate() + i * 7);
+        const nx = new Date(d);    nx.setDate(nx.getDate() + 7);
+        return { label: `Sem ${i + 1}`, startMs: d.getTime(), endMs: nx.getTime() - 1 };
+      });
+    } else {
+      const months = Math.ceil(diffDays / 30);
+      buckets = Array.from({ length: months }, (_, i) => {
+        const d  = new Date(Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth() + i, 1));
+        const nx = new Date(Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth() + i + 1, 1));
+        return { label: MESES[d.getUTCMonth()], startMs: d.getTime(), endMs: nx.getTime() - 1 };
+      });
     }
-    if (periodo === '1m') return { labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'], valores: gerarSerie(4, 45, 2) };
-    if (periodo === 'custom') {
-      const inicio = parseDateBR(dataInicio); const fim = parseDateBR(dataFim);
-      if (!inicio || !fim || fim <= inicio) return { labels: [], valores: [] };
-      const diffDays = Math.round((fim.getTime() - inicio.getTime()) / 86400000);
-      if (diffDays <= 14) {
-        const lbs = Array.from({ length: diffDays + 1 }, (_, i) => { const d = new Date(inicio); d.setDate(d.getDate() + i); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`; });
-        return { labels: lbs, valores: gerarSerie(diffDays + 1, 12, 5) };
-      } else if (diffDays <= 60) {
-        const weeks = Math.ceil(diffDays / 7);
-        return { labels: Array.from({ length: weeks }, (_, i) => `Sem ${i + 1}`), valores: gerarSerie(weeks, 45, 6) };
-      } else {
-        const months = Math.ceil(diffDays / 30);
-        const lbs = Array.from({ length: months }, (_, i) => { const d = new Date(inicio); d.setMonth(d.getMonth() + i); return MESES[d.getMonth()]; });
-        return { labels: lbs, valores: gerarSerie(months, 155, 7) };
-      }
-    }
-    const lbs = Array.from({ length: 12 }, (_, i) => { const d = new Date(hoje); d.setMonth(d.getMonth() - (11 - i)); return MESES[d.getMonth()]; });
-    return { labels: lbs, valores: gerarSerie(12, 155, 3) };
-  }, [periodo, dataInicio, dataFim]);
+
+    let cumulative = 0;
+    const valores = buckets.map((b) => {
+      cumulative += parcelas
+        .filter((p) => p.ms >= b.startMs && p.ms <= b.endMs)
+        .reduce((s, p) => s + p.interest, 0);
+      return cumulative / 100;
+    });
+
+    return { labels: buckets.map((b) => b.label), valores };
+  }, [cashflowData, periodDates]);
 
   const padH    = 8;
   const maxVal  = Math.max(...valores);
@@ -180,8 +241,6 @@ export default function CarteiraScreen() {
   const areaPath = points.length > 1
     ? `${linePath} L ${points[points.length - 1].x} ${chartH} L ${points[0].x} ${chartH} Z`
     : '';
-  const retornoValor   = valores[valores.length - 1] ?? 0;
-  const retornoPercent = investido > 0 ? (retornoValor / investido) * 100 : 0;
   const step     = Math.max(1, Math.ceil(labels.length / 6));
   const visLabels = labels.filter((_, i) => i % step === 0 || i === labels.length - 1);
 
@@ -314,32 +373,46 @@ export default function CarteiraScreen() {
             </View>
           )}
 
-          {valores.length > 0 ? (
+          {cashflowLoading ? (
+            <ActivityIndicator size="small" color={C.ink} style={{ paddingVertical: 32 }} />
+          ) : xirrRate !== null || valores.length > 0 ? (
             <>
               <View style={{ marginBottom: 16 }}>
-                <Text style={s.chartReturnValue}>+{rendimentoPercent.toFixed(1)}%</Text>
-                <Text style={s.chartReturnSub}>R$ {formatBRL(rendimentoValor)}</Text>
+                <Text style={s.chartReturnValue}>
+                  {xirrRate !== null ? `+${(xirrRate * 100).toFixed(1)}% a.a.` : '—'}
+                </Text>
+                <Text style={s.chartReturnSub}>
+                  {interestInPeriodCents > 0
+                    ? `R$ ${formatBRL(interestInPeriodCents / 100)} em juros no período`
+                    : 'Sem juros recebidos no período'}
+                </Text>
               </View>
-              <Svg width={chartW} height={chartH} style={{ display: 'flex' }}>
-                <Defs>
-                  <SvgLinearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%"   stopColor={C.dark} stopOpacity="0.16" />
-                    <Stop offset="100%" stopColor={C.dark} stopOpacity="0" />
-                  </SvgLinearGradient>
-                </Defs>
-                <Path d={areaPath} fill="url(#fill)" />
-                <Path d={linePath} fill="none" stroke={C.dark} strokeWidth="2.5" strokeLinecap="round" />
-                {points.length > 0 && (
-                  <Circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r={4} fill={C.dark} stroke="#fff" strokeWidth={2} />
-                )}
-              </Svg>
-              <View style={s.axisLabels}>
-                {visLabels.map((l, i) => <Text key={i} style={s.axisLabel}>{l}</Text>)}
-              </View>
+              {valores.length > 1 && (
+                <>
+                  <Svg width={chartW} height={chartH} style={{ display: 'flex' }}>
+                    <Defs>
+                      <SvgLinearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                        <Stop offset="0%"   stopColor={C.dark} stopOpacity="0.16" />
+                        <Stop offset="100%" stopColor={C.dark} stopOpacity="0" />
+                      </SvgLinearGradient>
+                    </Defs>
+                    <Path d={areaPath} fill="url(#fill)" />
+                    <Path d={linePath} fill="none" stroke={C.dark} strokeWidth="2.5" strokeLinecap="round" />
+                    {points.length > 0 && (
+                      <Circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r={4} fill={C.dark} stroke="#fff" strokeWidth={2} />
+                    )}
+                  </Svg>
+                  <View style={s.axisLabels}>
+                    {visLabels.map((l, i) => <Text key={i} style={s.axisLabel}>{l}</Text>)}
+                  </View>
+                </>
+              )}
             </>
-          ) : periodo === 'custom' ? (
+          ) : periodo === 'custom' && !periodDates ? (
             <Text style={s.customEmptyHint}>Preencha as duas datas para ver o rendimento do período</Text>
-          ) : null}
+          ) : (
+            <Text style={s.customEmptyHint}>Nenhum rendimento registrado neste período ainda</Text>
+          )}
         </LightCard>}
 
       </ScrollView>

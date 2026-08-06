@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, and, inArray, sql, lt } from "drizzle-orm";
+import { eq, and, inArray, sql, lt, ne } from "drizzle-orm";
 import type { PositionStatus } from "@workspace/db";
 import {
   db,
@@ -10,6 +10,7 @@ import {
   loanEventsTable,
   fundingOrderOffersTable,
   pushTokensTable,
+  installmentPaymentDistributionsTable,
 } from "@workspace/db";
 import { requireAuth, type AuthRequest } from "../middlewares/auth.js";
 import * as sseManager from "../lib/sse-manager.js";
@@ -440,6 +441,156 @@ router.post("/push-token", requireAuth, async (req, res) => {
     });
 
   res.json({ ok: true });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/investor/cashflows?start=YYYY-MM-DD&end=YYYY-MM-DD
+//
+// Retorna os fluxos de caixa do investidor no período, prontos para XIRR:
+//   aporte   — capital comprometido (negativo)
+//   parcela  — distribuição recebida (positivo), com decomposição juros/principal
+//   residual — saldo devedor ainda em aberto ao fim do período (positivo)
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/cashflows", requireAuth, async (req, res) => {
+  const { userId } = (req as AuthRequest).user;
+  const { start, end } = req.query as { start?: string; end?: string };
+
+  if (!start || !end || !/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+    res.status(400).json({ error: "Parâmetros start e end obrigatórios (YYYY-MM-DD)" });
+    return;
+  }
+
+  const startDate = new Date(start + "T00:00:00.000Z");
+  const endDate   = new Date(end   + "T23:59:59.999Z");
+
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || endDate <= startDate) {
+    res.status(400).json({ error: "Intervalo de datas inválido" });
+    return;
+  }
+
+  const investorId = await getInvestorId(userId);
+  if (!investorId) {
+    res.json({ cashflows: [] });
+    return;
+  }
+
+  // Todas as posições não-canceladas do investidor
+  const positions = await db
+    .select({
+      id:                     positionsTable.id,
+      originalPrincipalCents: positionsTable.originalPrincipalCents,
+      principalBalanceCents:  positionsTable.principalBalanceCents,
+      createdAt:              positionsTable.createdAt,
+    })
+    .from(positionsTable)
+    .where(
+      and(
+        eq(positionsTable.investorId, investorId),
+        ne(positionsTable.status, "cancelled" as PositionStatus),
+      ),
+    );
+
+  if (positions.length === 0) {
+    res.json({ cashflows: [] });
+    return;
+  }
+
+  const positionIds = positions.map((p) => p.id);
+
+  // Todas as distribuições do investidor — necessário para reconstruir saldo em qualquer data
+  const allDists = await db
+    .select({
+      positionId:    installmentPaymentDistributionsTable.positionId,
+      amountCents:   installmentPaymentDistributionsTable.amountCents,
+      interestCents: installmentPaymentDistributionsTable.interestCents,
+      principalCents:installmentPaymentDistributionsTable.principalCents,
+      distributedAt: installmentPaymentDistributionsTable.distributedAt,
+    })
+    .from(installmentPaymentDistributionsTable)
+    .where(inArray(installmentPaymentDistributionsTable.positionId, positionIds));
+
+  // Agrupa distribuições por posição para facilitar cálculos
+  const distByPos = new Map<string, typeof allDists>();
+  for (const d of allDists) {
+    if (!distByPos.has(d.positionId)) distByPos.set(d.positionId, []);
+    distByPos.get(d.positionId)!.push(d);
+  }
+
+  type CashflowKind = "aporte" | "parcela" | "residual";
+  const cashflows: Array<{
+    date:          string;
+    amountCents:   number;
+    interestCents?: number;
+    principalCents?:number;
+    kind:          CashflowKind;
+    positionId:    string;
+  }> = [];
+
+  for (const pos of positions) {
+    const dists = distByPos.get(pos.id) ?? [];
+
+    // ── APORTE ───────────────────────────────────────────────────────────────
+    if (pos.createdAt >= startDate && pos.createdAt <= endDate) {
+      // Posição criada dentro do período — aporte na data de criação
+      cashflows.push({
+        date:        pos.createdAt.toISOString().slice(0, 10),
+        amountCents: -pos.originalPrincipalCents,
+        kind:        "aporte",
+        positionId:  pos.id,
+      });
+    } else if (pos.createdAt < startDate) {
+      // Posição pré-existente — reconstruímos o saldo na data de início
+      // saldo_em_start = saldo_atual + principal devolvido após start
+      const principalAfterStart = dists
+        .filter((d) => d.distributedAt > startDate)
+        .reduce((s, d) => s + d.principalCents, 0);
+      const balanceAtStart = pos.principalBalanceCents + principalAfterStart;
+      if (balanceAtStart > 0) {
+        cashflows.push({
+          date:        start,
+          amountCents: -balanceAtStart,
+          kind:        "aporte",
+          positionId:  pos.id,
+        });
+      }
+    }
+
+    // ── PARCELAS recebidas dentro do período ─────────────────────────────────
+    for (const d of dists) {
+      if (d.distributedAt >= startDate && d.distributedAt <= endDate) {
+        cashflows.push({
+          date:          d.distributedAt.toISOString().slice(0, 10),
+          amountCents:   d.amountCents,
+          interestCents: d.interestCents,
+          principalCents:d.principalCents,
+          kind:          "parcela",
+          positionId:    pos.id,
+        });
+      }
+    }
+
+    // ── RESIDUAL ao fim do período ────────────────────────────────────────────
+    // Só incluímos residual se a posição era relevante para o período
+    if (pos.createdAt <= endDate) {
+      const principalAfterEnd = dists
+        .filter((d) => d.distributedAt > endDate)
+        .reduce((s, d) => s + d.principalCents, 0);
+      const balanceAtEnd = pos.principalBalanceCents + principalAfterEnd;
+      if (balanceAtEnd > 0) {
+        cashflows.push({
+          date:        end,
+          amountCents: balanceAtEnd,
+          kind:        "residual",
+          positionId:  pos.id,
+        });
+      }
+    }
+  }
+
+  // Ordena cronologicamente (XIRR exige fluxos ordenados)
+  cashflows.sort((a, b) => a.date.localeCompare(b.date));
+
+  res.json({ cashflows });
 });
 
 function emptySummary() {
