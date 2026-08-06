@@ -379,9 +379,12 @@ export default function CarteiraScreen() {
             <>
               <View style={{ marginBottom: 16 }}>
                 <Text style={s.chartReturnValue}>
-                  {xirrRate !== null
-                    ? `${xirrRate >= 0 ? '+' : ''}${(xirrRate * 100).toFixed(1)}% a.a.`
-                    : '—'}
+                  {xirrRate !== null ? (() => {
+                    const pct = xirrRate * 100;
+                    const rounded = Math.round(pct * 10) / 10; // 1 casa decimal
+                    const sign = rounded > 0 ? '+' : '';
+                    return `${sign}${rounded === 0 ? '0.0' : pct.toFixed(1)}% a.a.`;
+                  })() : '—'}
                 </Text>
                 <Text style={s.chartReturnSub}>
                   {interestInPeriodCents > 0
