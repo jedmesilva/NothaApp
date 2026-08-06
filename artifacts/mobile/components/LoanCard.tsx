@@ -55,10 +55,7 @@ export function LoanCard({ loan }: Props) {
         />
       </View>
       <Text style={st.value}>R$ {formatBRL(loan.valor)}</Text>
-      <Text style={st.label}>
-        R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade} · {loan.parcelasTotal}{' '}
-        {loan.parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
-      </Text>
+      <Text style={st.label}>R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade}</Text>
       <View style={st.valueSpacer} />
 
       {isCaptacao && (

@@ -133,10 +133,7 @@ export default function EmprestimoDetalheScreen() {
           </View>
 
           <Text style={s.heroValue}>R$ {formatBRL(valor)}</Text>
-          <Text style={s.heroSub}>
-            R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade} · {parcelasTotal}{' '}
-            {parcelasTotal === 1 ? cicloMeta.unidade : cicloMeta.unidadePlural}
-          </Text>
+          <Text style={s.heroSub}>R$ {formatBRL(Math.round(valorParcela))}/{cicloMeta.unidade}</Text>
 
           {status === 'captacao' && (
             <PoolBar
