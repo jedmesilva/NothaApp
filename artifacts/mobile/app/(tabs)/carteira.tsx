@@ -316,7 +316,7 @@ export default function CarteiraScreen() {
             style={s.heroTopRow}
           >
             <View style={{ flex: 1 }}>
-              <Eyebrow context="dark">Investimentos</Eyebrow>
+              <Eyebrow context="dark">Total investido</Eyebrow>
               <BigValue context="dark">R$ {formatBRL(investido)}</BigValue>
               <Text style={s.ativosInlineLabel}>
                 {ativosCount} {ativosCount === 1 ? 'ativo' : 'ativos'}
