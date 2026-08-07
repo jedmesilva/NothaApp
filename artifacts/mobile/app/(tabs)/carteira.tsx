@@ -14,7 +14,7 @@ import { router } from 'expo-router';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { formatBRL } from '@/data/loans';
 import { palette as C, fonts, fontSize, radii, spacing } from '@/constants/theme';
-import { DarkCard, LightCard, ThinBar, SplitRow, Chip, SectionTitle, Eyebrow, BigValue, AlertBanner } from '@/components/ds';
+import { DarkCard, LightCard, ThinBar, Chip, SectionTitle, Eyebrow, BigValue, AlertBanner } from '@/components/ds';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInvestorPositions } from '@/hooks/useInvestorPositions';
 import { useInvestorProfile, useActivateInvestorProfile } from '@/hooks/useInvestorProfile';
@@ -329,8 +329,8 @@ export default function CarteiraScreen() {
             <>
               <View style={s.heroDivider} />
 
-              {/* Capital retornado */}
-              <Eyebrow context="dark" style={{ marginBottom: 10 }}>Capital retornado</Eyebrow>
+              {/* Acompanhamento do total recebido */}
+              <Eyebrow context="dark" style={{ marginBottom: 10 }}>Recebido</Eyebrow>
               <View style={s.capitalPctRow}>
                 <Text style={s.capitalPct}>{percentRecebido}</Text>
                 <Text style={s.capitalPctSign}>%</Text>
@@ -339,12 +339,10 @@ export default function CarteiraScreen() {
 
               <ThinBar pct={percentRecebido} context="dark" style={{ marginTop: 2, marginBottom: 18 }} />
 
-              <SplitRow
-                context="dark"
-                left={{ label: 'Recebido', value: `R$ ${formatBRL(recebido)}` }}
-                right={{ label: 'A receber', value: `R$ ${formatBRL(aReceber)}` }}
-                style={{ marginBottom: 0 }}
-              />
+              <View style={s.receivedValuesRow}>
+                <Text style={s.receivedValue}>R$ {formatBRL(recebido)}</Text>
+                <Text style={s.receivedValue}>R$ {formatBRL(aReceber)}</Text>
+              </View>
             </>
           )}
         </DarkCard>
@@ -452,6 +450,8 @@ const s = StyleSheet.create({
   heroTopRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   ativosInlineLabel:{ fontSize: fontSize['sm+'], color: 'rgba(255,255,255,0.5)', fontFamily: fonts.medium, marginTop: 6 },
   heroDivider:      { height: 1, backgroundColor: 'rgba(255,255,255,0.12)', marginVertical: 20 },
+  receivedValuesRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  receivedValue: { fontFamily: fonts.display, fontSize: fontSize['2xl'], color: '#fff', letterSpacing: -0.3 },
   periodChips:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
   chartReturnValue: { fontFamily: fonts.display, fontSize: fontSize['7xl'], color: C.ink, letterSpacing: -0.6 },
   chartReturnSub:   { fontSize: fontSize.base, color: C.inkSoft, fontFamily: fonts.medium, marginTop: 4, marginBottom: 12 },
